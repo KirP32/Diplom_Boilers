@@ -9,7 +9,7 @@ const key = 'esptest';
 // #key
 
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'http://185.46.10.111'],
     methods: ['GET', 'POST', 'PUT'],
     credentials: true
 }));
