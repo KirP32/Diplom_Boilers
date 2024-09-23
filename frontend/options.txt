@@ -1,0 +1,7 @@
+"options": {
+    "allowedHosts": [
+      "localhost",
+      ".localhost"
+    ],
+    "proxy": "https://localhost:8080/"
+  }
