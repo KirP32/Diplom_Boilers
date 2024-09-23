@@ -20,7 +20,7 @@ const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     database: 'ADS_Line',
-    password: '123',
+    password: 'K#kcMx!b=q7!',
     port: 5432,
     client_encoding: 'utf8',
 });
