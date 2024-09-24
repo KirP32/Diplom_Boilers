@@ -9,21 +9,23 @@ const key = 'esptest';
 // #key
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://185.46.10.111'],
+    origin: ['http://localhost:5173', 'http://185.46.10.111', 'http://frontend:3000'],
     methods: ['GET', 'POST', 'PUT'],
     credentials: true
 }));
+
 
 const { Pool } = require('pg');
 
 const pool = new Pool({
     user: 'postgres',
-    host: 'localhost',
+    host: 'postgres',
     database: 'ADS_Line',
     password: 'K#kcMx!b=q7!',
     port: 5432,
     client_encoding: 'utf8',
 });
+
 
 pool.connect((err) => {
     if (err) {
