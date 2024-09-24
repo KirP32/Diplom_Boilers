@@ -21,27 +21,12 @@ services:
     build:
       context: ./backend
     environment:
-      - DATABASE_URL=postgres://postgres:K#kcMx!b=q7!@postgres:5432/ADS_Line
-    depends_on:
-      - postgres
+      - DATABASE_URL=${DATABASE_URL}
     networks:
       - dev
 
   frontend:
     build:
       context: ./frontend
-    networks:
-      - dev
-  
-  postgres:
-    image: postgres:14-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: K#kcMx!b=q7!
-      POSTGRES_DB: ADS_Line
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     networks:
       - dev

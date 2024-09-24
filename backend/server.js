@@ -19,13 +19,12 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
     user: 'postgres',
-    host: 'postgres',
+    host: 'localhost',
     database: 'ADS_Line',
     password: 'K#kcMx!b=q7!',
     port: 5432,
     client_encoding: 'utf8',
 });
-
 
 pool.connect((err) => {
     if (err) {
