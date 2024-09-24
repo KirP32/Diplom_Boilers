@@ -21,7 +21,7 @@ function App() {
   const fetchInfo = useCallback(async () => {
     const key = 'Tula71F46aw8f9';
     try {
-      const response = await axios.get(`/changes?key=${key}`);
+      const response = await axios.get(`http://localhost:8080/changes?key=${key}`);
       setBoiler(response.data);
     } catch (error) {
       console.error('Ошибка при выполнении запроса:', error.message);
@@ -42,7 +42,7 @@ function App() {
     data = { ...data, boiler_key: boiler_key }
     event.preventDefault();
     axios
-      .post("/info", data)
+      .post("http://localhost:8080/info", data)
       .then((response) => {
         setResponse(response.data);
       })
@@ -104,7 +104,7 @@ function App() {
         )}
       </>
       <section>
-        {boiler && boiler.map(item => (
+        {Array.isArray(boiler) && boiler.map(item => (
           <div key={item.id}>
             <h2>{item.temperature}</h2>
           </div>
