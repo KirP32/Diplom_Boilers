@@ -22,8 +22,10 @@ function App() {
   const fetchInfo = useCallback(async () => {
     const key = 'Tula71F46aw8f9';
     try {
+      console.log("fetch begin...");
       const response = await axios.get(`http://185.46.10.111/changes?key=${key}`);
       setBoiler(response.data);
+      console.log('fetch end...');
     } catch (error) {
       console.error('Ошибка при выполнении запроса:', error.message);
       setBoiler(null);
@@ -39,7 +41,7 @@ function App() {
       const response = await axios.get(`http://185.46.10.111/test`);
       setResponse_test(response.data);
       console.log("getTest OK");
-      console.log(response);
+      console.log(`getTest response` + response);
     } catch (error) {
       console.error('Ошибка при выполнении запроса:', error.message);
       setResponse_test(null);
