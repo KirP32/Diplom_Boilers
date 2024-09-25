@@ -55,6 +55,12 @@ app.get('/changes', (req, res) => {
     });
 });
 
+app.get('/test', (req, res) => {
+    console.log("Test route working");
+    res.status(200).send("Test route working");
+});
+
+
 app.post('/info', (req, res) => {
     console.log(req.body);
     const { boiler_key } = req.body;

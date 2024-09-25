@@ -16,6 +16,7 @@ function App() {
   const [tab, setTab] = useState('effect');
   const [boiler, setBoiler] = useState([]);
   const [response, setResponse] = useState("");
+  const [response_test, setResponse_test] = useState("");
   let [data, setData] = useState({ id: "", lastchanges: "" });
 
   const fetchInfo = useCallback(async () => {
@@ -32,6 +33,21 @@ function App() {
   useEffect(() => {
     fetchInfo();
   }, [fetchInfo]);
+
+  const getTest = useCallback(async () => {
+    try {
+      const response = await axios.get(`http://185.46.10.111/test`);
+      setResponse_test(response.data);
+      console.log("getTest OK");
+    } catch (error) {
+      console.error('Ошибка при выполнении запроса:', error.message);
+      setResponse_test(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    getTest();
+  }, [getTest]);
 
   const handleChange = (event) => {
     setData({ ...data, [event.target.name]: event.target.value });
