@@ -23,7 +23,7 @@ function App() {
     const key = 'Tula71F46aw8f9';
     try {
       console.log("fetch begin...");
-      const response = await axios.get(`http://185.46.10.111/changes?key=${key}`);
+      const response = await axios.get(`http://185.46.10.111/api/changes?key=${key}`);
       setBoiler(response.data);
       console.log('fetch end...');
       console.log(response);
@@ -39,9 +39,8 @@ function App() {
 
   const getTest = useCallback(async () => {
     try {
-      const response = await axios.get(`http://185.46.10.111/test`);
+      const response = await axios.get(`http://185.46.10.111/api/test`);
       setResponse_test(response.data);
-      console.log("getTest OK");
       console.log(`getTest response` + ` ${response.data}`);
     } catch (error) {
       console.error('Ошибка при выполнении запроса:', error.message);
@@ -62,7 +61,7 @@ function App() {
     data = { ...data, boiler_key: boiler_key }
     event.preventDefault();
     axios
-      .post("http://185.46.10.111/info", data)
+      .post("http://185.46.10.111/api/info", data)
       .then((response) => {
         setResponse(response.data);
       })
