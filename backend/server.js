@@ -79,6 +79,8 @@ app.post('/info', (req, res) => {
                     console.error('Error executing query:', err);
                     res.status(500).json({ error: 'Internal Server Error' });
                 } else {
+                    console.log("Data added to DB");
+                    console.log(req.body);
                     res.status(200).send("Данные успешно приняты");;
                 }
             }
