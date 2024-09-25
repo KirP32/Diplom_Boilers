@@ -39,6 +39,7 @@ function App() {
       const response = await axios.get(`http://185.46.10.111/test`);
       setResponse_test(response.data);
       console.log("getTest OK");
+      console.log(response);
     } catch (error) {
       console.error('Ошибка при выполнении запроса:', error.message);
       setResponse_test(null);

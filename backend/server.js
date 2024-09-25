@@ -66,7 +66,8 @@ app.post('/info', (req, res) => {
     const { boiler_key } = req.body;
     const { id } = req.body;
     const { lastchanges } = req.body;
-    console.log('Post ');
+    console.log('Received POST request on /info');
+    console.log(req.body);
     if (boiler_key == key) {
         console.log('--key accepted--');
         let str = 'UPDATE boilerinfo SET lastchanges = $1 WHERE id = $2'
