@@ -19,7 +19,7 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
     user: 'postgres',
-    host: 'localhost',
+    host: '185.46.10.111',
     database: 'ADS_Line',
     password: '123',
     port: 5432,
@@ -69,7 +69,6 @@ app.post('/info', (req, res) => {
     console.log('Post ');
     if (boiler_key == key) {
         console.log('--key accepted--');
-        res.status(200).send("Данные успешно приняты");
         let str = 'UPDATE boilerinfo SET lastchanges = $1 WHERE id = $2'
         pool.query(
             str,
@@ -79,7 +78,7 @@ app.post('/info', (req, res) => {
                     console.error('Error executing query:', err);
                     res.status(500).json({ error: 'Internal Server Error' });
                 } else {
-                    res.status(200);
+                    res.status(200).send("Данные успешно приняты");;
                 }
             }
         );
