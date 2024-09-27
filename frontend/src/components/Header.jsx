@@ -15,7 +15,7 @@ export default function Header() {
     return (
         <header>
             <img src={viteLogo} alt="" className='header__logo' />
-            <h3>Geffet boiler</h3>
+            <h3>GEFFEN boiler</h3>
             <span>Время: {now.toLocaleTimeString()} </span>
         </header>
     )
