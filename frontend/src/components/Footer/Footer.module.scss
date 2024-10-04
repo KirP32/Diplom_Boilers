@@ -1,0 +1,30 @@
+footer {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    background-color: hsl(212, 11%, 24%);
+}
+
+section {
+    color: hsl(0, 0%, 95%);
+    flex: 1 1 200px;
+    align-self: center;
+    text-align: center;
+    margin: 0 1em;
+    max-width: 265px;
+    ul {
+        list-style: none;
+        li {
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 3px;
+        }
+    }
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}

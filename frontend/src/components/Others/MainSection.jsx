@@ -1,4 +1,4 @@
-import { ways } from '../data.js';
+import { ways } from '../../data.js';
 import ReactiveList from './ReactiveList.jsx';
 
 

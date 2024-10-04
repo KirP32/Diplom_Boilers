@@ -19,7 +19,7 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
     user: 'postgres',
-    host: '185.46.10.111',
+    host: 'localhost',
     database: 'ADS_Line',
     password: '123',
     port: 5432,
@@ -81,11 +81,16 @@ app.post('/info', (req, res) => {
                 } else {
                     console.log("Data added to DB");
                     console.log(req.body);
-                    res.status(200).send("Данные успешно приняты");;
+                    res.status(200).send("Данные успешно приняты");
                 }
             }
         );
     } else {
         res.status(400).send("Некорректный ключ");
     }
+});
+
+app.get('/devices', (req, res) => {
+    const devices = [{ id: 1, name: 'floor1', status: 'online' }, { id: 2, name: 'bath2', status: 'error' }, { id: 3, name: 'garage', status: 'check' },];
+    res.json(devices);
 });

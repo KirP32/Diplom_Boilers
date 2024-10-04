@@ -1,0 +1,16 @@
+header {
+    height: 113px;
+    display: flex;
+    place-items: center;
+    place-content: center;
+    background: hsl(356, 65%, 38%);
+    color: white;
+    grid-column: 1 / -1;
+    & > * {
+        grid-column: 1 / -1;
+    }
+    h3 {
+        margin: 0;
+        font-size: 48px;
+    }
+}

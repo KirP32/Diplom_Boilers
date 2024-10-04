@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Button from './Button/Button';
+import Button from '../Button/Button';
 
 export default function Playground() {
     const [likes, setLikes] = useState(0);

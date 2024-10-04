@@ -1,0 +1,63 @@
+main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  .main_wrapper {
+    grid-column: 1 / -1;
+    justify-self: center;
+    align-self: center;
+    .sign_in {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 3em;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+      &_login {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        Button {
+          background-color: hsl(120, 73%, 75%);
+        }
+        Link {
+          font-size: 15px;
+        }
+      }
+      &_buttons {
+        flex-direction: column;
+        display: flex;
+        gap: 15px;
+        margin-bottom: 0.8em;
+      }
+      h4 {
+        font-size: 24px;
+        margin-bottom: 1.5em;
+      }
+      .sign_in_remember {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 0.8em;
+        justify-content: center;
+        cursor: pointer;
+        h5 {
+          font-size: 14px;
+          font-weight: 400;
+        }
+      }
+      input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+}
+
+.no_select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}

@@ -1,5 +1,5 @@
-import Button from "./Button/Button"
-import { differences } from "../data"
+import Button from "../Button/Button"
+import { differences } from "../../data"
 import { useState } from "react";
 
 

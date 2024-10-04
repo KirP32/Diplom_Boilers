@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, Fragment } from "react";
-import Button from "./Button/Button";
-import Modal from "./Modal/Modal";
+import Button from "../Button/Button";
+import Modal from "../Modal/Modal";
 
 export default function EffectSection() {
     const [modal, setModel] = useState(false)

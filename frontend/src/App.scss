@@ -1,43 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-header {
-  height: 50px;
-  display: flex;
-  padding: 0 2rem;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #ccc;
-  background: #fafafa;
-}
-.header__logo {
-  width: 50px;
-  height: 50px;
-}
-main {
-  max-width: 850px;
-  padding: 1rem;
-  padding-top: 2rem;
-}
-
-section {
-  //border: 1px solid plum;
-  border-radius: 10px;
-  margin-bottom: 1rem;
-}
-
-section ul {
-  list-style: none;
-}
-
-section ul li {
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  font-family: "Roboto", sans-serif;
 }
 
 .content,
@@ -61,4 +28,22 @@ h3 {
   padding: 0.5rem 1rem;
   width: 100%;
   margin-bottom: 1rem;
+}
+
+.app_wrapper {
+  height: 100dvh;
+    --columns: 12;
+    --offset: 75px;
+    --frame_gap: 120px;
+    display: grid;
+    grid-template-columns: var(--offset) repeat(var(--columns), 1fr) var(--offset);
+    grid-auto-rows: 113px 1fr 189px;
+    grid-auto-flow: row;
+    column-gap: 12px;
+
+    & > * {
+        grid-column: 1/-1;
+        display: grid;
+        grid-template-columns: subgrid;
+    }
 }
