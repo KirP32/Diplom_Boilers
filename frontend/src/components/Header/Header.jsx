@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import styles from './Header.module.scss'
+import './Header.scss'
 
 export default function Header() {
     return (
