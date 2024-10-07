@@ -7,6 +7,7 @@ export default function EffectSection() {
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState([]);
     const [inputValue, setInputValue] = useState('');
+    
     const fetchUsers = useCallback(async () => {
         setLoading(true);
         const response = await fetch('https://jsonplaceholder.typicode.com/users');

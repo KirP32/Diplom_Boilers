@@ -24,6 +24,12 @@ main {
         Link {
           font-size: 15px;
         }
+        &_btn {
+          border-radius: 100px;
+          &:hover {
+            --state-layer-opacity: 0.15 !important;
+          }
+        }
       }
       &_buttons {
         flex-direction: column;
@@ -42,6 +48,7 @@ main {
         margin-bottom: 0.8em;
         justify-content: center;
         cursor: pointer;
+        align-items: center;
         h5 {
           font-size: 14px;
           font-weight: 400;

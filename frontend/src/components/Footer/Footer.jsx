@@ -7,7 +7,7 @@ export default function Footer() {
     return (
         <footer className={styles.footer}>
             <img src={ads_line} alt="" />
-            <section className={styles.section}>
+            <div className={styles.section}>
                 <h4>Контактная информация</h4>
                 <ul className={styles.section}>
                     <li>ул. Щегловская Засека, 31</li>
@@ -18,7 +18,7 @@ export default function Footer() {
                         geffen.ru
                     </li>
                 </ul>
-            </section>
+            </div>
             <img src={ads_data} alt="" />
             <img src={ads_di} alt="" />
         </footer>

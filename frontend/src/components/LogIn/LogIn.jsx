@@ -24,7 +24,7 @@ export default function LogIn() {
                         <h5 onClick={chengeCheckbox} className={styles.no_select}>Запомнить меня</h5>
                     </div>
                     <div className={styles.sign_in_login}>
-                        <Button>Войти</Button>  
+                        <Button className={styles.sign_in_login_btn}>Войти</Button>  
                         <Link to="/PersonalAccount">Забыли пароль?</Link>
                     </div>
                 </div>

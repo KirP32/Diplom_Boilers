@@ -1,15 +1,24 @@
 .button {
+  position: relative;
+  isolation: isolate;
   padding: 0.8rem 2rem;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: all 0.3s;
   font-weight: bold;
-  //margin-right: 1rem;
-}
-
-.button:hover {
-  opacity: 0.4;
+  z-index: 1;
+  &::before {
+    content: " ";
+    position: absolute;
+    z-index: -1;
+    background: currentColor;
+    inset: 0;
+    opacity: var(--state-layer-opacity, 0);
+    border-radius: 100px;
+  }
+  &:hover {
+    --state-layer-opacity: 0.25;
+  }
 }
 
 .button:disabled {
