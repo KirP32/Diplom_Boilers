@@ -28,14 +28,14 @@ export default function PersonalAccount() {
             });
             setdevicesArray(response.data);
             setDeviceObject(response.data[0]);
-            console.log(response.data);
+            //console.log(response.data);
         } catch (error) {
             console.error('Сервер недоступен или выключен, пожалуйста, сообщите об ошибке');
         }
     }, []);
 
     const updateInfo = (updatedBoiler) => {
-        console.log('updateinfo triggered');
+        //console.log('updateinfo triggered');
         const updatedDevices = devicesArray.map(device => {
             if (device.id === deviceObject.id) {
                 const updatedBoilers = device.boilers.map(boiler => {
@@ -49,7 +49,7 @@ export default function PersonalAccount() {
             }
             return device;
         });
-        console.log(updatedDevices);
+        //console.log(updatedDevices);
         setdevicesArray(updatedDevices);
     };
     
