@@ -3,16 +3,25 @@ import styles from './PersonalAccount.module.scss';
 import Input from '../Input/Input';
 import Button from '../Button/Button';
 import axios from "axios";
+import PopDialog from "../PopDialog/PopDialog";
 
 export default function PersonalAccount() {
-
+    const [open, setOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
     const [devicesArray, setdevicesArray] = useState([]);
     const [deviceFindName, setdeviceFindName] = useState('');
     const [deviceObject, setDeviceObject] = useState({});
     const [buttonActive, setbuttonActive] = useState(false);
+
+    const openDialog = (item) => {
+        setSelectedItem(item);
+        setOpen(true);
+    };
+
     const getAllDevices = useCallback(async () => {
+        // в get было http://185.46.10.111/api/devices
         try {
-            const response = await axios.get('http://185.46.10.111/api/devices', {
+            const response = await axios.get('http://localhost:8080/devices', {
                 params: {
                     KEY: 12345,
                 }
@@ -25,13 +34,30 @@ export default function PersonalAccount() {
         }
     }, []);
 
+    const updateInfo = (updatedBoiler) => {
+        console.log('updateinfo triggered');
+        const updatedDevices = devicesArray.map(device => {
+            if (device.id === deviceObject.id) {
+                const updatedBoilers = device.boilers.map(boiler => {
+                    if (boiler.name === updatedBoiler.name) {
+                        return { ...boiler, ...updatedBoiler };
+                    }
+                    return boiler;
+                });
+    
+                return { ...device, boilers: updatedBoilers };
+            }
+            return device;
+        });
+        console.log(updatedDevices);
+        setdevicesArray(updatedDevices);
+    };
+    
+
     useEffect(() => {
         getAllDevices();
     }, [getAllDevices]);
 
-    function clickListener() {
-
-    }
     return (
         <div className={styles.lk__wrapper}>
             <div className={styles.lk__wrapper__sidebar}>
@@ -49,7 +75,7 @@ export default function PersonalAccount() {
                                     <div key={item.id} className={styles.devices_container} onClick={() => setDeviceObject(item)}>
                                         <div className={`${styles[`circle__` + `${item.status}`]} ${styles.circle} ${styles.no_select}`} />
                                         <h4 className={styles.device__text}>{item.name}</h4>
-                                    </div>  
+                                    </div>
                                 ))
                             }
                         </>
@@ -63,7 +89,7 @@ export default function PersonalAccount() {
             {(devicesArray.length > 0) && <div className={styles.lk__wrapper__main__content}>
                 <div className={styles.lk__wrapper__main__indicators}>
                     <div className={styles.lk__wrapper__main__indicators__wrapper}>
-                        <Button onClick={clickListener}><h4>Датчики</h4> <span className="material-symbols-outlined">
+                        <Button><h4>Датчики</h4> <span className="material-symbols-outlined">
                             device_thermostat
                         </span></Button>
                         <button><h4>График</h4> <span className="material-symbols-outlined">
@@ -95,7 +121,7 @@ export default function PersonalAccount() {
                             {deviceObject.boilers
                                 .map((item) =>
                                 (
-                                    <div key={item.name} className={styles.lk__wrapper__main__object__container}>
+                                    <div key={item.name} className={styles.lk__wrapper__main__object__container} onClick={() => openDialog(item)}>
                                         <div className={styles.lk__wrapper__main__object__container__header}>
                                             <h4>{item.name}</h4>
                                         </div>
@@ -112,6 +138,14 @@ export default function PersonalAccount() {
                                 )
                             }
                         </>}
+                        {selectedItem && (
+                            <PopDialog 
+                            open={open}
+                            setDialog={(current) => setOpen(current)}
+                            selectedItem={selectedItem}
+                            updatedevices={updateInfo}
+                            ></PopDialog>
+                        )}
                     </div>
                 </div>
             </div>}

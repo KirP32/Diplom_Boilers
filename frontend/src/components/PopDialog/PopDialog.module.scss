@@ -1,0 +1,27 @@
+.dialog {
+    &__wrapper {
+        padding: 8px;
+    }
+    &__status {
+        padding: 8px;
+    }
+    &__temperature {
+        align-items: center;
+        display: flex;
+        padding: 8px;
+    }
+    &__time {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        column-gap: 5px;
+        padding: 8px;
+        & h4 {
+            font-weight: normal;
+        }
+    }
+    &__setTemp {
+        padding-top: 15px;
+        text-align: center;
+    }
+}
