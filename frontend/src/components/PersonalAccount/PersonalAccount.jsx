@@ -19,9 +19,9 @@ export default function PersonalAccount() {
     };
 
     const getAllDevices = useCallback(async () => {
-        // в get было http://185.46.10.111/api/devices
+        // в get было http://185.46.10.111/api/devices http://localhost:8080/devices
         try {
-            const response = await axios.get('http://localhost:8080/devices', {
+            const response = await axios.get('http://185.46.10.111/api/devices', {
                 params: {
                     KEY: 12345,
                 }
