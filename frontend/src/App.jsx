@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import axios from "axios";
 import Footer from './components/Footer/Footer';
 import LogIn from './components/LogIn/LogIn';
+import { useNavigate } from 'react-router-dom';
 
 function App() {
   const [boiler, setBoiler] = useState([]);
@@ -44,7 +45,9 @@ function App() {
     <div className="app_wrapper">
       <Header></Header>
       {/* <SendRequest /> */}
+
       <LogIn></LogIn>
+
       <div className="container__footer" style={{ gridColumn: '1 / -1' }}>
         <Footer />
       </div>

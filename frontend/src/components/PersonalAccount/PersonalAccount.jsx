@@ -19,20 +19,21 @@ export default function PersonalAccount() {
     };
 
     const getAllDevices = useCallback(async () => {
-        // в get было http://185.46.10.111/api/devices http://localhost:8080/devices
         try {
-            const response = await axios.get('http://185.46.10.111/api/devices', {
+            const response = await axios.get('http://localhost:8080/devices', {
                 params: {
                     KEY: 12345,
-                }
+                },
+                withCredentials: true,
+                headers: {'accessToken':`${localStorage.getItem('accessToken')}`},
             });
             setdevicesArray(response.data);
             setDeviceObject(response.data[0]);
-            //console.log(response.data);
         } catch (error) {
             console.error('Сервер недоступен или выключен, пожалуйста, сообщите об ошибке');
         }
     }, []);
+    
 
     const updateInfo = (updatedBoiler) => {
         //console.log('updateinfo triggered');
@@ -44,7 +45,7 @@ export default function PersonalAccount() {
                     }
                     return boiler;
                 });
-    
+
                 return { ...device, boilers: updatedBoilers };
             }
             return device;
@@ -52,11 +53,12 @@ export default function PersonalAccount() {
         //console.log(updatedDevices);
         setdevicesArray(updatedDevices);
     };
-    
+
 
     useEffect(() => {
         getAllDevices();
     }, [getAllDevices]);
+
 
     return (
         <div className={styles.lk__wrapper}>
@@ -139,11 +141,11 @@ export default function PersonalAccount() {
                             }
                         </>}
                         {selectedItem && (
-                            <PopDialog 
-                            open={open}
-                            setDialog={(current) => setOpen(current)}
-                            selectedItem={selectedItem}
-                            updatedevices={updateInfo}
+                            <PopDialog
+                                open={open}
+                                setDialog={(current) => setOpen(current)}
+                                selectedItem={selectedItem}
+                                updatedevices={updateInfo}
                             ></PopDialog>
                         )}
                     </div>
