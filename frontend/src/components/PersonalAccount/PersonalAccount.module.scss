@@ -107,6 +107,14 @@
                 border-radius: 100px;
                 margin-right: 10px;
             }
+            &__profile {
+                display: flex;
+                column-gap: 10px;
+                span {
+                    align-self: center;
+                    cursor: pointer;
+                }
+            }
         }
         &__device_info {
             display: grid;

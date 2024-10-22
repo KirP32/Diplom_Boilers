@@ -1,9 +1,11 @@
-import { Fragment, useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import styles from './PersonalAccount.module.scss';
 import Input from '../Input/Input';
 import Button from '../Button/Button';
-import axios from "axios";
 import PopDialog from "../PopDialog/PopDialog";
+import $api from "../../http";
+import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from "jwt-decode";
 
 export default function PersonalAccount() {
     const [open, setOpen] = useState(false);
@@ -11,7 +13,16 @@ export default function PersonalAccount() {
     const [devicesArray, setdevicesArray] = useState([]);
     const [deviceFindName, setdeviceFindName] = useState('');
     const [deviceObject, setDeviceObject] = useState({});
-    const [buttonActive, setbuttonActive] = useState(false);
+    const [user_name, setUser_name] = useState('');
+
+    useEffect(() => {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+            setUser_name(jwtDecode(token).login);
+        }
+    }, []);
+
+    const navigate = useNavigate();
 
     const openDialog = (item) => {
         setSelectedItem(item);
@@ -20,20 +31,26 @@ export default function PersonalAccount() {
 
     const getAllDevices = useCallback(async () => {
         try {
-            const response = await axios.get('http://localhost:8080/devices', {
-                params: {
-                    KEY: 12345,
-                },
-                withCredentials: true,
-                headers: {'accessToken':`${localStorage.getItem('accessToken')}`},
-            });
+            const response = await $api.get('/devices',
+                {
+                    params: {
+                        KEY: 12345,
+                    },
+                    headers: { 'accessToken': `${localStorage.getItem('accessToken')}` },
+                }
+            );
             setdevicesArray(response.data);
             setDeviceObject(response.data[0]);
         } catch (error) {
-            console.error('Сервер недоступен или выключен, пожалуйста, сообщите об ошибке');
+            if (error.status == 401) {
+
+            }
+            else {
+                console.error(error.status);
+            }
         }
     }, []);
-    
+
 
     const updateInfo = (updatedBoiler) => {
         //console.log('updateinfo triggered');
@@ -54,11 +71,36 @@ export default function PersonalAccount() {
         setdevicesArray(updatedDevices);
     };
 
+    function logout() {
+        $api
+            .post('/logout')
+            .then((response) => {
+                localStorage.removeItem('accessToken');
+                navigate('/');
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }
 
     useEffect(() => {
         getAllDevices();
     }, [getAllDevices]);
 
+
+    function sendEsp() {
+        $api
+            .get('http://localhost:8080/test_esp', {
+                headers: { 'Authorization': `Bearer $2b$12$IDWkgcBO6qA8xXHovNrejefn9yiDJ4I5OJ4iDcyyNIzFyDeaasnTe` }
+            })
+            .then((response) => {
+                console.log(response);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+
+    }
 
     return (
         <div className={styles.lk__wrapper}>
@@ -101,16 +143,21 @@ export default function PersonalAccount() {
                             warning
                         </span></button>
                     </div>
-                    <Button className={styles.lk__wrapper__main__indicators__btn}>user@yandex.ru</Button>
+                    <div className={styles.lk__wrapper__main__indicators__profile}>
+                        <span onClick={logout} className={`material-symbols-outlined ${styles.no_select}`}>
+                            logout
+                        </span>
+                        <Button className={styles.lk__wrapper__main__indicators__btn}>{user_name}</Button>
+                    </div>
                 </div>
                 <div className={styles.lk__wrapper__main__device_info}>
                     <div className={styles.section__wrapper}>
                         <section className={styles.lk__wrapper__main__device_info__header}><h4>{deviceObject.name} |</h4>  <div className={`${styles[`circle__` + `${deviceObject.status}`]} ${styles.circle} ${styles.no_select}`} /></section>
                         <section className={styles.lk__wrapper__main__device_info__connection}>
-                            <span className="material-symbols-outlined no_select">
+                            <span className={`material-symbols-outlined ${styles.no_select}`}>
                                 wifi
                             </span>
-                            <span className="material-symbols-outlined no_select">
+                            <span className={`material-symbols-outlined ${styles.no_select}`}>
                                 signal_cellular_3_bar
                             </span>
                         </section>
@@ -148,6 +195,9 @@ export default function PersonalAccount() {
                                 updatedevices={updateInfo}
                             ></PopDialog>
                         )}
+                    </div>
+                    <div className="test_esp">
+                        <Button onClick={sendEsp} >Проверка</Button>
                     </div>
                 </div>
             </div>}

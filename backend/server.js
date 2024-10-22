@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 require("dotenv").config();
 
@@ -71,6 +72,49 @@ app.get('/test', (req, res) => {
     res.status(200).send("Test route working");
 });
 
+app.get('/devices', checkCookie, (req, res) => {
+    const devices = [{ id: 1, name: 'floor1', status: 'online', boilers: [{ name: 'Котёл основной', t: 65, online: '15h 5m 10s' }, { name: 'Котёл гараж', t: 100, online: '1h 4m 55s' }, { name: 'Крыша', t: 47, online: '6h 14m 31s' },] },
+    { id: 2, name: 'bath2', status: 'error' }, { id: 3, name: 'garage', status: 'check' },
+    { id: 4, name: 'bathroom', status: 'check' }, { id: 5, name: 'Pool', status: 'check' },
+    { id: 6, name: 'hatch', status: 'error' },];
+    res.json(devices);
+});
+
+app.get('/refresh', async (req, res) => {
+    try {
+        const token = req.cookies.refreshToken;
+        if (!token) {
+            console.error('Refresh token not provided');
+            return res.status(401).send('UnauthorizedError: No token provided');
+        }
+
+        let flag_token;
+        try {
+            const userData = jwt.verify(token, process.env.JWT_REFRESH_KEY);
+            flag_token = userData;
+        } catch (e) {
+            flag_token = null;
+            console.error('Error refreshing token:', e);
+            return res.status(500).send('Internal Server Error');
+        }
+
+        if (!flag_token || !(await checkTokenExists(token))) {
+            return res.status(401).send('UnauthorizedError');
+        }
+
+        const { accessToken, refreshToken } = getTokens(flag_token.login);
+        await updateToken(flag_token.login, refreshToken); // в БД
+
+        res.cookie('refreshToken', refreshToken, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
+        return res.send({ accessToken });
+    } catch (error) {
+        console.error('Error in refresh token route:', error);
+        return res.status(500).send('Internal Server Error');
+    }
+});
+
+
+
 app.post('/login', (req, res) => {
     const { login } = req.body;
     const { password } = req.body;
@@ -99,6 +143,15 @@ app.post('/login', (req, res) => {
         }
     });
 });
+
+// middleware использует accessToken для проверки а не refreshToken
+app.post('/logout', checkCookie, async (req, res) => {
+    const { refreshToken } = req.cookies;
+    await deleteCookieDB(refreshToken);
+    res.clearCookie('refreshToken');
+    res.status(200).send({ message: 'Logged out successfully' });
+});
+
 
 app.post('/info', (req, res) => {
     console.log(req.body);
@@ -129,23 +182,17 @@ app.post('/info', (req, res) => {
     }
 });
 
-app.get('/devices', checkCookie, (req, res) => {
-    const devices = [{ id: 1, name: 'floor1', status: 'online', boilers: [{ name: 'Котёл основной', t: 65, online: '15h 5m 10s' }, { name: 'Котёл гараж', t: 100, online: '1h 4m 55s' }, { name: 'Крыша', t: 47, online: '6h 14m 31s' },] },
-    { id: 2, name: 'bath2', status: 'error' }, { id: 3, name: 'garage', status: 'check' },
-    { id: 4, name: 'bathroom', status: 'check' }, { id: 5, name: 'Pool', status: 'check' },
-    { id: 6, name: 'hatch', status: 'error' },];
-    res.json(devices);
-});
 
-function checkCookie(req, res, next) {
-    const authcookie = req.headers.accesstoken;
+async function checkCookie(req, res, next) {
+    const authcookie = req.headers['accesstoken'];
+
     if (!authcookie) {
         return res.sendStatus(401);
     }
 
     jwt.verify(authcookie, process.env.JWT_SECRET_KEY, (err, data) => {
         if (err) {
-            return res.sendStatus(403);
+            return res.sendStatus(401);
         } else {
             console.log("Checked successfully");
             req.user = data;
@@ -179,3 +226,42 @@ async function updateToken(login, refreshToken) {
         console.error('Error updating token:', err);
     }
 }
+
+const checkTokenExists = async (refreshToken) => {
+    try {
+        const result = await pool.query(
+            "SELECT EXISTS(SELECT 1 FROM refreshtokens WHERE refreshtoken = $1)",
+            [refreshToken]
+        );
+        return result.rows[0].exists;
+    } catch (error) {
+        console.error('Ошибка при проверке токена:', error);
+    }
+};
+
+async function deleteCookieDB(refreshToken) {
+    try {
+        const userResult = await pool.query('DELETE FROM refreshtokens WHERE refreshtoken = $1', [refreshToken]);
+        console.log('deleted successfully');
+        return userResult;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+
+app.get('/test_esp', async (req, res) => {
+    const api = req.headers['authorization'];
+    await axios.get('http://185.113.139.204:8000/module/get/0-00001', {
+        headers: {
+            Authorization: api,
+            "Content-Type": 'application/json',
+        }
+    })
+        .then((response) => {
+            res.send(response.data);
+        })
+        .catch((error) => {
+            console.log(error);
+        })
+})

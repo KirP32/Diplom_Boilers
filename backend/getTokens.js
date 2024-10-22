@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
 
-const accessTokenAge = '1h';
+const accessTokenAge = '10s';
 const refreshTokenAge = '31d';
 
 const getTokens = (login) => (
