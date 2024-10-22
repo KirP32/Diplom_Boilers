@@ -31,11 +31,9 @@ export default function PersonalAccount() {
 
     const getAllDevices = useCallback(async () => {
         try {
-            const response = await $api.get('/devices',
+            const response = await $api.get('/test_esp',
                 {
-                    params: {
-                        KEY: 12345,
-                    },
+                    
                     headers: { 'accessToken': `${localStorage.getItem('accessToken')}` },
                 }
             );
