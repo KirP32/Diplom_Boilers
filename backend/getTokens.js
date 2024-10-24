@@ -4,13 +4,12 @@ require("dotenv").config();
 const accessTokenAge = '10s';
 const refreshTokenAge = '31d';
 
-const getTokens = (login) => (
-    {
+const getTokens = (login) => {
+    return {
         accessToken: jwt.sign({ login }, process.env.JWT_SECRET_KEY, { expiresIn: `${accessTokenAge}` }),
         refreshToken: jwt.sign({ login }, process.env.JWT_REFRESH_KEY, { expiresIn: `${refreshTokenAge}` }),
-    }
-)
-
+    };
+};
 
 module.exports = {
     getTokens,
