@@ -32,7 +32,19 @@ export default function LogIn() {
             login: login,
             password: hash
         };
+        let beforeUnloadHandler = (event) => {
+            localStorage.removeItem('accessToken');
+            let pastDate = new Date(0);
+            document.cookie = `refreshToken=; expires=${pastDate.toUTCString()}; path=/`;
+            $api.post('/logout');
+        };
 
+
+        if (checked == false) {
+            window.addEventListener('beforeunload', beforeUnloadHandler);
+        } else {
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
+        }
         $api
             .post('/login', data)
             .then((response) => {
@@ -78,7 +90,7 @@ export default function LogIn() {
                     }
                     {
                         regFlag && <SignUp
-                        updateRegFlag={(event) => setRegFlag(event)}
+                            updateRegFlag={(event) => setRegFlag(event)}
                         ></SignUp>
                     }
                     {token_access &&
