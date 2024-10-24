@@ -61,15 +61,15 @@ export default function LogIn() {
                 <div className={styles.sign_in}>
                     {!token_access && !regFlag && <>
                         <h4>Вход в систему ADS Line</h4>
-                        <div className={styles.sign_in_buttons}>
+                        <div className={styles.sign_in__buttons}>
                             <Input type="text" placeholder="Ваш логин" value={login} onChange={(event) => setLogin(event.target.value)} />
                             <Input type='password' placeholder="Пароль" value={password} onChange={(event) => setPassword(event.target.value)} />
                         </div>
-                        <div className={styles.sign_in_remember}>
+                        <div className={styles.sign_in__remember}>
                             <input type="checkbox" checked={checked} onChange={chengeCheckbox} />
                             <h5 onClick={chengeCheckbox} className={styles.no_select}>Запомнить меня</h5>
                         </div>
-                        <div className={styles.sign_in_login}>
+                        <div className={styles.sign_in__login}>
                             <Button className={styles.sign_in_login_btn} onClick={comparePassword}>Войти</Button>
                             <Link onClick={() => setRegFlag(true)} >Регистрация</Link>
                             <Link to="/PersonalAccount">Забыли пароль?</Link>
@@ -77,7 +77,9 @@ export default function LogIn() {
                     </>
                     }
                     {
-                        regFlag && <SignUp></SignUp>
+                        regFlag && <SignUp
+                        updateRegFlag={(event) => setRegFlag(event)}
+                        ></SignUp>
                     }
                     {token_access &&
                         <div className={styles.logged__wrapper}>

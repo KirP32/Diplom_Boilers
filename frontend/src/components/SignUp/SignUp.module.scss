@@ -9,5 +9,15 @@
     }
     &__register {
         padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        &__button {
+            background-color: hsl(120, 73%, 75%);
+        }
+    }
+    &__back {
+        align-self: center;
+        text-decoration: none;
     }
 }

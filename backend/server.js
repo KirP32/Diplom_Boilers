@@ -14,6 +14,8 @@ const app = express();
 
 const port = process.env.PORT || 8080;
 
+// хочу открыть порт 5432 и 8080 на ubuntu, я до этого закрывал все порты через команды, вроде ufw denu ALL
+
 // #key
 const key = 'esptest';
 // #key
@@ -31,7 +33,7 @@ app.use(cors({
 
 const pool = new Pool({
     user: 'postgres',
-    host: '185.46.10.111',
+    host: 'localhost',
     database: 'ADS_Line',
     password: '123',
     port: 5432,
@@ -55,8 +57,8 @@ app.get('/changes', (req, res) => {
     const key = req.query.key;
     console.log(`Received key: ${key}`);
 
-    let str = `SELECT temperature, id FROM boilerinfo WHERE key = '${key}'`;
-    pool.query(str, (err, result) => {
+    let str = `SELECT temperature, id FROM boilerinfo WHERE key = $1`;
+    pool.query(str, [key], (err, result) => {
         if (err) {
             console.error('Error executing query:', err);
             res.status(500).json({ error: 'Internal Server Error' });
@@ -136,7 +138,9 @@ app.post('/login', (req, res) => {
         const isValid = await bcrypt.compare(password, pass_hash);
 
         if (isValid) {
+            console.log('Validation passed')
             const { accessToken, refreshToken } = getTokens(login);
+            console.log('getToken passed')
             await updateToken(login, refreshToken);
             res.cookie("refreshToken", refreshToken, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
             res.send({ accessToken });
@@ -144,6 +148,26 @@ app.post('/login', (req, res) => {
             res.status(401).json({ error: 'Invalid credentials' });
         }
     });
+});
+
+app.post('/sign_up', async (req, res) => {
+    const { login, password, email } = req.body;
+    const hash = bcrypt.hashSync(password);
+    try {
+        const userResult = await pool.query(
+            'INSERT INTO users (username, phone_number, password_hash) VALUES ($1, $2, $3)',
+            [login, '123456789', hash]
+        );
+
+        if (userResult.rowCount > 0) {
+            res.send('OK');
+        } else {
+            res.status(500).json({ error: 'Не удалось создать пользователя' });
+        }
+    } catch (error) {
+        res.status(500).send('Ошибка при создании пользователя');
+        console.error('Ошибка запроса:', error);
+    }
 });
 
 // middleware использует accessToken для проверки а не refreshToken
