@@ -1,12 +1,14 @@
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
-import styles from './PopDialog.module.scss'
+import styles from './PopDialog.module.scss';
 import Button_M from '@mui/material/Button';
 import Slider from '@mui/material/Slider';
 import { useState, useEffect } from "react";
 
 export default function PopDialog({ open, setDialog, selectedItem, updatedevices }) {
-
-    const [value, setValue] = useState(selectedItem?.t);
+    
+    const [value, setValue] = useState(
+        selectedItem.t ? Number(selectedItem.t).toFixed(2) : 0
+    );
 
     const marks = [
         {
@@ -25,7 +27,7 @@ export default function PopDialog({ open, setDialog, selectedItem, updatedevices
 
     useEffect(() => {
         if (selectedItem) {
-            setValue(selectedItem.t);
+            setValue(Number(selectedItem.t).toFixed(2));
         }
     }, [selectedItem]);
 
@@ -34,8 +36,8 @@ export default function PopDialog({ open, setDialog, selectedItem, updatedevices
     };
 
     function onFinish() {
-        setDialog(false)
-        selectedItem.t = value;
+        setDialog(false);
+        selectedItem.t = parseFloat(value);
         updatedevices(selectedItem);
     }
 
@@ -46,7 +48,7 @@ export default function PopDialog({ open, setDialog, selectedItem, updatedevices
                 <div className={styles.dialog__wrapper}>
                     <h4 className={styles.dialog__status}>Датчики:</h4>
                     <div className={styles.dialog__temperature}>
-                        {selectedItem.t}
+                        {value}
                         <span className="material-symbols-outlined">
                             device_thermostat
                         </span>
@@ -59,7 +61,7 @@ export default function PopDialog({ open, setDialog, selectedItem, updatedevices
                         <h4>{value}</h4>
                         <Slider
                             aria-label="temperature"
-                            value={value}
+                            value={parseFloat(value)}
                             onChange={handleChange}
                             marks={marks}
                             sx={{
@@ -77,5 +79,5 @@ export default function PopDialog({ open, setDialog, selectedItem, updatedevices
                 </Button_M>
             </DialogActions>
         </Dialog>
-    )
+    );
 }

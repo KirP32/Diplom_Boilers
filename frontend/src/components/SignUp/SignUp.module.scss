@@ -1,0 +1,13 @@
+.sign_up {
+    &__inputs {
+        gap: 15px;
+        display: flex;
+        flex-direction: column;
+        & input {
+            font-size: 15px;
+        }
+    }
+    &__register {
+        padding: 15px;
+    }
+}

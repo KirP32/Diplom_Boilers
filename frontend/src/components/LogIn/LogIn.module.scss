@@ -21,9 +21,6 @@ main {
         Button {
           background-color: hsl(120, 73%, 75%);
         }
-        Link {
-          font-size: 15px;
-        }
         &_btn {
           border-radius: 100px;
           &:hover {
@@ -32,6 +29,7 @@ main {
         }
         a {
           padding-bottom: 10px;
+          align-self: center;
         }
       }
       &_buttons {

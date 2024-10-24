@@ -7,16 +7,16 @@ import { sha256 } from 'js-sha256';
 import $api from '../../http';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
+import SignUp from '../SignUp/SignUp';
 
 export default function LogIn() {
     const [checked, setChecked] = useState(false);
     const navigate = useNavigate();
-    function chengeCheckbox() {
-        setChecked(!checked);
-    }
     const [token_access, setToken_access] = useState('');
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
+    const [regFlag, setRegFlag] = useState(false);
+
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
         if (token) {
@@ -50,13 +50,16 @@ export default function LogIn() {
                     console.log('An error occurred:', error.message);
                 }
             });
+    }
 
+    function chengeCheckbox() {
+        setChecked(!checked);
     }
     return (
         <main className={styles.main}>
             <div className={styles.main_wrapper}>
                 <div className={styles.sign_in}>
-                    {!token_access && <>
+                    {!token_access && !regFlag && <>
                         <h4>Вход в систему ADS Line</h4>
                         <div className={styles.sign_in_buttons}>
                             <Input type="text" placeholder="Ваш логин" value={login} onChange={(event) => setLogin(event.target.value)} />
@@ -68,9 +71,13 @@ export default function LogIn() {
                         </div>
                         <div className={styles.sign_in_login}>
                             <Button className={styles.sign_in_login_btn} onClick={comparePassword}>Войти</Button>
+                            <Link onClick={() => setRegFlag(true)} >Регистрация</Link>
                             <Link to="/PersonalAccount">Забыли пароль?</Link>
                         </div>
                     </>
+                    }
+                    {
+                        regFlag && <SignUp></SignUp>
                     }
                     {token_access &&
                         <div className={styles.logged__wrapper}>

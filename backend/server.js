@@ -31,7 +31,7 @@ app.use(cors({
 
 const pool = new Pool({
     user: 'postgres',
-    host: 'localhost',
+    host: '185.46.10.111',
     database: 'ADS_Line',
     password: '123',
     port: 5432,
@@ -73,10 +73,12 @@ app.get('/test', (req, res) => {
 });
 
 app.get('/devices', checkCookie, (req, res) => {
-    const devices = [{ id: 1, name: 'floor1', status: 'online', boilers: [{ name: 'Котёл основной', t: 65, online: '15h 5m 10s' }, { name: 'Котёл гараж', t: 100, online: '1h 4m 55s' }, { name: 'Крыша', t: 47, online: '6h 14m 31s' },] },
-    { id: 2, name: 'bath2', status: 'error' }, { id: 3, name: 'garage', status: 'check' },
-    { id: 4, name: 'bathroom', status: 'check' }, { id: 5, name: 'Pool', status: 'check' },
-    { id: 6, name: 'hatch', status: 'error' },];
+    const devices = [
+        { id: 1, name: 'floor1', status: 'online', boilers: [{ name: 'Котёл основной', t: 65, online: '15h 5m 10s' }, { name: 'Котёл гараж', t: 100, online: '1h 4m 55s' }, { name: 'Крыша', t: 47, online: '6h 14m 31s' },] },
+        { id: 2, name: 'bath2', status: 'error' }, { id: 3, name: 'garage', status: 'check' },
+        { id: 4, name: 'bathroom', status: 'check' }, { id: 5, name: 'Pool', status: 'check' },
+        { id: 6, name: 'hatch', status: 'error' },
+    ];
     res.json(devices);
 });
 
@@ -249,10 +251,12 @@ async function deleteCookieDB(refreshToken) {
     }
 }
 
+//let counter = 1;
 
 app.get('/test_esp', async (req, res) => {
+
     const api = req.headers['authorization'];
-    await axios.get('http://185.113.139.204:8000/module/get/0-00001', {
+    await axios.get('http://185.113.139.204:8000/module/get/0-00002', {
         headers: {
             Authorization: api,
             "Content-Type": 'application/json',
@@ -264,4 +268,23 @@ app.get('/test_esp', async (req, res) => {
         .catch((error) => {
             console.log(error);
         })
-})
+});
+
+app.put('/off_esp', async (req, res) => {
+    const api = req.headers['authorization'];
+    const { indicator } = req.body;
+    const url = `http://185.113.139.204:8000/module/serial/0-00002/command=${indicator}`;
+    await axios.put(url, {}, {
+        headers: {
+            Authorization: api,
+            "Content-Type": 'application/json',
+        }
+    })
+        .then((response) => {
+            res.send(response.data);
+        })
+        .catch((error) => {
+            console.log(error);
+            res.status(500).send('Ошибка на сервере');
+        });
+});

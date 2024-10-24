@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = `http://localhost:8080`
+export const API_URL = `http://185.46.10.111/api`
 
 const $api = axios.create({
     withCredentials: true,
@@ -9,6 +9,7 @@ const $api = axios.create({
 
 $api.interceptors.request.use((config) => {
     config.headers.accessToken = `${localStorage.getItem('accessToken')}`
+    config.headers.authorization = 'Bearer $2b$12$IDWkgcBO6qA8xXHovNrejefn9yiDJ4I5OJ4iDcyyNIzFyDeaasnTe';
     return config;
 })
 

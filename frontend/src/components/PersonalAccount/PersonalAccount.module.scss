@@ -228,7 +228,7 @@
     align-self: center;
     justify-self: center;
     border: 1px solid gray;
-    &__error {
+    &__offline {
         background-color: hsl(0, 100%, 50%);
     }
     &__online {
@@ -236,6 +236,12 @@
     }
     &__check {
         background-color: hsl(60, 100%, 50%);
+    }
+    &__On {
+        background-color: hsl(120, 100%, 25%);
+    }
+    &__Off {
+        background-color: hsl(0, 100%, 50%);
     }
 }
 
@@ -261,4 +267,11 @@
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+}
+
+.test_esp {
+    grid-area: header;
+    display: flex;
+    height: 42px;
+    justify-content: space-evenly;
 }

@@ -12,8 +12,9 @@ export default function PersonalAccount() {
     const [selectedItem, setSelectedItem] = useState(null);
     const [devicesArray, setdevicesArray] = useState([]);
     const [deviceFindName, setdeviceFindName] = useState('');
-    const [deviceObject, setDeviceObject] = useState({});
+    const [deviceObject, setDeviceObject] = useState();
     const [user_name, setUser_name] = useState('');
+    const [indicator, setIndicator] = useState(true);
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
@@ -31,24 +32,21 @@ export default function PersonalAccount() {
 
     const getAllDevices = useCallback(async () => {
         try {
-            const response = await $api.get('/test_esp',
-                {
-                    
-                    headers: { 'accessToken': `${localStorage.getItem('accessToken')}` },
-                }
-            );
-            setdevicesArray(response.data);
-            setDeviceObject(response.data[0]);
+            const response = await $api.get('/test_esp');
+            const devices = [formatResponseData(response.data)];
+            setdevicesArray(devices);
+            if (!deviceObject) {
+                setDeviceObject(devices[0]);
+            }
         } catch (error) {
             if (error.status == 401) {
-
+                console.log('Unathorized');
             }
             else {
-                console.error(error.status);
+                console.error(error);
             }
         }
     }, []);
-
 
     const updateInfo = (updatedBoiler) => {
         //console.log('updateinfo triggered');
@@ -83,14 +81,18 @@ export default function PersonalAccount() {
 
     useEffect(() => {
         getAllDevices();
+
+        const intervalId = setInterval(() => {
+            getAllDevices();
+        }, 5000);
+
+        return () => clearInterval(intervalId);
     }, [getAllDevices]);
 
 
     function sendEsp() {
         $api
-            .get('http://localhost:8080/test_esp', {
-                headers: { 'Authorization': `Bearer $2b$12$IDWkgcBO6qA8xXHovNrejefn9yiDJ4I5OJ4iDcyyNIzFyDeaasnTe` }
-            })
+            .get('/test_esp')
             .then((response) => {
                 console.log(response);
             })
@@ -98,6 +100,38 @@ export default function PersonalAccount() {
                 console.error(error);
             });
 
+    }
+
+    const formatResponseData = (data) => {
+        const boilers = [];
+        for (let key in data) {
+            if (key.startsWith('module_')) {
+                boilers.push({
+                    name: key,
+                    t: data[key],
+                    online: 'N/A'
+                });
+            }
+        }
+        return {
+            id: 1,
+            name: data.s_number,
+            status: data.wsk_pump == '*ON' ? 'online' : 'offline',
+            boilers: boilers
+        };
+    };
+
+    async function turnOffEsp() {
+        $api.put('/off_esp', {
+            indicator: indicator ? '-' : '+',
+        })
+            .then((response) => {
+                console.log(response.data);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+        setIndicator(!indicator);
     }
 
     return (
@@ -114,7 +148,7 @@ export default function PersonalAccount() {
                             {devicesArray
                                 .filter((item) => item.name.toLowerCase().includes(deviceFindName.toLowerCase()))
                                 .map((item) => (
-                                    <div key={item.id} className={styles.devices_container} onClick={() => setDeviceObject(item)}>
+                                    <div key={item.name} className={styles.devices_container} onClick={() => setDeviceObject(item)}>
                                         <div className={`${styles[`circle__` + `${item.status}`]} ${styles.circle} ${styles.no_select}`} />
                                         <h4 className={styles.device__text}>{item.name}</h4>
                                     </div>
@@ -163,6 +197,10 @@ export default function PersonalAccount() {
                     {/* Иконки в зависимости от wifi/связи */}
                 </div>
                 <div className={styles.lk__wrapper__main__object}>
+                    <div className={styles.test_esp}>
+                        <Button onClick={sendEsp}>Проверка</Button>
+                        <Button onClick={turnOffEsp}>{indicator ? 'Выключить' : 'Включить'}</Button>
+                    </div>
                     <div className={styles.lk__wrapper__main__object__wrapper}>
                         {deviceObject.boilers && <>
                             {deviceObject.boilers
@@ -175,7 +213,13 @@ export default function PersonalAccount() {
                                         <div className={styles.lk__wrapper__main__object__container__body}>
                                             <span className={styles.lk__wrapper__main__object__container__body__info__span}>
                                                 <span className="material-symbols-outlined">device_thermostat</span>
-                                                {item.t}
+                                                {
+                                                    String(item.t).includes('.')
+                                                        ? String(item.t).split('.')[1].length >= 2
+                                                            ? `${String(item.t).split('.')[0]}.${String(item.t).split('.')[1].slice(0, 2)}`
+                                                            : item.t
+                                                        : item.t
+                                                }
                                             </span>
                                             <h5>Время работы:</h5>
                                             {item.online}
@@ -194,9 +238,7 @@ export default function PersonalAccount() {
                             ></PopDialog>
                         )}
                     </div>
-                    <div className="test_esp">
-                        <Button onClick={sendEsp} >Проверка</Button>
-                    </div>
+
                 </div>
             </div>}
             {devicesArray.length == 0 && <>
