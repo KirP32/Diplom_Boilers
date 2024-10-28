@@ -85,7 +85,6 @@ app.get('/devices', checkCookie, (req, res) => {
 });
 
 app.get('/refresh', async (req, res) => {
-    console.log('refresh triggered');
     try {   
         const token = req.cookies.refreshToken;
         if (!token) {
@@ -221,7 +220,7 @@ async function checkCookie(req, res, next) {
         if (err) {
             return res.sendStatus(401);
         } else {
-            console.log("Checked successfully");
+            //console.log("Checked successfully");
             req.user = data;
             next();
         }
@@ -248,7 +247,7 @@ async function updateToken(login, refreshToken) {
         `;
         await pool.query(updateTokenQuery, [userID, refreshToken]);
 
-        console.log('Token updated successfully');
+        //console.log('Token updated successfully');
     } catch (err) {
         console.error('Error updating token:', err);
     }
@@ -278,7 +277,7 @@ async function deleteCookieDB(refreshToken) {
 
 //let counter = 1;
 
-app.get('/test_esp', async (req, res) => {
+app.get('/test_esp', checkCookie, async (req, res) => {
 
     const api = req.headers['authorization'];
     await axios.get('http://185.113.139.204:8000/module/get/0-00002', {
@@ -295,7 +294,7 @@ app.get('/test_esp', async (req, res) => {
         })
 });
 
-app.put('/off_esp', async (req, res) => {
+app.put('/off_esp', checkCookie, async (req, res) => {
     const api = req.headers['authorization'];
     const { indicator } = req.body;
     const url = `http://185.113.139.204:8000/module/serial/0-00002/command=${indicator}`;

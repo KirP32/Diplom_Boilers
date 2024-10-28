@@ -33,20 +33,25 @@ export default function PersonalAccount() {
     const getAllDevices = useCallback(async () => {
         try {
             const response = await $api.get('/test_esp');
-            const devices = [formatResponseData(response.data)];
-            setdevicesArray(devices);
-            if (!deviceObject) {
-                setDeviceObject(devices[0]);
+            
+            if (response.status === 200) {
+                const devices = [formatResponseData(response.data)];
+                setdevicesArray(devices);
+                if (!deviceObject) {
+                    setDeviceObject(devices[0]);
+                }
+            } else if (response.status === 401) {
+                console.log('Unauthorized');
             }
         } catch (error) {
-            if (error.status == 401) {
-                console.log('Unathorized');
-            }
-            else {
-                console.error(error);
+            if (error.response && error.response.status === 401) {
+                console.log('Unauthorized');
+            } else {
+                //console.error(error);
             }
         }
     }, []);
+    
 
     const updateInfo = (updatedBoiler) => {
         const updatedDevices = devicesArray.map(device => {
@@ -82,7 +87,7 @@ export default function PersonalAccount() {
 
         const intervalId = setInterval(() => {
             getAllDevices();
-        }, 5000);
+        }, 10000);
 
         return () => clearInterval(intervalId);
     }, [getAllDevices]);
