@@ -85,7 +85,8 @@ app.get('/devices', checkCookie, (req, res) => {
 });
 
 app.get('/refresh', async (req, res) => {
-    try {
+    console.log('refresh triggered');
+    try {   
         const token = req.cookies.refreshToken;
         if (!token) {
             console.error('Refresh token not provided');
