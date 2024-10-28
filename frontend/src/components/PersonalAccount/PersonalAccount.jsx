@@ -49,7 +49,6 @@ export default function PersonalAccount() {
     }, []);
 
     const updateInfo = (updatedBoiler) => {
-        //console.log('updateinfo triggered');
         const updatedDevices = devicesArray.map(device => {
             if (device.id === deviceObject.id) {
                 const updatedBoilers = device.boilers.map(boiler => {
@@ -63,7 +62,6 @@ export default function PersonalAccount() {
             }
             return device;
         });
-        //console.log(updatedDevices);
         setdevicesArray(updatedDevices);
     };
 

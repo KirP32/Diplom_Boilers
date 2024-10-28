@@ -26,8 +26,6 @@ export default function LogIn() {
 
     function comparePassword() {
         const hash = sha256(password);
-        // console.log(hash);
-        // console.log(bcrypt.hashSync(hash));
         const data = {
             login: login,
             password: hash
