@@ -85,7 +85,7 @@ app.get('/devices', checkCookie, (req, res) => {
 });
 
 app.get('/refresh', async (req, res) => {
-    try {   
+    try {
         const token = req.cookies.refreshToken;
         if (!token) {
             console.error('Refresh token not provided');
@@ -119,10 +119,9 @@ app.get('/refresh', async (req, res) => {
 
 
 
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     const { login } = req.body;
     const { password } = req.body;
-    console.log(req.body);
     const str = "SELECT password_hash FROM USERS WHERE username = $1";
     pool.query(str, [login], async (err, result) => {
         if (err) {
@@ -139,7 +138,8 @@ app.post('/login', (req, res) => {
 
         if (isValid) {
             console.log('Validation passed')
-            const { accessToken, refreshToken } = getTokens(login);
+            const access_level = (await pool.query('SELECT access_level FROM users WHERE username = $1', [login])).rows[0].access_level;
+            const { accessToken, refreshToken } = getTokens(login, access_level);
             console.log('getToken passed')
             await updateToken(login, refreshToken);
             res.cookie("refreshToken", refreshToken, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
@@ -155,7 +155,7 @@ app.post('/sign_up', async (req, res) => {
     const hash = bcrypt.hashSync(password);
     try {
         const userResult = await pool.query(
-            'INSERT INTO users (username, phone_number, password_hash) VALUES ($1, $2, $3)',
+            'INSERT INTO users (username, phone_number, password_hash, access_level) VALUES ($1, $2, $3, 0)',
             [login, '123456789', hash]
         );
 
@@ -171,7 +171,7 @@ app.post('/sign_up', async (req, res) => {
 });
 
 // middleware использует accessToken для проверки а не refreshToken
-app.post('/logout', checkCookie, async (req, res) => {
+app.post('/logout', async (req, res) => {
     const { refreshToken } = req.cookies;
     await deleteCookieDB(refreshToken);
     res.clearCookie('refreshToken');
@@ -211,7 +211,6 @@ app.post('/info', (req, res) => {
 
 async function checkCookie(req, res, next) {
     const authcookie = req.headers['accesstoken'];
-
     if (!authcookie) {
         return res.sendStatus(401);
     }
@@ -311,4 +310,36 @@ app.put('/off_esp', checkCookie, async (req, res) => {
             console.log(error);
             res.status(500).send('Ошибка на сервере');
         });
+});
+
+app.post('/add_device', checkCookie, async (req, res) => {
+    const { login, device_uid } = req.body;
+    const pquery = await pool.query('SELECT id FROM devices WHERE device_uid = $1', [device_uid]);
+
+    if (pquery.rowCount === 0) {
+        return res.send({ code: 23500 });
+    }
+    const str = `
+            INSERT INTO user_devices (user_id, device_id) 
+            VALUES (
+                (SELECT id FROM users WHERE username = $1), 
+                (SELECT id FROM devices WHERE device_uid = $2)
+            );`;
+
+    try {
+        const result = await pool.query(str, [login, device_uid]);
+        if (result.rowCount > 0) {
+            console.log("Device added to user", login);
+            res.status(200).send("Устройство добавлено");
+        }
+
+    } catch (error) {
+        if (error.code == '23502') {
+            res.send({ code: 23502 });
+        }
+        else if (error.code == '23505') {
+            res.send({ code: 23505 });
+        }
+    }
+
 });

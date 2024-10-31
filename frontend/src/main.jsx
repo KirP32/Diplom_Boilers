@@ -10,7 +10,9 @@ import Playground from './components/Others/Playground.jsx';
 import NotFoundPage from './components/NotFoundPage/NotFoundPage.jsx';
 import PersonalAccount from './components/PersonalAccount/PersonalAccount.jsx';
 import PrivateRoute from './components/Guards/PrivateRoute.jsx';
-import LoginGuard from './components/Guards/LoginGuard.jsx';
+import WorkerPanel from './components/WorkerPanel/WorkerPanel.jsx';
+import WorkerGuard from './components/Guards/WorkerGuard.jsx';
+import 'material-icons/iconfont/material-icons.css';
 
 const router = createBrowserRouter([
   {
@@ -28,6 +30,14 @@ const router = createBrowserRouter([
       <PrivateRoute>
         <PersonalAccount />
       </PrivateRoute>
+    ),
+  },
+  {
+    path: '/workerpanel',
+    element: (
+      <WorkerGuard>
+        <WorkerPanel />
+      </WorkerGuard>
     ),
   },
 ]);

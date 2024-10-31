@@ -1,9 +1,9 @@
-import './Input.scss'
+import styles from './Input.module.scss'
 
-export default function Input({...props }) {
+export default function Input({ ...props }) {
     return (
-        <input
-        placeholder={props.placeholder}
+        <input className={styles.custom_input}
+            placeholder={props.placeholder}
             {...props}>
         </input>
     )

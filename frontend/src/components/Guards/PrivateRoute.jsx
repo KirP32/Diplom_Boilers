@@ -1,11 +1,18 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
-import $api from "../../http";
-import axios from 'axios';
 
-const PrivateRoute =  ({ children }) => {
-  const token = localStorage.getItem('accessToken');
+const PrivateRoute = ({ children }) => {
+  let token;
+  if (localStorage.getItem('stay_logged') == 'false') {
+    token = sessionStorage.getItem('accessToken');
+  }
+  else {
+    token = localStorage.getItem('accessToken');
+  }
+  // else if (jwtDecode(token).access_level === 1) {
+  //   return <Navigate to={'/workerpanel'} />;
+  // }
   if (token) {
     return children;
   }

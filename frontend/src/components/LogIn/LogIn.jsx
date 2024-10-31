@@ -1,8 +1,8 @@
 import styles from './LogIn.module.scss'
 import Input from '../Input/Input';
 import Button from '../Button/Button';
-import { Link, Navigate } from "react-router-dom"
-import React, { Fragment, useState, useEffect, useRef } from 'react';
+import { Link } from "react-router-dom"
+import React, { useState, useEffect } from 'react';
 import { sha256 } from 'js-sha256';
 import $api from '../../http';
 import { useNavigate } from 'react-router-dom';
@@ -17,10 +17,17 @@ export default function LogIn() {
     const [password, setPassword] = useState('');
     const [regFlag, setRegFlag] = useState(false);
 
+    const [decoded, setDecoded] = useState({});
+
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
         if (token) {
             setToken_access(token);
+            try {
+                setDecoded(jwtDecode(token));
+            } catch (error) {
+                console.error('Invalid token:', error);
+            }
         }
     }, []);
 
@@ -30,26 +37,25 @@ export default function LogIn() {
             login: login,
             password: hash
         };
-        let beforeUnloadHandler = (event) => {
-            localStorage.removeItem('accessToken');
-            let pastDate = new Date(0);
-            document.cookie = `refreshToken=; expires=${pastDate.toUTCString()}; path=/`;
-            $api.post('/logout');
-        };
-
 
         if (checked == false) {
-            window.addEventListener('beforeunload', beforeUnloadHandler);
+            localStorage.setItem("stay_logged", "false");
         } else {
-            window.removeEventListener('beforeunload', beforeUnloadHandler);
+            localStorage.setItem("stay_logged", "true");
         }
         $api
             .post('/login', data)
             .then((response) => {
                 const accessToken = response.data.accessToken;
-                localStorage.setItem('accessToken', accessToken);
+                if (checked) {
+                    localStorage.setItem('accessToken', accessToken);
+                }
+                else {
+                    sessionStorage.setItem('accessToken', accessToken);
+                }
                 setToken_access(accessToken);
                 navigate('/personalaccount');
+
             })
             .catch((error) => {
                 if (error.response && error.response.status === 401) {
@@ -81,7 +87,7 @@ export default function LogIn() {
                         </div>
                         <div className={styles.sign_in__login}>
                             <Button className={styles.sign_in_login_btn} onClick={comparePassword}>Войти</Button>
-                            <Link onClick={() => setRegFlag(true)} >Регистрация</Link>
+                            {/* <Link onClick={() => setRegFlag(true)} >Регистрация</Link> */}
                             <Link to="/PersonalAccount">Забыли пароль?</Link>
                         </div>
                     </>
@@ -93,7 +99,7 @@ export default function LogIn() {
                     }
                     {token_access &&
                         <div className={styles.logged__wrapper}>
-                            <h4>Добро пожаловать, {jwtDecode(token_access).login} </h4>
+                            <h4>Добро пожаловать, {decoded.login} </h4>
                             <Link to="/PersonalAccount">Личный кабинет</Link>
                         </div>
                     }

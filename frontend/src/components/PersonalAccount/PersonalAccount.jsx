@@ -6,9 +6,12 @@ import PopDialog from "../PopDialog/PopDialog";
 import $api from "../../http";
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
+import { Dialog } from "@mui/material";
+import AddEspDialog from "../AddEspDialog/AddEspDialog";
 
 export default function PersonalAccount() {
     const [open, setOpen] = useState(false);
+    const [addEspDialog, setAddEspDialog] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [devicesArray, setdevicesArray] = useState([]);
     const [deviceFindName, setdeviceFindName] = useState('');
@@ -17,7 +20,13 @@ export default function PersonalAccount() {
     const [indicator, setIndicator] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem('accessToken');
+        let token;
+        if (sessionStorage.getItem("accessToken")) {
+            token = sessionStorage.getItem('accessToken');
+        }
+        else {
+            token = localStorage.getItem('accessToken');
+        }
         if (token) {
             setUser_name(jwtDecode(token).login);
         }
@@ -33,7 +42,7 @@ export default function PersonalAccount() {
     const getAllDevices = useCallback(async () => {
         try {
             const response = await $api.get('/test_esp');
-            
+
             if (response.status === 200) {
                 const devices = [formatResponseData(response.data)];
                 setdevicesArray(devices);
@@ -44,14 +53,15 @@ export default function PersonalAccount() {
                 console.log('Unauthorized');
             }
         } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Unauthorized');
+            if (error.response && error.response.status === 401 && localStorage.getItem("stay_logged") === "false") {
+                alert("Ваш сеанс истёк, пожалуйста, войдите снова");
+                logout();
             } else {
-                //console.error(error);
+                // console.error(error);
             }
         }
-    }, []);
-    
+    }, [navigate]);
+
 
     const updateInfo = (updatedBoiler) => {
         const updatedDevices = devicesArray.map(device => {
@@ -75,6 +85,7 @@ export default function PersonalAccount() {
             .post('/logout')
             .then((response) => {
                 localStorage.removeItem('accessToken');
+                sessionStorage.removeItem('accessToken');
                 navigate('/');
             })
             .catch((error) => {
@@ -87,11 +98,10 @@ export default function PersonalAccount() {
 
         const intervalId = setInterval(() => {
             getAllDevices();
-        }, 10000);
+        }, 5000);
 
         return () => clearInterval(intervalId);
     }, [getAllDevices]);
-
 
     function sendEsp() {
         $api
@@ -117,7 +127,7 @@ export default function PersonalAccount() {
             }
         }
         return {
-            id: 1,
+            id: Math.floor(Math.random() * 100) + 1, // ДОЛЖНО БРАТЬСЯ ИЗ БД, СЕЙЧАС ЗАГЛУШКА
             name: data.s_number,
             status: data.wsk_pump == '*ON' ? 'online' : 'offline',
             boilers: boilers
@@ -141,7 +151,8 @@ export default function PersonalAccount() {
         <div className={styles.lk__wrapper}>
             <div className={styles.lk__wrapper__sidebar}>
                 <div className={styles.lk__wrapper__sidebar__header}>
-                    <Button> <h4>Добавить устройство</h4></Button>
+                    <Button onClick={() => { setAddEspDialog(true) }}> <h4>Добавить устройство</h4></Button>
+                    <AddEspDialog open={addEspDialog} setDialog={(event) => { setAddEspDialog(event) }} ></AddEspDialog>
                     <Input placeholder="Поиск устройств" value={deviceFindName} onChange={(event) => setdeviceFindName(event.target.value)} />
                     <hr />
                 </div>
@@ -168,18 +179,18 @@ export default function PersonalAccount() {
             {(devicesArray.length > 0) && <div className={styles.lk__wrapper__main__content}>
                 <div className={styles.lk__wrapper__main__indicators}>
                     <div className={styles.lk__wrapper__main__indicators__wrapper}>
-                        <Button><h4>Датчики</h4> <span className="material-symbols-outlined">
+                        <Button><h4>Датчики</h4> <span className="material-icons-outlined">
                             device_thermostat
                         </span></Button>
-                        <button><h4>График</h4> <span className="material-symbols-outlined">
+                        <button><h4>График</h4> <span className="material-icons-outlined">
                             query_stats
                         </span></button>
-                        <button><h4>Ошибки</h4> <span className="material-symbols-outlined">
+                        <button><h4>Ошибки</h4> <span className="material-icons-outlined">
                             warning
                         </span></button>
                     </div>
                     <div className={styles.lk__wrapper__main__indicators__profile}>
-                        <span onClick={logout} className={`material-symbols-outlined ${styles.no_select}`}>
+                        <span onClick={logout} className={`material-icons-outlined ${styles.no_select}`}>
                             logout
                         </span>
                         <Button className={styles.lk__wrapper__main__indicators__btn}>{user_name}</Button>
@@ -189,11 +200,11 @@ export default function PersonalAccount() {
                     <div className={styles.section__wrapper}>
                         <section className={styles.lk__wrapper__main__device_info__header}><h4>{deviceObject.name} |</h4>  <div className={`${styles[`circle__` + `${deviceObject.status}`]} ${styles.circle} ${styles.no_select}`} /></section>
                         <section className={styles.lk__wrapper__main__device_info__connection}>
-                            <span className={`material-symbols-outlined ${styles.no_select}`}>
+                            <span title="Связь wifi стабильна" className={`material-icons-outlined ${styles.no_select}`}>
                                 wifi
                             </span>
-                            <span className={`material-symbols-outlined ${styles.no_select}`}>
-                                signal_cellular_3_bar
+                            <span title="Связь GSM стабильна" className={`material-icons-outlined ${styles.no_select}`}>
+                                signal_cellular_alt
                             </span>
                         </section>
                     </div>
@@ -215,7 +226,7 @@ export default function PersonalAccount() {
                                         </div>
                                         <div className={styles.lk__wrapper__main__object__container__body}>
                                             <span className={styles.lk__wrapper__main__object__container__body__info__span}>
-                                                <span className="material-symbols-outlined">device_thermostat</span>
+                                                <span className="material-icons-outlined">device_thermostat</span>
                                                 {
                                                     String(item.t).includes('.')
                                                         ? String(item.t).split('.')[1].length >= 2

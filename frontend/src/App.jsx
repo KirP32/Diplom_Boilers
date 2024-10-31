@@ -3,6 +3,7 @@ import './App.scss'
 import React, { Fragment, useState, useEffect } from 'react';
 import Footer from './components/Footer/Footer';
 import LogIn from './components/LogIn/LogIn';
+import 'material-icons/iconfont/material-icons.css';
 
 function App() {
   const [boiler, setBoiler] = useState([]);

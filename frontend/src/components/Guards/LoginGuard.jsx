@@ -4,8 +4,15 @@ import { jwtDecode } from "jwt-decode";
 import $api from "../../http";
 import axios from 'axios';
 
-const LoginGuard =  ({ children }) => {
-  const token = localStorage.getItem('accessToken');
+const LoginGuard = ({ children }) => {
+  let token;
+  if (localStorage.getItem('stay_logged') == 'false') {
+    token = sessionStorage.getItem('accessToken');
+  }
+  else {
+    token = localStorage.getItem('accessToken');
+  }
+
   if (token) {
     return <Navigate to={'/personalaccount'} />;
   }

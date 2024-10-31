@@ -1,0 +1,14 @@
+.worker_wrapper {
+    display: flex;
+    height: 100%;
+    flex-direction: row;
+    &__sidebar {
+        flex: 0 1 310px;
+        padding: 15px;
+        border-right: 1px solid hsl(0, 0%, 55%);
+        padding: 15px;
+    }
+    &__main {
+        flex: 1;
+    }
+}

@@ -1,13 +1,13 @@
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
 
-const accessTokenAge = '10s';
+const accessTokenAge = '20m';
 const refreshTokenAge = '31d';
 
-const getTokens = (login) => {
+const getTokens = (login, access_level) => {
     return {
-        accessToken: jwt.sign({ login }, process.env.JWT_SECRET_KEY, { expiresIn: `${accessTokenAge}` }),
-        refreshToken: jwt.sign({ login }, process.env.JWT_REFRESH_KEY, { expiresIn: `${refreshTokenAge}` }),
+        accessToken: jwt.sign({ login, access_level }, process.env.JWT_SECRET_KEY, { expiresIn: `${accessTokenAge}` }),
+        refreshToken: jwt.sign({ login, access_level }, process.env.JWT_REFRESH_KEY, { expiresIn: `${refreshTokenAge}` }),
     };
 };
 
