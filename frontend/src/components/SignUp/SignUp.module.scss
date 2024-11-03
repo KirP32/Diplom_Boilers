@@ -1,14 +1,36 @@
 .sign_up {
+    &__wrapper {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        &__content {
+            display: flex;
+            flex-direction: column;
+            align-self: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 3em 3em 0 3em;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            & h4 {
+                font-size: 24px;
+                margin-bottom: 1.5em;
+            }
+        }
+    }
     &__inputs {
         gap: 15px;
         display: flex;
         flex-direction: column;
         & input {
-            font-size: 15px;
+            font-size: 20px;
         }
     }
     &__register {
-        padding: 15px;
+        padding: 25px 15px 15px 15px;
         display: flex;
         flex-direction: column;
         gap: 15px;

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = `http://localhost:8080`
+export const API_URL = `http://185.46.10.111/api`
 
 const logged = localStorage.getItem("stay_logged");
 const $api = axios.create({
@@ -31,7 +31,7 @@ $api.interceptors.response.use((config) => {
             localStorage.setItem('accessToken', response.data.accessToken);
             return $api.request(originalRequest);
         } catch (e) {
-            console.log('НЕ АВТОРИЗОВАН')
+            // console.log('НЕ АВТОРИЗОВАН')
         }
     }
     throw error;

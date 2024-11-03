@@ -1,16 +1,40 @@
-import styles from './WorkerPanel.module.scss'
-import Button from '../Button/Button'
+import styles from './WorkerPanel.module.scss';
+import Button from '../Button/Button';
+import { useState } from 'react';
+import SignUp from '../SignUp/SignUp';
+import AddDevice from './AddDevice/AddDevice';
 
-export default function WorkerPanel() {
+function WorkerPanel() {
+    const [activeComponent, setActiveComponent] = useState('addUser');
+
+    const renderContent = () => {
+        switch (activeComponent) {
+            case 'addUser':
+                return <SignUp></SignUp>;
+            case 'addDevice':
+                return <AddDevice></AddDevice>;
+            case 'edit':
+                return <>едит</>;
+            case 'history':
+                return <>хистория</>;
+            default:
+                return null;
+        }
+    };
 
     return (
         <div className={styles.worker_wrapper}>
             <div className={styles.worker_wrapper__sidebar}>
-                <Button>Регистрация пользователя</Button>
-                <Button>Добавить устройство</Button>
-                <Button>Редактирование</Button>
+                <Button className={styles.worker_wrapper__sidebar__button} onClick={() => setActiveComponent('addUser')}> <h4>Добавить пользователя</h4></Button>
+                <Button className={styles.worker_wrapper__sidebar__button} onClick={() => setActiveComponent('addDevice')}><h4>Меню устройств</h4></Button>
+                <Button className={styles.worker_wrapper__sidebar__button} onClick={() => setActiveComponent('edit')}><h4>Редактирование</h4></Button>
+                <Button className={styles.worker_wrapper__sidebar__button} onClick={() => setActiveComponent('history')}><h4>История</h4></Button>
             </div>
-            <div className={styles.worker_wrapper__main}></div>
+            <div className={styles.worker_wrapper__main}>
+                {renderContent()}
+            </div>
         </div>
-    )
+    );
 }
+
+export default WorkerPanel;

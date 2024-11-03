@@ -5,13 +5,7 @@ import $api from "../../http";
 import axios from 'axios';
 
 const LoginGuard = ({ children }) => {
-  let token;
-  if (localStorage.getItem('stay_logged') == 'false') {
-    token = sessionStorage.getItem('accessToken');
-  }
-  else {
-    token = localStorage.getItem('accessToken');
-  }
+  const token = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
 
   if (token) {
     return <Navigate to={'/personalaccount'} />;

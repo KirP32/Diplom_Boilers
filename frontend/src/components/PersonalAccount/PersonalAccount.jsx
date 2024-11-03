@@ -20,13 +20,7 @@ export default function PersonalAccount() {
     const [indicator, setIndicator] = useState(true);
 
     useEffect(() => {
-        let token;
-        if (sessionStorage.getItem("accessToken")) {
-            token = sessionStorage.getItem('accessToken');
-        }
-        else {
-            token = localStorage.getItem('accessToken');
-        }
+        const token = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
         if (token) {
             setUser_name(jwtDecode(token).login);
         }
@@ -42,7 +36,6 @@ export default function PersonalAccount() {
     const getAllDevices = useCallback(async () => {
         try {
             const response = await $api.get('/test_esp');
-
             if (response.status === 200) {
                 const devices = [formatResponseData(response.data)];
                 setdevicesArray(devices);

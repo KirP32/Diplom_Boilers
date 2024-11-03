@@ -33,7 +33,7 @@ app.use(cors({
 
 const pool = new Pool({
     user: 'postgres',
-    host: 'localhost',
+    host: '185.46.10.111',
     database: 'ADS_Line',
     password: '123',
     port: 5432,
@@ -105,8 +105,8 @@ app.get('/refresh', async (req, res) => {
         if (!flag_token || !(await checkTokenExists(token))) {
             return res.status(401).send('UnauthorizedError');
         }
-
-        const { accessToken, refreshToken } = getTokens(flag_token.login);
+        const access_level = (await pool.query('SELECT access_level FROM users WHERE username = $1', [flag_token.login])).rows[0].access_level;
+        const { accessToken, refreshToken } = getTokens(flag_token.login, access_level);
         await updateToken(flag_token.login, refreshToken); // в БД
 
         res.cookie('refreshToken', refreshToken, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
@@ -342,4 +342,24 @@ app.post('/add_device', checkCookie, async (req, res) => {
         }
     }
 
+});
+
+app.post('/getUser_info', async (req, res) => {
+    const { login } = req.body;
+    const check_user = await pool.query('SELECT id FROM users WHERE username = $1', [login]);
+    if (check_user.rowCount === 1) {
+        const { id } = check_user.rows[0];
+        const str = 'SELECT device_id FROM user_devices WHERE user_id = $1';
+        pool.query(str, [id], (err, result) => {
+            if (err) {
+                console.log(`Ошибка в getUser_info с юзером ${login}`);
+            }
+            else {
+                res.send({ devices: result.rows });
+            }
+        });
+    }
+    else {
+        res.send({ error: 'User not found' });
+    }
 });

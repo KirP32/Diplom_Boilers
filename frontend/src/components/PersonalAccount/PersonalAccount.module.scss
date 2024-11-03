@@ -109,7 +109,7 @@
             }
             &__profile {
                 display: flex;
-                column-gap: 10px;
+                column-gap: 15px;
                 span {
                     align-self: center;
                     cursor: pointer;
@@ -159,7 +159,7 @@
                 justify-content: space-evenly;
             }
             &__container {
-                background: lightgrey;
+                background: hsl(0, 0%, 93%);
                 padding: 15px;
                 min-width: 250px;
                 border-radius: 8px;

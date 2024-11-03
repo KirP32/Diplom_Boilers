@@ -12,6 +12,7 @@ export default function SignUp({ updateRegFlag, ...props }) {
     const [password, setPassword] = useState('');
     const [password_check, setPassword_check] = useState('');
     const [email, setEmail] = useState('');
+    const [contract, setContract] = useState('');
     const [errors, setErrors] = useState({ login: false, password: false, email: false });
     const navigate = useNavigate();
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -54,21 +55,24 @@ export default function SignUp({ updateRegFlag, ...props }) {
     }
 
     return (
-        <>
-            <h4>Регистрация</h4>
-            <div className={styles.sign_up__inputs}>
-                <Input type="text" placeholder="Ваш логин" value={login} onChange={(event) => setLogin(event.target.value)} />
-                {errors.login && <h5>Неправильный логин</h5>}
-                <Input type='password' placeholder="Пароль" value={password} onChange={(event) => setPassword(event.target.value)} />
-                <Input type='password' placeholder="Повторите пароль" value={password_check} onChange={(event) => setPassword_check(event.target.value)} />
-                {errors.password && <h5>Пароли не совпадают</h5>}
-                <Input type='email' placeholder="Почта" value={email} onChange={(event) => setEmail(event.target.value)} />
-                {errors.email && <h5>Неправильный формат почты</h5>}
+        <div className={styles.sign_up__wrapper}>
+            <div className={styles.sign_up__wrapper__content}>
+                <h4>Регистрация</h4>
+                <div className={styles.sign_up__inputs}>
+                    <Input type="text" placeholder="Логин пользователя" value={login} onChange={(event) => setLogin(event.target.value)} />
+                    {errors.login && <h5>Неправильный логин</h5>}
+                    <Input type='password' placeholder="Пароль" value={password} onChange={(event) => setPassword(event.target.value)} />
+                    <Input type='password' placeholder="Повторите пароль" value={password_check} onChange={(event) => setPassword_check(event.target.value)} />
+                    {errors.password && <h5>Пароли не совпадают</h5>}
+                    <Input type='email' placeholder="Почта" value={email} onChange={(event) => setEmail(event.target.value)} />
+                    {errors.email && <h5>Неправильный формат почты</h5>}
+                    <Input type='email' placeholder="Номер договора" value={contract} onChange={(event) => setContract(event.target.value)} />
+                </div>
+                <div className={styles.sign_up__register}>
+                    <Button onClick={registration} className={styles.sign_up__register__button}>Регистрация</Button>
+                    {/* <Link className={styles.sign_up__back} onClick={() => updateRegFlag(false)}>Назад</Link> */}
+                </div>
             </div>
-            <div className={styles.sign_up__register}>
-                <Button onClick={registration} className={styles.sign_up__register__button}>Регистрация</Button>
-                <Link className={styles.sign_up__back} onClick={() => updateRegFlag(false)}>Назад</Link>
-            </div>
-        </>
+        </div>
     )
 }
