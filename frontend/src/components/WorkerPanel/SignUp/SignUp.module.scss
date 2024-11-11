@@ -43,3 +43,28 @@
         text-decoration: none;
     }
 }
+
+.registration__failed {
+    position: absolute;
+    color: hsl(0, 0%, 0%);
+    animation: reg_failed 2s forwards;
+    background-color: hsl(0, 100%, 65%);
+    padding: 15px;
+    border-radius: 5px;
+}
+
+@keyframes reg_failed {
+    from {
+        margin-top: 0%;
+    }
+    to {
+        margin-top: 5%;
+    }
+    90% {
+        display: none;
+    }
+}
+
+.error {
+    color: hsl(0, 100%, 50%);
+}

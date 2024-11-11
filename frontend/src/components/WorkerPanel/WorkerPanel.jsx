@@ -1,8 +1,9 @@
 import styles from './WorkerPanel.module.scss';
 import Button from '../Button/Button';
 import { useState } from 'react';
-import SignUp from '../SignUp/SignUp';
+import SignUp from './SignUp/SignUp';
 import AddDevice from './AddDevice/AddDevice';
+import WorkerHistory from './WorkerHistory/WorkerHistory';
 
 function WorkerPanel() {
     const [activeComponent, setActiveComponent] = useState('addUser');
@@ -13,10 +14,10 @@ function WorkerPanel() {
                 return <SignUp></SignUp>;
             case 'addDevice':
                 return <AddDevice></AddDevice>;
-            case 'edit':
-                return <>едит</>;
+            case 'edit': // TODO: удаление и добавление реализовано в addDevice
+                return <>Редактирование</>; // Создание не начато
             case 'history':
-                return <>хистория</>;
+                return <WorkerHistory></WorkerHistory>;
             default:
                 return null;
         }
@@ -27,7 +28,7 @@ function WorkerPanel() {
             <div className={styles.worker_wrapper__sidebar}>
                 <Button className={styles.worker_wrapper__sidebar__button} onClick={() => setActiveComponent('addUser')}> <h4>Добавить пользователя</h4></Button>
                 <Button className={styles.worker_wrapper__sidebar__button} onClick={() => setActiveComponent('addDevice')}><h4>Меню устройств</h4></Button>
-                <Button className={styles.worker_wrapper__sidebar__button} onClick={() => setActiveComponent('edit')}><h4>Редактирование</h4></Button>
+                {/* <Button className={styles.worker_wrapper__sidebar__button} onClick={() => setActiveComponent('edit')}><h4>Редактирование</h4></Button> */}
                 <Button className={styles.worker_wrapper__sidebar__button} onClick={() => setActiveComponent('history')}><h4>История</h4></Button>
             </div>
             <div className={styles.worker_wrapper__main}>

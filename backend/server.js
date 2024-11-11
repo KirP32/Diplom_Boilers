@@ -1,5 +1,4 @@
 const express = require('express');
-const fs = require('fs');
 const { getTokens, refreshTokenAge } = require('./getTokens');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -26,14 +25,14 @@ app.use(express.json());
 
 app.use(cors({
     origin: ['http://localhost:5173', 'http://185.46.10.111', 'http://frontend:3000'],
-    methods: ['GET', 'POST', 'PUT'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
 }));
 
 
 const pool = new Pool({
     user: 'postgres',
-    host: '185.46.10.111',
+    host: 'localhost',
     database: 'ADS_Line',
     password: '123',
     port: 5432,
@@ -153,19 +152,28 @@ app.post('/login', async (req, res) => {
 app.post('/sign_up', async (req, res) => {
     const { login, password, email } = req.body;
     const hash = bcrypt.hashSync(password);
+    const authcookie = req.headers['accesstoken'];
+
     try {
         const userResult = await pool.query(
             'INSERT INTO users (username, phone_number, password_hash, access_level) VALUES ($1, $2, $3, 0)',
             [login, '123456789', hash]
         );
-
+        //console.log(decodeJWT(authcookie).login);
         if (userResult.rowCount > 0) {
+            const data = {
+                user_id: await getID(decodeJWT(authcookie).login),
+                action: 'Добавлен пользователь',
+                time: new Date(),
+                subject_id: await getID(login),
+            };
+            await log_history(data);
             res.send('OK');
         } else {
-            res.status(500).json({ error: 'Не удалось создать пользователя' });
+            res.sendStatus(500);
         }
     } catch (error) {
-        res.status(500).send('Ошибка при создании пользователя');
+        res.sendStatus(500);
         console.error('Ошибка запроса:', error);
     }
 });
@@ -274,7 +282,15 @@ async function deleteCookieDB(refreshToken) {
     }
 }
 
-//let counter = 1;
+async function log_history(data) {
+    try {
+        //console.log(data);
+        await pool.query('INSERT INTO actions_control (user_id, subject_id, action, time) VALUES ($1, $2, $3, $4)', [data.user_id, data.subject_id, data.action, data.time]);
+    } catch (error) {
+        console.log('Проблема логирований действий (log_history)');
+        console.log(error);
+    }
+}
 
 app.get('/test_esp', checkCookie, async (req, res) => {
 
@@ -314,23 +330,39 @@ app.put('/off_esp', checkCookie, async (req, res) => {
 
 app.post('/add_device', checkCookie, async (req, res) => {
     const { login, device_uid } = req.body;
-    const pquery = await pool.query('SELECT id FROM devices WHERE device_uid = $1', [device_uid]);
 
-    if (pquery.rowCount === 0) {
-        return res.send({ code: 23500 });
-    }
-    const str = `
+    try {
+        const pquery = await pool.query('SELECT id FROM devices WHERE device_uid = $1', [device_uid]);
+        if (pquery.rowCount === 0) {
+            const error = new Error();
+            error.code = 23500;
+            throw error;
+        }
+        const id = await getID(login);
+        if (id.code) {
+            const error = new Error();
+            error.code = id.code;
+            throw error;
+
+        }
+        const str = `
             INSERT INTO user_devices (user_id, device_id) 
             VALUES (
-                (SELECT id FROM users WHERE username = $1), 
+                $1, 
                 (SELECT id FROM devices WHERE device_uid = $2)
             );`;
 
-    try {
-        const result = await pool.query(str, [login, device_uid]);
+        const result = await pool.query(str, [id, device_uid]);
         if (result.rowCount > 0) {
+            const data = {
+                user_id: await getID(decodeJWT(req.headers['accesstoken']).login),
+                action: `Добавлено устройство ${device_uid}`,
+                time: new Date(),
+                subject_id: await getID(login),
+            };
+            await log_history(data);
             console.log("Device added to user", login);
-            res.status(200).send("Устройство добавлено");
+            return res.status(200).send("Устройство добавлено");
         }
 
     } catch (error) {
@@ -340,16 +372,22 @@ app.post('/add_device', checkCookie, async (req, res) => {
         else if (error.code == '23505') {
             res.send({ code: 23505 });
         }
+        else if (error.code == '23500') {
+            res.send({ code: 23500 });
+        }
     }
-
 });
+
 
 app.post('/getUser_info', async (req, res) => {
     const { login } = req.body;
     const check_user = await pool.query('SELECT id FROM users WHERE username = $1', [login]);
     if (check_user.rowCount === 1) {
         const { id } = check_user.rows[0];
-        const str = 'SELECT device_id FROM user_devices WHERE user_id = $1';
+        const str = `SELECT device_uid
+                    FROM user_devices
+                    JOIN devices ON device_id = id
+                    WHERE user_id = $1;`;
         pool.query(str, [id], (err, result) => {
             if (err) {
                 console.log(`Ошибка в getUser_info с юзером ${login}`);
@@ -361,5 +399,80 @@ app.post('/getUser_info', async (req, res) => {
     }
     else {
         res.send({ error: 'User not found' });
+    }
+});
+
+app.delete('/delete_device/:device_uid', checkCookie, async (req, res) => {
+    const { device_uid } = req.params;
+    const login = req.headers['login'];
+    try {
+        const deviceResult = await pool.query('SELECT id FROM devices WHERE device_uid = $1', [device_uid]);
+
+        if (deviceResult.rowCount === 0) {
+            return res.status(404).send("Устройство с таким UID не найдено");
+        }
+
+        const deviceId = deviceResult.rows[0].id;
+
+        const deleteResult = await pool.query('DELETE FROM user_devices WHERE device_id = $1', [deviceId]);
+
+        if (deleteResult.rowCount > 0) {
+            res.send("OK");
+            const data = {
+                user_id: await getID(decodeJWT(req.headers['accesstoken']).login),
+                action: `Удалено устройство ${device_uid}`,
+                time: new Date(),
+                subject_id: await getID(login),
+            };
+            await log_history(data);
+        } else {
+            res.status(404).send("Запись в user_devices не найдена");
+        }
+
+    } catch (err) {
+        console.error("Ошибка при удалении устройства:", err);
+        res.status(500).send("Ошибка сервера");
+    }
+});
+
+async function getID(login) {
+    try {
+        const result = await pool.query('SELECT id FROM users WHERE username = $1', [login]);
+        if (result.rowCount > 0) {
+            return result.rows[0].id;
+        } else {
+            const error = new Error();
+            error.code = 23502;
+            throw error;
+        }
+    } catch (error) {
+        if (error.code == '23502') {
+            return { code: '23502' };
+        }
+    }
+}
+
+function decodeJWT(token) {
+    const [, payloadB64,] = token.split('.');
+    const payload = JSON.parse(atob(payloadB64));
+    return payload;
+}
+
+app.post('/getActions', checkCookie, async (req, res) => {
+    try {
+        const authtoken = req.headers['accesstoken'];
+        const id = await getID(decodeJWT(authtoken).login);
+        const actionArr = await pool.query(`SELECT ac.action, ac.time, u.username 
+                    FROM actions_control ac 
+                    JOIN users u ON ac.subject_id = u.id
+                    WHERE ac.user_id = $1;`, [id]);
+        if (actionArr.rowCount < 1) {
+            res.send([null]);
+        }
+        else {
+            res.send(actionArr.rows);
+        }
+    } catch (error) {
+        console.log(error);
     }
 });

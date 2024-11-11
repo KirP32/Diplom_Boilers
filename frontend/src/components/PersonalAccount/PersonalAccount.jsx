@@ -6,7 +6,6 @@ import PopDialog from "../PopDialog/PopDialog";
 import $api from "../../http";
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
-import { Dialog } from "@mui/material";
 import AddEspDialog from "../AddEspDialog/AddEspDialog";
 
 export default function PersonalAccount() {
@@ -53,7 +52,7 @@ export default function PersonalAccount() {
                 // console.error(error);
             }
         }
-    }, [navigate]);
+    }, [deviceObject]);
 
 
     const updateInfo = (updatedBoiler) => {
@@ -105,8 +104,8 @@ export default function PersonalAccount() {
             .catch((error) => {
                 console.error(error);
             });
-
     }
+
 
     const formatResponseData = (data) => {
         const boilers = [];
@@ -145,7 +144,7 @@ export default function PersonalAccount() {
             <div className={styles.lk__wrapper__sidebar}>
                 <div className={styles.lk__wrapper__sidebar__header}>
                     <Button onClick={() => { setAddEspDialog(true) }}> <h4>Добавить устройство</h4></Button>
-                    <AddEspDialog open={addEspDialog} setDialog={(event) => { setAddEspDialog(event) }} ></AddEspDialog>
+                    {/* <AddEspDialog open={addEspDialog} setDialog={(event) => { setAddEspDialog(event) }} ></AddEspDialog> */}
                     <Input placeholder="Поиск устройств" value={deviceFindName} onChange={(event) => setdeviceFindName(event.target.value)} />
                     <hr />
                 </div>
@@ -236,18 +235,17 @@ export default function PersonalAccount() {
                                 )
                             }
                         </>}
-                        {selectedItem && (
-                            <PopDialog
-                                open={open}
-                                setDialog={(current) => setOpen(current)}
-                                selectedItem={selectedItem}
-                                updatedevices={updateInfo}
-                            ></PopDialog>
-                        )}
                     </div>
-
                 </div>
             </div>}
+            {selectedItem && (
+                <PopDialog
+                    open={open}
+                    setDialog={(current) => setOpen(current)}
+                    selectedItem={selectedItem}
+                    updatedevices={updateInfo}
+                ></PopDialog>
+            )}
             {devicesArray.length == 0 && <>
                 <div className={`${styles.noContent}`}>
                     <h3>Для продолжения работы добавьте устройство</h3>

@@ -7,7 +7,6 @@ import { sha256 } from 'js-sha256';
 import $api from '../../http';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
-import SignUp from '../SignUp/SignUp';
 
 export default function LogIn() {
     const [checked, setChecked] = useState(false);
@@ -92,11 +91,11 @@ export default function LogIn() {
                         </div>
                     </>
                     }
-                    {
+                    {/* {
                         regFlag && <SignUp
                             updateRegFlag={(event) => setRegFlag(event)}
                         ></SignUp>
-                    }
+                    } */}
                     {token_access &&
                         <div className={styles.logged__wrapper}>
                             <h4>Добро пожаловать, {decoded.login} </h4>

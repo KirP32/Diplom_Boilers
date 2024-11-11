@@ -5,7 +5,7 @@ import styles from './AddEspDialog.module.scss'
 import $api from "../../http";
 import { useState } from "react";
 
-export default function AddEspDialog({ open, setDialog, ...props }) {
+export default function AddEspDialog({ open, setDialog, findUser }) {
 
     const [device_uid, setDevice_uid] = useState('');
     const [user_login, setUser_login] = useState('');
@@ -19,11 +19,6 @@ export default function AddEspDialog({ open, setDialog, ...props }) {
             login: user_login,
             device_uid: device_uid
         }
-        try {
-
-        } catch (error) {
-
-        }
         $api.post('/add_device', data)
             .then((response) => {
                 if (response.data.code == 23502) {
@@ -36,9 +31,10 @@ export default function AddEspDialog({ open, setDialog, ...props }) {
                     alert('Устройство не найдено');
                 }
                 else {
-                    setDialog(false);
+                    findUser();
                     setDevice_uid('');
                     setUser_login('');
+                    handleclose();
                 }
 
             })

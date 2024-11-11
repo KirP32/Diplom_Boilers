@@ -1,0 +1,61 @@
+.worker_history {
+    &__wrapper {
+        display: flex;
+        flex-direction: column;
+        align-self: center;
+        padding-top: 4em;
+        height: 100%;
+        width: 100%;
+        padding: 20px;
+    }
+    &__onError {
+        color: red;
+        text-align: center;
+    }
+    &__header {
+        display: flex;
+        justify-content: space-between;
+        font-weight: bold;
+        padding: 10px;
+        background-color: #e0e0e0;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+    &__list {
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 10px;
+        &__item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border: 1px solid hsl(0, 0%, 87%);
+            border-radius: 5px;
+            background-color: hsl(0, 0%, 98%);
+            &:hover {
+                background-color: hsl(0, 0%, 95%);
+            }
+            &__username,
+            &__action,
+            &__time {
+                flex: 1;
+                text-align: left;
+                padding: 0 10px;
+            }
+            &__time {
+                text-align: right;
+                font-style: italic;
+            }
+            &__username {
+                font-weight: bold;
+            }
+        }
+    }
+}
+
+.even {
+    background-color: hsl(0, 0%, 85%);
+}
+.odd {
+    background-color: hsl(0, 0%, 98%);
+}
