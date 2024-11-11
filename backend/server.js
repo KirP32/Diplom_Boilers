@@ -32,7 +32,7 @@ app.use(cors({
 
 const pool = new Pool({
     user: 'postgres',
-    host: 'localhost',
+    host: '185.46.10.111',
     database: 'ADS_Line',
     password: '123',
     port: 5432,
