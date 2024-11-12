@@ -32,7 +32,7 @@ app.use(cors({
 
 const pool = new Pool({
     user: 'postgres',
-    host: '185.46.10.111',
+    host: '185.46.10.111', //185.46.10.111
     database: 'ADS_Line',
     password: '123',
     port: 5432,
@@ -380,6 +380,7 @@ app.post('/add_device', checkCookie, async (req, res) => {
 
 
 app.post('/getUser_info', async (req, res) => {
+    console.log('getUser_info');
     const { login } = req.body;
     const check_user = await pool.query('SELECT id FROM users WHERE username = $1', [login]);
     if (check_user.rowCount === 1) {

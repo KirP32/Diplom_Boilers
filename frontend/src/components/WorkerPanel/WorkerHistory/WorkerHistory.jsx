@@ -8,12 +8,13 @@ export default function WorkerHistory() {
     useEffect(() => { getActions() }, []);
 
     async function getActions() {
-        try {
-            const result = await $api.post('/getActions');
-            setActionsArr(result.data);
-        } catch (error) {
-            console.error(error);
-        }
+        await $api.post('/getActions')
+            .then(result => {
+                setActionsArr(result.data);
+            })
+            .catch(error => {
+                //console.log(error);
+            });
     }
 
     return (
@@ -30,9 +31,9 @@ export default function WorkerHistory() {
                     <div className={styles.worker_history__list}>
                         {actionsArr.length > 0 && actionsArr.map((item, index) => (
                             <div key={index} className={`${styles.worker_history__list__item} ${index % 2 === 0 ? styles.even : styles.odd}`}>
-                                <span className={styles.worker_history__list__item__username}>{item.username}</span>
-                                <span className={styles.worker_history__list__item__action}>{item.action}</span>
-                                <span className={styles.worker_history__list__item__time}>{new Date(item.time).toLocaleString()}</span>
+                                <span className={styles.worker_history__list__item__username}>{item?.username}</span>
+                                <span className={styles.worker_history__list__item__action}>{item?.action}</span>
+                                <span className={styles.worker_history__list__item__time}>{new Date(item?.time).toLocaleString()}</span>
                             </div>
                         ))}
                     </div>

@@ -6,7 +6,6 @@ import PopDialog from "../PopDialog/PopDialog";
 import $api from "../../http";
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
-import AddEspDialog from "../AddEspDialog/AddEspDialog";
 
 export default function PersonalAccount() {
     const [open, setOpen] = useState(false);
@@ -152,7 +151,7 @@ export default function PersonalAccount() {
                     {devicesArray &&
                         <>
                             {devicesArray
-                                .filter((item) => item.name.toLowerCase().includes(deviceFindName.toLowerCase()))
+                                .filter((item) => item.name && deviceFindName && item.name.toLowerCase().includes(deviceFindName.toLowerCase()))
                                 .map((item) => (
                                     <div key={item.name} className={styles.devices_container} onClick={() => setDeviceObject(item)}>
                                         <div className={`${styles[`circle__` + `${item.status}`]} ${styles.circle} ${styles.no_select}`} />
