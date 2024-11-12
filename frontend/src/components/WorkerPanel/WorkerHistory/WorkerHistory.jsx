@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import $api from '../../../http'
 import styles from './WorkerHistory.module.scss'
+import { useNavigate } from 'react-router-dom';
+import logout from '../../Logout/logout';
 
 export default function WorkerHistory() {
     const [actionsArr, setActionsArr] = useState([]);
-
+    const navigate = useNavigate();
     useEffect(() => { getActions() }, []);
 
     async function getActions() {
@@ -13,13 +15,16 @@ export default function WorkerHistory() {
                 setActionsArr(result.data);
             })
             .catch(error => {
-                //console.log(error);
+                console.log(error);
+                if (error.status === 401) {
+                    logout(navigate);
+                }
             });
     }
 
     return (
         <div className={styles.worker_history__wrapper}>
-            {actionsArr.length === 0 ? (
+            {actionsArr[0] === null ? (
                 <div className={styles.worker_history__onError}><h4>Событий нет</h4></div>
             ) : (
                 <>

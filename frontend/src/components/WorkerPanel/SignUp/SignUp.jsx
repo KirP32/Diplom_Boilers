@@ -4,6 +4,8 @@ import Input from '../../Input/Input';
 import Button from '../../Button/Button';
 import $api from '../../../http';
 import { sha256 } from 'js-sha256';
+import logout from '../../Logout/logout';
+import { useNavigate } from 'react-router-dom';
 
 export default function SignUp({ updateRegFlag, ...props }) {
     const [login, setLogin] = useState('');
@@ -14,6 +16,7 @@ export default function SignUp({ updateRegFlag, ...props }) {
     const [errors, setErrors] = useState({ login: false, password: false, email: false });
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const [sign_failure, setSign_failure] = useState(false);
+    const navigate = useNavigate();
 
     function registration() {
         if (validate()) {
@@ -29,6 +32,9 @@ export default function SignUp({ updateRegFlag, ...props }) {
                 })
                 .catch((error) => {
                     console.log(error.message);
+                    if (error.status === 401) {
+                        logout(navigate);
+                    }
                     setSign_failure(true);
                     setTimeout(() => {
                         setSign_failure(false);

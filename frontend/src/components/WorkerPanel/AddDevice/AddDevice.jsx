@@ -5,6 +5,8 @@ import $api from "../../../http";
 import styles from './AddDevice.module.scss';
 import DeviceDialog from "./DeviceDialog/DeviceDialog";
 import AddEspDialog from "../../AddEspDialog/AddEspDialog";
+import logout from "../../Logout/logout";
+import { useNavigate } from 'react-router-dom';
 
 export default function AddDevice() {
 
@@ -13,6 +15,7 @@ export default function AddDevice() {
     const [open, setOpen] = useState(false);
     const [device, setDevice] = useState({});
     const [addEspDialog, setAddEspDialog] = useState(false);
+    const navigate = useNavigate();
 
     async function findUser() {
         const body = { login: login };
@@ -30,6 +33,9 @@ export default function AddDevice() {
             })
             .catch((err) => {
                 console.log(err);
+                if (err.status === 401) {
+                    logout(navigate);
+                }
             })
     }
 

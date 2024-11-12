@@ -149,7 +149,7 @@ app.post('/login', async (req, res) => {
     });
 });
 
-app.post('/sign_up', async (req, res) => {
+app.post('/sign_up', checkCookie, async (req, res) => {
     const { login, password, email } = req.body;
     const hash = bcrypt.hashSync(password);
     const authcookie = req.headers['accesstoken'];
@@ -379,7 +379,7 @@ app.post('/add_device', checkCookie, async (req, res) => {
 });
 
 
-app.post('/getUser_info', async (req, res) => {
+app.post('/getUser_info', checkCookie, async (req, res) => {
     console.log('getUser_info');
     const { login } = req.body;
     const check_user = await pool.query('SELECT id FROM users WHERE username = $1', [login]);
