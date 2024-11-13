@@ -44,6 +44,7 @@ createRoot(document.getElementById('root')).render(
     <RouterProvider
       future={{
         v7_startTransition: true,
+        v7_relativeSplatPath: true,
       }}
       router={router} />
   </StrictMode>,
