@@ -2,10 +2,10 @@ import { useCallback, useState, useEffect } from "react";
 import styles from './PersonalAccount.module.scss';
 import Input from '../Input/Input';
 import Button from '../Button/Button';
-import PopDialog from "../PopDialog/PopDialog";
 import $api from "../../http";
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
+import PopDialog from './PopDialog/PopDialog'
 
 export default function PersonalAccount() {
     const [open, setOpen] = useState(false);

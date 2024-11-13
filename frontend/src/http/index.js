@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const API_URL = `http://185.46.10.111/api` //http://185.46.10.111/api
-
+//http://localhost:8080
 const logged = localStorage.getItem("stay_logged");
 const $api = axios.create({
     withCredentials: true,

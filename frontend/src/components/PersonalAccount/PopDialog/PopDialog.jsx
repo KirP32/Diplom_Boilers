@@ -49,7 +49,7 @@ export default function PopDialog({ open, setDialog, selectedItem, updatedevices
                     <h4 className={styles.dialog__status}>Датчики:</h4>
                     <div className={styles.dialog__temperature}>
                         {value}
-                        <span className="material-symbols-outlined">
+                        <span className="material-icons-outlined">
                             device_thermostat
                         </span>
                     </div>
