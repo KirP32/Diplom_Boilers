@@ -32,7 +32,7 @@ export default function SignUp({ updateRegFlag, ...props }) {
                 })
                 .catch((error) => {
                     console.log(error.message);
-                    if (error.status === 401) {
+                    if (error.status === 401 && localStorage.getItem('stay_logged') == false) {
                         logout(navigate);
                     }
                     setSign_failure(true);

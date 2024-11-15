@@ -23,6 +23,8 @@ export default function PersonalAccount() {
     const [options_flag, setOptions_flag] = useState(false);
     const [user_email, setUserEmail] = useState(null);
 
+    let flag_error = false;
+
     useEffect(() => {
         $api.post('/getUser_email')
             .then(result => {
@@ -58,9 +60,10 @@ export default function PersonalAccount() {
                 console.log('Unauthorized');
             }
         } catch (error) {
-            if (error.response && error.response.status === 401 && localStorage.getItem("stay_logged") === "false") {
+            if (error.response && error.response.status === 401 && localStorage.getItem("stay_logged") === "false" && !flag_error) {
                 alert("Ваш сеанс истёк, пожалуйста, войдите снова");
                 logout(navigate);
+                flag_error = true;
             } else {
                 // console.error(error);
             }

@@ -33,7 +33,7 @@ export default function AddDevice() {
             })
             .catch((err) => {
                 console.log(err);
-                if (err.status === 401) {
+                if (err.status === 401 && localStorage.getItem('stay_logged') == false) {
                     logout(navigate);
                 }
             })

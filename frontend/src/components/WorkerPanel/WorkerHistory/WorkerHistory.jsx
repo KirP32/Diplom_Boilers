@@ -16,7 +16,7 @@ export default function WorkerHistory() {
             })
             .catch(error => {
                 console.log(error);
-                if (error.status === 401) {
+                if (error.status === 401 && localStorage.getItem('stay_logged') == false) {
                     logout(navigate);
                 }
             });

@@ -26,12 +26,15 @@ $api.interceptors.response.use((config) => {
     const originalRequest = error.config;
     if (((error.response.status === 401) && error.config && !error.config._isRetry) && logged == "true") {
         originalRequest._isRetry = true;
+        // console.log('Пробую выдать авторизацию');
         try {
             const response = await axios.get(`${API_URL}/refresh`, { withCredentials: true })
             localStorage.setItem('accessToken', response.data.accessToken);
+            // console.log('Выдал авторизацию')
             return $api.request(originalRequest);
         } catch (e) {
-            // console.log('НЕ АВТОРИЗОВАН')
+            console.log('Ошибка авторизации')
+            // console.log(e);
         }
     }
     throw error;
