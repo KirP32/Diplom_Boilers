@@ -6,6 +6,9 @@ import $api from "../../http";
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
 import PopDialog from './PopDialog/PopDialog'
+import logout from '../Logout/logout';
+import formatResponseData from "./Functions/formatResponseData";
+import OptionsDialog from "./OptionsDialog/OptionsDialog";
 
 export default function PersonalAccount() {
     const [open, setOpen] = useState(false);
@@ -16,6 +19,19 @@ export default function PersonalAccount() {
     const [deviceObject, setDeviceObject] = useState();
     const [user_name, setUser_name] = useState('');
     const [indicator, setIndicator] = useState(true);
+    const navigate = useNavigate();
+    const [options_flag, setOptions_flag] = useState(false);
+    const [user_email, setUserEmail] = useState(null);
+
+    useEffect(() => {
+        $api.post('/getUser_email')
+            .then(result => {
+                setUserEmail(result?.data?.email);
+            })
+            .catch(error => {
+                console.log(error);
+            })
+    }, [user_email]);
 
     useEffect(() => {
         const token = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
@@ -23,8 +39,6 @@ export default function PersonalAccount() {
             setUser_name(jwtDecode(token).login);
         }
     }, []);
-
-    const navigate = useNavigate();
 
     const openDialog = (item) => {
         setSelectedItem(item);
@@ -46,12 +60,12 @@ export default function PersonalAccount() {
         } catch (error) {
             if (error.response && error.response.status === 401 && localStorage.getItem("stay_logged") === "false") {
                 alert("Ваш сеанс истёк, пожалуйста, войдите снова");
-                logout();
+                logout(navigate);
             } else {
                 // console.error(error);
             }
         }
-    }, [deviceObject]);
+    }, []);
 
 
     const updateInfo = (updatedBoiler) => {
@@ -70,19 +84,6 @@ export default function PersonalAccount() {
         });
         setdevicesArray(updatedDevices);
     };
-
-    function logout() {
-        $api
-            .post('/logout')
-            .then((response) => {
-                localStorage.removeItem('accessToken');
-                sessionStorage.removeItem('accessToken');
-                navigate('/');
-            })
-            .catch((error) => {
-                console.log(error);
-            });
-    }
 
     useEffect(() => {
         getAllDevices();
@@ -104,26 +105,6 @@ export default function PersonalAccount() {
                 console.error(error);
             });
     }
-
-
-    const formatResponseData = (data) => {
-        const boilers = [];
-        for (let key in data) {
-            if (key.startsWith('module_')) {
-                boilers.push({
-                    name: key,
-                    t: data[key],
-                    online: 'N/A'
-                });
-            }
-        }
-        return {
-            id: Math.floor(Math.random() * 100) + 1, // ДОЛЖНО БРАТЬСЯ ИЗ БД, СЕЙЧАС ЗАГЛУШКА
-            name: data.s_number,
-            status: data.wsk_pump == '*ON' ? 'online' : 'offline',
-            boilers: boilers
-        };
-    };
 
     async function turnOffEsp() {
         $api.put('/off_esp', {
@@ -181,10 +162,10 @@ export default function PersonalAccount() {
                         </span></button>
                     </div>
                     <div className={styles.lk__wrapper__main__indicators__profile}>
-                        <span onClick={logout} className={`material-icons-outlined ${styles.no_select}`}>
+                        <span onClick={() => logout(navigate)} className={`material-icons-outlined ${styles.no_select}`}>
                             logout
                         </span>
-                        <Button className={styles.lk__wrapper__main__indicators__btn}>{user_name}</Button>
+                        <Button className={styles.lk__wrapper__main__indicators__btn} onClick={() => setOptions_flag(!options_flag)}><h4>{user_name}</h4></Button>
                     </div>
                 </div>
                 <div className={styles.lk__wrapper__main__device_info}>
@@ -245,6 +226,7 @@ export default function PersonalAccount() {
                     updatedevices={updateInfo}
                 ></PopDialog>
             )}
+            {options_flag && <OptionsDialog open={options_flag} user={{ user_name, user_email }} setOptions={(e) => setOptions_flag(e)}></OptionsDialog>}
             {devicesArray.length == 0 && <>
                 <div className={`${styles.noContent}`}>
                     <h3>Для продолжения работы добавьте устройство</h3>

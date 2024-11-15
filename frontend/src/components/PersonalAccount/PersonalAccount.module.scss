@@ -51,7 +51,9 @@
                 }
             }
             &__btn_settings {
-                color: #f5f5f5;
+                & h4 {
+                    color: #f5f5f5;
+                }
             }
         }
     }
@@ -101,11 +103,14 @@
                 }
             }
             &__btn {
-                color: hsl(0, 0%, 0%) !important;
-                font-size: 20px;
-                align-self: center;
-                border-radius: 100px;
-                margin-right: 10px;
+                background-color: hsl(240, 25%, 50%);
+                & h4 {
+                    color: white;
+                    font-size: 20px;
+                    align-self: center;
+                    border-radius: 100px;
+                    margin-right: 10px;
+                }
             }
             &__profile {
                 display: flex;
