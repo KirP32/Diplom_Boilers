@@ -7,6 +7,7 @@ import { sha256 } from 'js-sha256';
 import $api from '../../http';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function LogIn() {
     const [checked, setChecked] = useState(false);
@@ -14,7 +15,6 @@ export default function LogIn() {
     const [token_access, setToken_access] = useState('');
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
-    const [regFlag, setRegFlag] = useState(false);
 
     const [decoded, setDecoded] = useState({});
 
@@ -32,9 +32,11 @@ export default function LogIn() {
 
     function comparePassword() {
         const hash = sha256(password);
+        const UUID4 = uuidv4();
         const data = {
             login: login,
-            password: hash
+            password: hash,
+            UUID4: UUID4,
         };
 
         if (checked == false) {
@@ -54,7 +56,6 @@ export default function LogIn() {
                 }
                 setToken_access(accessToken);
                 navigate('/personalaccount');
-
             })
             .catch((error) => {
                 if (error.response && error.response.status === 401) {
@@ -74,7 +75,7 @@ export default function LogIn() {
         <main className={styles.main}>
             <div className={styles.main_wrapper}>
                 <div className={styles.sign_in}>
-                    {!token_access && !regFlag && <>
+                    {!token_access && <>
                         <h4>Вход в систему ADS Line</h4>
                         <div className={styles.sign_in__buttons}>
                             <Input type="text" placeholder="Ваш логин" value={login} onChange={(event) => setLogin(event.target.value)} />
@@ -91,11 +92,6 @@ export default function LogIn() {
                         </div>
                     </>
                     }
-                    {/* {
-                        regFlag && <SignUp
-                            updateRegFlag={(event) => setRegFlag(event)}
-                        ></SignUp>
-                    } */}
                     {token_access &&
                         <div className={styles.logged__wrapper}>
                             <h4>Добро пожаловать, {decoded.login} </h4>

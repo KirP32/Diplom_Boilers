@@ -93,7 +93,7 @@ export default function PersonalAccount() {
 
         const intervalId = setInterval(() => {
             getAllDevices();
-        }, 5000);
+        }, 10000);
 
         return () => clearInterval(intervalId);
     }, [getAllDevices]);

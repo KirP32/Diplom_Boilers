@@ -44,6 +44,7 @@ class DataController {
     async refresh(req, res, next) {
         try {
             const token = req.cookies.refreshToken;
+            const UUID4 = req.cookies.UUID4;
             if (!token) {
                 console.error('Refresh token not provided');
                 return res.status(401).send('UnauthorizedError: No token provided');
@@ -64,7 +65,7 @@ class DataController {
             }
             const access_level = (await pool.query('SELECT access_level FROM users WHERE username = $1', [flag_token.login])).rows[0].access_level;
             const { accessToken, refreshToken } = getTokens(flag_token.login, access_level);
-            await updateToken(flag_token.login, refreshToken); // в БД
+            await updateToken(flag_token.login, refreshToken, UUID4); // в БД
 
             res.cookie('refreshToken', refreshToken, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
             return res.send({ accessToken });
@@ -75,8 +76,7 @@ class DataController {
     }
 
     async login(req, res, next) {
-        const { login } = req.body;
-        const { password } = req.body;
+        const { login, password, UUID4 } = req.body;
         const str = "SELECT password_hash FROM USERS WHERE username = $1";
         pool.query(str, [login], async (err, result) => {
             if (err) {
@@ -96,8 +96,9 @@ class DataController {
                 const access_level = (await pool.query('SELECT access_level FROM users WHERE username = $1', [login])).rows[0].access_level;
                 const { accessToken, refreshToken } = getTokens(login, access_level);
                 console.log('getToken passed')
-                await updateToken(login, refreshToken);
+                await updateToken(login, refreshToken, UUID4);
                 res.cookie("refreshToken", refreshToken, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
+                res.cookie("UUID4", UUID4, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
                 res.send({ accessToken });
             } else {
                 res.status(401).json({ error: 'Invalid credentials' });
@@ -135,11 +136,16 @@ class DataController {
     }
 
     async logout(req, res, next) {
-        const { refreshToken } = req.cookies;
-        await deleteCookieDB(refreshToken);
-        res.clearCookie('refreshToken');
+        const { refreshToken, UUID4 } = req.cookies;
+
+        await deleteCookieDB(refreshToken, UUID4);
+
+        res.clearCookie('refreshToken', { httpOnly: true });
+        res.clearCookie('UUID4', { httpOnly: true });
+
         res.status(200).send({ message: 'Logged out successfully' });
     }
+
 
     async info(req, res, next) {
         console.log(req.body);
@@ -360,7 +366,7 @@ class DataController {
 
 }
 
-async function updateToken(login, refreshToken) {
+async function updateToken(login, refreshToken, UUID4) {
     try {
         const getUserQuery = `SELECT id FROM users WHERE username = $1`;
         const userResult = await pool.query(getUserQuery, [login]);
@@ -373,12 +379,12 @@ async function updateToken(login, refreshToken) {
         const userID = userResult.rows[0].id;
 
         const updateTokenQuery = `
-            INSERT INTO refreshtokens (user_id, refreshtoken)
-            VALUES ($1, $2)
+            INSERT INTO refreshtokens (user_id, refreshtoken, uuid)
+            VALUES ($1, $2, $3)
             ON CONFLICT (user_id)
             DO UPDATE SET refreshtoken = EXCLUDED.refreshtoken;
         `;
-        await pool.query(updateTokenQuery, [userID, refreshToken]);
+        await pool.query(updateTokenQuery, [userID, refreshToken, UUID4]);
 
         //console.log('Token updated successfully');
     } catch (err) {
@@ -398,9 +404,9 @@ const checkTokenExists = async (refreshToken) => {
     }
 };
 
-async function deleteCookieDB(refreshToken) {
+async function deleteCookieDB(refreshToken, UUID4) {
     try {
-        const userResult = await pool.query('DELETE FROM refreshtokens WHERE refreshtoken = $1', [refreshToken]);
+        const userResult = await pool.query('DELETE FROM refreshtokens WHERE refreshtoken = $1 AND uuid = $2', [refreshToken, UUID4]);
         console.log('deleted successfully');
         return userResult;
     } catch (error) {
