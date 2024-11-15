@@ -381,9 +381,9 @@ async function updateToken(login, refreshToken, UUID4) {
         const updateTokenQuery = `
             INSERT INTO refreshtokens (user_id, refreshtoken, uuid)
             VALUES ($1, $2, $3)
-            ON CONFLICT (user_id)
-            DO UPDATE SET refreshtoken = EXCLUDED.refreshtoken;
         `;
+        console.log('ВНЕСЕНИЕ В БД');
+        console.log(login, UUID4);
         await pool.query(updateTokenQuery, [userID, refreshToken, UUID4]);
 
         //console.log('Token updated successfully');
