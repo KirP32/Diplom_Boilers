@@ -33,17 +33,18 @@ export default function LogIn() {
     function comparePassword() {
         const hash = sha256(password);
         const UUID4 = uuidv4();
-        const data = {
-            login: login,
-            password: hash,
-            UUID4: UUID4,
-        };
 
         if (checked == false) {
             localStorage.setItem("stay_logged", "false");
         } else {
             localStorage.setItem("stay_logged", "true");
         }
+        const data = {
+            login: login,
+            password: hash,
+            UUID4: UUID4,
+            isSession: !checked,
+        };
         $api
             .post('/login', data)
             .then((response) => {

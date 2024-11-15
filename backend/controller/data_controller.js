@@ -76,7 +76,7 @@ class DataController {
     }
 
     async login(req, res, next) {
-        const { login, password, UUID4 } = req.body;
+        const { login, password, UUID4, isSession } = req.body;
         const str = "SELECT password_hash FROM USERS WHERE username = $1";
         pool.query(str, [login], async (err, result) => {
             if (err) {
@@ -94,11 +94,16 @@ class DataController {
             if (isValid) {
                 console.log('Validation passed')
                 const access_level = (await pool.query('SELECT access_level FROM users WHERE username = $1', [login])).rows[0].access_level;
-                const { accessToken, refreshToken } = getTokens(login, access_level);
+                const { accessToken, refreshToken } = getTokens(login, access_level, isSession);
                 console.log('getToken passed')
-                await updateToken(login, refreshToken, UUID4);
-                res.cookie("refreshToken", refreshToken, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
-                res.cookie("UUID4", UUID4, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
+                if (!isSession) {
+                    await updateToken(login, refreshToken, UUID4);
+                    res.cookie("refreshToken", refreshToken, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
+                    res.cookie("UUID4", UUID4, { maxAge: 31 * 24 * 60 * 60 * 1000, httpOnly: true });
+                }
+                else {
+                    res.cookie("refreshToken", refreshToken);
+                }
                 res.send({ accessToken });
             } else {
                 res.status(401).json({ error: 'Invalid credentials' });
@@ -137,15 +142,15 @@ class DataController {
 
     async logout(req, res, next) {
         const { refreshToken, UUID4 } = req.cookies;
+        if (UUID4) {
+            await deleteCookieDB(refreshToken, UUID4);
 
-        await deleteCookieDB(refreshToken, UUID4);
+            res.clearCookie('UUID4', { httpOnly: true });
+        }
 
         res.clearCookie('refreshToken', { httpOnly: true });
-        res.clearCookie('UUID4', { httpOnly: true });
-
         res.status(200).send({ message: 'Logged out successfully' });
     }
-
 
     async info(req, res, next) {
         console.log(req.body);
@@ -382,8 +387,6 @@ async function updateToken(login, refreshToken, UUID4) {
             INSERT INTO refreshtokens (user_id, refreshtoken, uuid)
             VALUES ($1, $2, $3)
         `;
-        console.log('ВНЕСЕНИЕ В БД');
-        console.log(login, UUID4);
         await pool.query(updateTokenQuery, [userID, refreshToken, UUID4]);
 
         //console.log('Token updated successfully');
