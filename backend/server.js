@@ -6,7 +6,7 @@ const pool = require('./dataBase/pool');
 
 const app = express();
 
-const port = process.env.PORT || 8080;
+const port = 8080;
 
 app.use(cookieParser());
 app.use(express.json());

@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const pool = require('../dataBase/pool');
 const { getTokens } = require('../getTokens');
 const bcrypt = require('bcryptjs');
-const cookieParser = require('cookie-parser');
 const axios = require('axios');
 require("dotenv").config();
 
