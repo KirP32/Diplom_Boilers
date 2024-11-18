@@ -126,9 +126,8 @@ export default function PersonalAccount() {
         <div className={styles.lk__wrapper}>
             <div className={styles.lk__wrapper__sidebar}>
                 <div className={styles.lk__wrapper__sidebar__header}>
-                    <Button onClick={() => { setAddEspDialog(true) }}> <h4>Добавить устройство</h4></Button>
-                    {/* <AddEspDialog open={addEspDialog} setDialog={(event) => { setAddEspDialog(event) }} ></AddEspDialog> */}
-                    <Input placeholder="Поиск устройств" value={deviceFindName} onChange={(event) => setdeviceFindName(event.target.value)} />
+                    <h4>Мои инженерные системы</h4>
+                    <Input placeholder="Поиск систем" value={deviceFindName} onChange={(event) => setdeviceFindName(event.target.value)} />
                     <hr />
                 </div>
                 <div className={styles.lk__wrapper__sidebar__devices}>
@@ -154,15 +153,15 @@ export default function PersonalAccount() {
             {(devicesArray.length > 0) && <div className={styles.lk__wrapper__main__content}>
                 <div className={styles.lk__wrapper__main__indicators}>
                     <div className={styles.lk__wrapper__main__indicators__wrapper}>
-                        <Button><h4>Датчики</h4> <span className="material-icons-outlined">
-                            device_thermostat
-                        </span></Button>
-                        <button><h4>График</h4> <span className="material-icons-outlined">
+                        <Button><h4>Мониторинг</h4> <span className="material-icons-outlined">
                             query_stats
-                        </span></button>
-                        <button><h4>Ошибки</h4> <span className="material-icons-outlined">
+                        </span></Button>
+                        <Button><h4>О системе</h4> <span className="material-icons-outlined">
+                            info
+                        </span></Button>
+                        <Button><h4>Заявки</h4> <span className="material-icons-outlined">
                             warning
-                        </span></button>
+                        </span></Button>
                     </div>
                     <div className={styles.lk__wrapper__main__indicators__profile}>
                         <span onClick={() => logout(navigate)} className={`material-icons-outlined ${styles.no_select}`}>
