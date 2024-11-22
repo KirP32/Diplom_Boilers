@@ -1,0 +1,48 @@
+:root {
+    --background-color-dark: hsl(0, 0%, 12%);
+    --background-color-items-dark: hsl(0, 0%, 12%);
+    --text-color-dark: hsl(0, 0%, 100%);
+    --text-color-on-surface-dark: hsl(0, 0%, 0%);
+    --backgorund-color-on-surface-dark: hsl(0, 0%, 20%);
+    --special-btn-color-dark: hsl(216, 40%, 42%);
+    --gradient-colors-dark: linear-gradient(
+        to top,
+        rgb(91, 91, 91),
+        rgb(215 215 215),
+        rgb(255 255 255 / 87%),
+        rgb(255 255 255 / 60%),
+        rgb(255 255 255)
+    );
+    --display-border-dark: none;
+
+    --background-color-light: hsl(0, 0%, 100%);
+    --background-color-items-light: hsl(0, 0%, 93%);
+    --text-color-light: hsl(0, 0%, 0%);
+    --text-color-on-surface-light: hsl(0, 0%, 0%);
+    --backgorund-color-on-surface-light: hsl(0, 0%, 100%);
+    --special-btn-color-light: hsl(216, 40%, 42%);
+    --gradient-colors-light: hsl(0, 0%, 89%);
+    --display-border-light: 1px solid black;
+}
+
+.light-theme {
+    --background-color: var(--background-color-light);
+    --background-color-items: var(--background-color-items-light);
+    --text-color: var(--text-color-light);
+    --text-color-on-surface: var(--text-color-on-surface-light);
+    --backgorund-color-on-surface: var(--backgorund-color-on-surface-light);
+    --special-btn-color: var(--special-btn-color-light);
+    --gradient-colors: var(--gradient-colors-light);
+    --display-border: var(--display-border-light);
+}
+
+.dark-theme {
+    --background-color: var(--background-color-dark);
+    --background-color-items: var(--background-color-items-dark);
+    --text-color: var(--text-color-dark);
+    --text-color-on-surface: var(--text-color-on-surface-dark);
+    --backgorund-color-on-surface: var(--backgorund-color-on-surface-dark);
+    --special-btn-color: var(--special-btn-color-dark);
+    --gradient-colors: var(--gradient-colors-dark);
+    --display-border: var(--display-border-dark);
+}
