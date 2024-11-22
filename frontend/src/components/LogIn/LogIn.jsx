@@ -15,7 +15,7 @@ export default function LogIn() {
   const [token_access, setToken_access] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
-
+  const [verifying, setVerifying] = useState(false);
   const [decoded, setDecoded] = useState({});
 
   useEffect(() => {
@@ -33,6 +33,7 @@ export default function LogIn() {
   }, []);
 
   function comparePassword() {
+    setVerifying(true);
     const hash = sha256(password);
     const UUID4 = uuidv4();
 
@@ -70,6 +71,9 @@ export default function LogIn() {
         } else {
           console.log("An error occurred:", error.message);
         }
+      })
+      .finally(() => {
+        setVerifying(false);
       });
   }
 
@@ -111,6 +115,7 @@ export default function LogIn() {
                 <Button
                   className={styles.sign_in_login_btn}
                   onClick={comparePassword}
+                  disabled={verifying === true}
                 >
                   Войти
                 </Button>

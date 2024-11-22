@@ -4,52 +4,28 @@ import Input from "../Input/Input";
 import Button from "../Button/Button";
 import $api from "../../http";
 import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
-import PopDialog from "./PopDialog/PopDialog";
+import PopDialog from "./Dialogs/PopDialog/PopDialog";
 import logout from "../Logout/logout";
 import formatResponseData from "./Functions/formatResponseData";
-import OptionsDialog from "./OptionsDialog/OptionsDialog";
-import SettingsDialog from "./SettingsDialog/SettingsDialog";
+import SettingsDialog from "./Dialogs/SettingsDialog/SettingsDialog";
 import { ThemeContext } from "../../Theme";
-import { Menu, MenuItem } from "@mui/material";
+import ObjectWrapper from "./ObjectWrapper/ObjectWrapper";
+import DeviceInfo from "./DeviceInfo/DeviceInfo";
+import Indicators from "./Indicators/Indicators";
 
 export default function PersonalAccount() {
   const [open, setOpen] = useState(false);
-  const [addEspDialog, setAddEspDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [devicesArray, setdevicesArray] = useState([]);
   const [deviceFindName, setdeviceFindName] = useState("");
   const [deviceObject, setDeviceObject] = useState();
-  const [user_name, setUser_name] = useState("");
   const [indicator, setIndicator] = useState(true);
-  const navigate = useNavigate();
-  const [options_flag, setOptions_flag] = useState(false);
-  const [user_email, setUserEmail] = useState(null);
   const [settingsDialog, setSettingsDialog] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const openMenu = Boolean(anchorEl);
+  const { theme } = useContext(ThemeContext);
+  const navigate = useNavigate();
+  const [selectedTab, setSelectedTab] = useState("");
 
   let flag_error = false;
-  const { theme } = useContext(ThemeContext);
-  useEffect(() => {
-    $api
-      .post("/getUser_email")
-      .then((result) => {
-        setUserEmail(result?.data?.email);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, [user_email]);
-
-  useEffect(() => {
-    const token =
-      sessionStorage.getItem("accessToken") ||
-      localStorage.getItem("accessToken");
-    if (token) {
-      setUser_name(jwtDecode(token).login);
-    }
-  }, []);
 
   const openDialog = (item) => {
     setSelectedItem(item);
@@ -79,7 +55,7 @@ export default function PersonalAccount() {
         logout(navigate);
         flag_error = true;
       } else {
-        // console.error(error);
+        console.error(error);
       }
     }
   }, []);
@@ -191,79 +167,8 @@ export default function PersonalAccount() {
       {devicesArray.length > 0 && (
         <div className={styles.lk__wrapper__main__content}>
           <div className={styles.lk__wrapper__main__content__wrapper}>
-            <div className={styles.lk__wrapper__main__indicators}>
-              <div className={styles.lk__wrapper__main__indicators__wrapper}>
-                <Button onClick={(event) => setAnchorEl(event.currentTarget)}>
-                  <h4>Мониторинг</h4>{" "}
-                  <span className="material-icons-outlined">query_stats</span>
-                </Button>
-                <Menu
-                  anchorEl={anchorEl}
-                  open={openMenu}
-                  onClose={() => setAnchorEl(null)}
-                >
-                  <MenuItem onClick={() => setAnchorEl(null)}>
-                    Мнемосхема
-                  </MenuItem>
-                  <MenuItem onClick={() => setAnchorEl(null)}>Чертежи</MenuItem>
-                  <MenuItem onClick={() => setAnchorEl(null)}>
-                    Информация
-                  </MenuItem>
-                </Menu>
-                <Button>
-                  <h4>О системе</h4>{" "}
-                  <span className="material-icons-outlined">info</span>
-                </Button>
-                <Button>
-                  <h4>Заявки</h4>{" "}
-                  <span className="material-icons-outlined">warning</span>
-                </Button>
-              </div>
-              <div className={styles.lk__wrapper__main__indicators__profile}>
-                <span
-                  onClick={() => logout(navigate)}
-                  className={`material-icons-outlined ${styles.no_select}`}
-                >
-                  logout
-                </span>
-                <Button
-                  className={styles.lk__wrapper__main__indicators__btn}
-                  onClick={() => setOptions_flag(!options_flag)}
-                >
-                  <h4>{user_name}</h4>
-                </Button>
-              </div>
-            </div>
-            <div className={styles.lk__wrapper__main__device_info}>
-              <div className={styles.section__wrapper}>
-                <section
-                  className={styles.lk__wrapper__main__device_info__header}
-                >
-                  <h4>{deviceObject.name} |</h4>{" "}
-                  <div
-                    className={`${
-                      styles[`circle__` + `${deviceObject.status}`]
-                    } ${styles.circle} ${styles.no_select}`}
-                  />
-                </section>
-                <section
-                  className={styles.lk__wrapper__main__device_info__connection}
-                >
-                  <span
-                    title="Связь wifi стабильна"
-                    className={`material-icons-outlined ${styles.no_select}`}
-                  >
-                    wifi
-                  </span>
-                  <span
-                    title="Связь GSM стабильна"
-                    className={`material-icons-outlined ${styles.no_select}`}
-                  >
-                    signal_cellular_alt
-                  </span>
-                </section>
-              </div>
-            </div>
+            <Indicators />
+            <DeviceInfo deviceObject={deviceObject} />
             <div className={styles.lk__wrapper__main__object}>
               <div className={styles.test_esp}>
                 <Button onClick={sendEsp}>Проверка</Button>
@@ -271,53 +176,10 @@ export default function PersonalAccount() {
                   {indicator ? "Выключить" : "Включить"}
                 </Button>
               </div>
-              <div className={styles.lk__wrapper__main__object__wrapper}>
-                {deviceObject.boilers && (
-                  <>
-                    {deviceObject.boilers.map((item) => (
-                      <div
-                        key={item.name}
-                        className={styles.lk__wrapper__main__object__container}
-                        onClick={() => openDialog(item)}
-                      >
-                        <div
-                          className={
-                            styles.lk__wrapper__main__object__container__header
-                          }
-                        >
-                          <h4>{item.name}</h4>
-                        </div>
-                        <div
-                          className={
-                            styles.lk__wrapper__main__object__container__body
-                          }
-                        >
-                          <span
-                            className={
-                              styles.lk__wrapper__main__object__container__body__info__span
-                            }
-                          >
-                            <span className="material-icons-outlined">
-                              device_thermostat
-                            </span>
-                            {String(item.t).includes(".")
-                              ? String(item.t).split(".")[1].length >= 2
-                                ? `${String(item.t).split(".")[0]}.${String(
-                                    item.t
-                                  )
-                                    .split(".")[1]
-                                    .slice(0, 2)}`
-                                : item.t
-                              : item.t}
-                          </span>
-                          <h5>Время работы:</h5>
-                          {item.online}
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
+              <ObjectWrapper
+                deviceObject={deviceObject}
+                openDialog={(item) => openDialog(item)}
+              />
             </div>
           </div>
         </div>
@@ -330,13 +192,6 @@ export default function PersonalAccount() {
           updatedevices={updateInfo}
         ></PopDialog>
       )}
-      {options_flag && (
-        <OptionsDialog
-          open={options_flag}
-          user={{ user_name, user_email }}
-          setOptions={(e) => setOptions_flag(e)}
-        ></OptionsDialog>
-      )}
       {devicesArray.length == 0 && (
         <>
           <div className={`${styles.noContent}`}>
@@ -344,12 +199,11 @@ export default function PersonalAccount() {
           </div>
         </>
       )}
-      {settingsDialog && (
-        <SettingsDialog
-          open={settingsDialog}
-          setSettingsDialog={(e) => setSettingsDialog(e)}
-        ></SettingsDialog>
-      )}
+
+      <SettingsDialog
+        open={settingsDialog}
+        setSettingsDialog={(e) => setSettingsDialog(e)}
+      ></SettingsDialog>
     </div>
   );
 }

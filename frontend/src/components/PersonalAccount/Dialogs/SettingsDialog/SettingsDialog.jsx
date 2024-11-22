@@ -8,7 +8,7 @@ import { useContext } from "react";
 import Switch from "@mui/material/Switch";
 import Button_M from "@mui/material/Button";
 import styles from "./SettingsDialog.module.scss";
-import { ThemeContext } from "../../../Theme";
+import { ThemeContext } from "../../../../Theme";
 
 export default function SettingsDialog({ open, setSettingsDialog }) {
   function onFinish() {
