@@ -45,12 +45,7 @@ export default function PersonalAccount() {
         console.log("Unauthorized");
       }
     } catch (error) {
-      if (
-        error.response &&
-        error.response.status === 401 &&
-        localStorage.getItem("stay_logged") === "false" &&
-        !flag_error
-      ) {
+      if (error.response && error.response.status === 401 && !flag_error) {
         alert("Ваш сеанс истёк, пожалуйста, войдите снова");
         logout(navigate);
         flag_error = true;

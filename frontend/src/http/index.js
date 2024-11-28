@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const API_URL = `http://185.46.10.111/api`; //http://185.46.10.111/api
+export const API_URL = `http://localhost:8080`; //http://185.46.10.111/api
 //http://localhost:8080
 const logged = localStorage.getItem("stay_logged");
 const $api = axios.create({
@@ -33,13 +33,13 @@ $api.interceptors.response.use(
       logged == "true"
     ) {
       originalRequest._isRetry = true;
-      // console.log('Пробую выдать авторизацию');
+      // console.log("Пробую выдать авторизацию");
       try {
         const response = await axios.get(`${API_URL}/refresh`, {
           withCredentials: true,
         });
         localStorage.setItem("accessToken", response.data.accessToken);
-        // console.log('Выдал авторизацию')
+        // console.log("Выдал авторизацию");
         return $api.request(originalRequest);
       } catch (e) {
         console.log("Ошибка авторизации");

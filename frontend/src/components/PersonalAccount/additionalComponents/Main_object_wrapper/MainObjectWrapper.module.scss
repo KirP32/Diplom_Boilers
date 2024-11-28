@@ -1,0 +1,24 @@
+.main__object {
+    display: grid;
+    grid-template-rows: 170px 1fr 170px;
+    grid-template-areas: "header" "main" "footer";
+}
+
+.test_esp {
+    grid-area: header;
+    display: flex;
+    height: 42px;
+    justify-content: space-evenly;
+
+    & button {
+        color: var(--text-color-on-surface);
+        font-size: 16px;
+        border-radius: 6px;
+        font-weight: bold;
+        text-align: center;
+        background: var(--gradient-colors);
+        &::before {
+            border-radius: 6px;
+        }
+    }
+}
