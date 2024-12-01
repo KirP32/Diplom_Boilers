@@ -4,33 +4,31 @@ import Input from "../Input/Input";
 import Button from "../Button/Button";
 import $api from "../../http";
 import { useNavigate } from "react-router-dom";
-import PopDialog from "./Dialogs/PopDialog/PopDialog";
 import logout from "../Logout/logout";
 import formatResponseData from "./Functions/formatResponseData";
 import SettingsDialog from "./Dialogs/SettingsDialog/SettingsDialog";
 import { ThemeContext } from "../../Theme";
-import ObjectWrapper from "./ObjectWrapper/ObjectWrapper";
-import DeviceInfo from "./DeviceInfo/DeviceInfo";
 import Indicators from "./Indicators/Indicators";
+import Sensors from "./tabs/Sensors/Sensors";
 
 export default function PersonalAccount() {
-  const [open, setOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
   const [devicesArray, setdevicesArray] = useState([]);
   const [deviceFindName, setdeviceFindName] = useState("");
   const [deviceObject, setDeviceObject] = useState();
-  const [indicator, setIndicator] = useState(true);
   const [settingsDialog, setSettingsDialog] = useState(false);
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = useState("");
-
-  let flag_error = false;
-
-  const openDialog = (item) => {
-    setSelectedItem(item);
-    setOpen(true);
+  const [selectedTab, setSelectedTab] = useState("sensors");
+  const tabObject = {
+    sensors: (
+      <Sensors
+        deviceObject={deviceObject}
+        setdevicesArray={setdevicesArray}
+        devicesArray={devicesArray}
+      />
+    ),
   };
+  let flag_error = false;
 
   const getAllDevices = useCallback(async () => {
     try {
@@ -81,31 +79,6 @@ export default function PersonalAccount() {
 
     return () => clearInterval(intervalId);
   }, [getAllDevices]);
-
-  function sendEsp() {
-    $api
-      .get("/test_esp")
-      .then((response) => {
-        console.log(response);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
-
-  async function turnOffEsp() {
-    $api
-      .put("/off_esp", {
-        indicator: indicator ? "-" : "+",
-      })
-      .then((response) => {
-        console.log(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-    setIndicator(!indicator);
-  }
 
   return (
     <div className={`${styles.lk__wrapper} ${theme}`}>
@@ -162,30 +135,10 @@ export default function PersonalAccount() {
       {devicesArray.length > 0 && (
         <div className={styles.lk__wrapper__main__content}>
           <div className={styles.lk__wrapper__main__content__wrapper}>
-            <Indicators />
-            <DeviceInfo deviceObject={deviceObject} />
-            <div className={styles.lk__wrapper__main__object}>
-              <div className={styles.test_esp}>
-                <Button onClick={sendEsp}>Проверка</Button>
-                <Button onClick={turnOffEsp}>
-                  {indicator ? "Выключить" : "Включить"}
-                </Button>
-              </div>
-              <ObjectWrapper
-                deviceObject={deviceObject}
-                openDialog={(item) => openDialog(item)}
-              />
-            </div>
+            <Indicators setSelectedTab={setSelectedTab} />
+            {tabObject[selectedTab]}
           </div>
         </div>
-      )}
-      {selectedItem && (
-        <PopDialog
-          open={open}
-          setDialog={(current) => setOpen(current)}
-          selectedItem={selectedItem}
-          updatedevices={updateInfo}
-        ></PopDialog>
       )}
       {devicesArray.length == 0 && (
         <>

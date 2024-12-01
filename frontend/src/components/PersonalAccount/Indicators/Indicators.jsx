@@ -8,7 +8,7 @@ import { Menu, MenuItem } from "@mui/material";
 import logout from "../../Logout/logout";
 import { useNavigate } from "react-router-dom";
 
-export default function Indicators() {
+export default function Indicators({ setSelectedTab }) {
   const [user_name, setUser_name] = useState("");
   const [options_flag, setOptions_flag] = useState(false);
   const [user_email, setUserEmail] = useState(null);
@@ -29,7 +29,10 @@ export default function Indicators() {
     setRequestsAnchorEl(event.currentTarget);
   };
 
-  const handleClose = () => {
+  const handleClose = (tabName) => {
+    if (tabName) {
+      setSelectedTab(tabName);
+    }
     setMonitoringAnchorEl(null);
     setSystemAnchorEl(null);
     setRequestsAnchorEl(null);
@@ -66,12 +69,16 @@ export default function Indicators() {
           className={styles.menu}
           anchorEl={monitoringAnchorEl}
           open={Boolean(monitoringAnchorEl)}
-          onClose={handleClose}
+          onClose={() => handleClose()}
         >
-          <MenuItem onClick={handleClose}>Мнемосхема</MenuItem>
-          <MenuItem onClick={handleClose}>Информация</MenuItem>
-          <MenuItem onClick={handleClose}>Чертёж</MenuItem>
-          <MenuItem onClick={handleClose}>Sensors</MenuItem>
+          <MenuItem onClick={() => handleClose("mnemoscheme")}>
+            Мнемосхема
+          </MenuItem>
+          <MenuItem onClick={() => handleClose("information")}>
+            Информация
+          </MenuItem>
+          <MenuItem onClick={() => handleClose("drawing")}>Чертёж</MenuItem>
+          <MenuItem onClick={() => handleClose("sensors")}>Sensors</MenuItem>
         </Menu>
 
         <Button onClick={handleOpenSystemMenu}>
@@ -82,7 +89,7 @@ export default function Indicators() {
           className={styles.menu}
           anchorEl={systemAnchorEl}
           open={Boolean(systemAnchorEl)}
-          onClose={handleClose}
+          onClose={() => handleClose()}
           anchorOrigin={{
             vertical: "bottom",
             horizontal: "center",
@@ -92,9 +99,15 @@ export default function Indicators() {
             horizontal: "center",
           }}
         >
-          <MenuItem onClick={handleClose}>Информация</MenuItem>
-          <MenuItem onClick={handleClose}>Показатели</MenuItem>
-          <MenuItem onClick={handleClose}>Документация</MenuItem>
+          <MenuItem onClick={() => handleClose("systemInfo")}>
+            Информация
+          </MenuItem>
+          <MenuItem onClick={() => handleClose("indicators")}>
+            Показатели
+          </MenuItem>
+          <MenuItem onClick={() => handleClose("documentation")}>
+            Документация
+          </MenuItem>
         </Menu>
 
         <Button onClick={handleOpenRequestsMenu}>
@@ -105,7 +118,7 @@ export default function Indicators() {
           className={styles.menu}
           anchorEl={requestsAnchorEl}
           open={Boolean(requestsAnchorEl)}
-          onClose={handleClose}
+          onClose={() => handleClose()}
           anchorOrigin={{
             vertical: "bottom",
             horizontal: "right",
@@ -115,9 +128,15 @@ export default function Indicators() {
             horizontal: "right",
           }}
         >
-          <MenuItem onClick={handleClose}>Просмотр</MenuItem>
-          <MenuItem onClick={handleClose}>Создать</MenuItem>
-          <MenuItem onClick={handleClose}>Дополнительно</MenuItem>
+          <MenuItem onClick={() => handleClose("viewRequests")}>
+            Просмотр
+          </MenuItem>
+          <MenuItem onClick={() => handleClose("createRequests")}>
+            Создать
+          </MenuItem>
+          <MenuItem onClick={() => handleClose("additionalRequests")}>
+            Дополнительно
+          </MenuItem>
         </Menu>
       </div>
       <div className={styles.indicators__profile}>

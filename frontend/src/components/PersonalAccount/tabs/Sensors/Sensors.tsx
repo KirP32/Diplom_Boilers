@@ -1,6 +1,7 @@
 import React from "react";
 import DeviceInfo from "../../additionalComponents/DeviceInfo/DeviceInfo";
 import MainObjectWrapper from "../../additionalComponents/Main_object_wrapper/MainObjectWrapper";
+import Button from "../../../Button/Button";
 
 export default function Sensors({
   deviceObject,
@@ -11,9 +12,9 @@ export default function Sensors({
     <>
       <DeviceInfo deviceObject={deviceObject} />
       <MainObjectWrapper
-        deviceObject={deviceObject}
-        setdevicesArray={(e: any) => setdevicesArray(e)}
         devicesArray={devicesArray}
+        deviceObject={deviceObject}
+        setdevicesArray={setdevicesArray}
       />
     </>
   );
