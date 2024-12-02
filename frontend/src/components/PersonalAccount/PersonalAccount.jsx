@@ -10,6 +10,7 @@ import SettingsDialog from "./Dialogs/SettingsDialog/SettingsDialog";
 import { ThemeContext } from "../../Theme";
 import Indicators from "./Indicators/Indicators";
 import Sensors from "./tabs/Sensors/Sensors";
+import Mnemoscheme from "./tabs/Mnemoscheme/Mnemoscheme";
 
 export default function PersonalAccount() {
   const [devicesArray, setdevicesArray] = useState([]);
@@ -27,6 +28,7 @@ export default function PersonalAccount() {
         devicesArray={devicesArray}
       />
     ),
+    mnemoscheme: <Mnemoscheme />,
   };
   let flag_error = false;
 
@@ -52,23 +54,6 @@ export default function PersonalAccount() {
       }
     }
   }, []);
-
-  const updateInfo = (updatedBoiler) => {
-    const updatedDevices = devicesArray.map((device) => {
-      if (device.id === deviceObject.id) {
-        const updatedBoilers = device.boilers.map((boiler) => {
-          if (boiler.name === updatedBoiler.name) {
-            return { ...boiler, ...updatedBoiler };
-          }
-          return boiler;
-        });
-
-        return { ...device, boilers: updatedBoilers };
-      }
-      return device;
-    });
-    setdevicesArray(updatedDevices);
-  };
 
   useEffect(() => {
     getAllDevices();

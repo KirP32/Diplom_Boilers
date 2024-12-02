@@ -14,7 +14,8 @@ export default function MainObjectWrapper({
   const [indicator, setIndicator] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
   const [open, setOpen] = useState(false);
-
+  // console.log("devicesArray triggered");
+  // console.log(devicesArray);
   const updateInfo = (updatedBoiler) => {
     const updatedDevices = devicesArray.map((device) => {
       if (device.id === deviceObject.id) {
