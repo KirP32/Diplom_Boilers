@@ -1,46 +1,51 @@
 import React from "react";
-import styles from "./Mnemoscheme.module.scss";
-import data from "./data";
+import { MapContainer, ImageOverlay } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
 export default function Mnemoscheme() {
-  function sorted_array(data) {
-    const length = data.length;
-    let array = [];
-    // #TODO: как устройства между собой связываются.
-  }
+  const imageSize = 1;
+  const gap = 0.1;
+  // верх/низ, право/лево
+  // y x
+  const bounds1 = [
+    [0, 0], // нижняя левая точка
+    [imageSize, imageSize], // верхняя-правая точка
+  ];
+
+  const bounds2 = [
+    [0, imageSize + gap],
+    [imageSize, imageSize * 2 + gap],
+  ];
+
+  const bounds3 = [
+    [0, imageSize * 2 + gap * 2],
+    [imageSize, imageSize * 3 + gap * 2],
+  ];
+
+  const bounds4 = [
+    [0, imageSize * 1 + gap],
+    [imageSize * 1, imageSize * 2],
+  ];
+
   return (
-    <div
-      className="wrapper"
-      style={{
-        display: "flex",
-        gap: 15,
-        flexWrap: "wrap",
-        height: 770,
-        padding: "0 15px 15px 15px",
-      }}
+    <MapContainer
+      center={[0, 0]}
+      zoom={8}
+      style={{ width: "100%", height: "500px" }}
+      scrollWheelZoom={true}
     >
-      {data.map((item, index) => (
-        <div className={styles.container} key={index}>
-          {item.name.includes("boiler") && (
-            <>
-              <section style={{ placeItems: "center", display: "flex" }}>
-                <button>Один</button>
-                <button>Два</button>
-              </section>
-              <img
-                className={styles.picture}
-                src="https://geffen.ru/upload/resize_cache/iblock/862/vz3gpzut4973eb6a9sa9rrq9i4v64bqn/490_490_0/d644d6d3_ad55_11e9_9930_00155d016401_2f898086_0589_11ec_a597_005056010522.jpg"
-                alt=""
-              />
-            </>
-          )}
-          {!item.name.includes("boiler") && (
-            <>
-              <h4 style={{ textAlign: "center" }}>{item.name}</h4>
-            </>
-          )}
-        </div>
-      ))}
-    </div>
+      <ImageOverlay
+        url="https://geffen.ru/upload/resize_cache/iblock/862/vz3gpzut4973eb6a9sa9rrq9i4v64bqn/490_490_0/d644d6d3_ad55_11e9_9930_00155d016401_2f898086_0589_11ec_a597_005056010522.jpg"
+        bounds={bounds1}
+      />
+      <ImageOverlay
+        url="https://geffen.ru/upload/resize_cache/iblock/862/vz3gpzut4973eb6a9sa9rrq9i4v64bqn/490_490_0/d644d6d3_ad55_11e9_9930_00155d016401_2f898086_0589_11ec_a597_005056010522.jpg"
+        bounds={bounds2}
+      />
+      <ImageOverlay
+        url="https://geffen.ru/upload/resize_cache/iblock/862/vz3gpzut4973eb6a9sa9rrq9i4v64bqn/490_490_0/d644d6d3_ad55_11e9_9930_00155d016401_2f898086_0589_11ec_a597_005056010522.jpg"
+        bounds={bounds3}
+      />
+    </MapContainer>
   );
 }

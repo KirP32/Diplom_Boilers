@@ -45,3 +45,7 @@ h3 {
     grid-template-columns: subgrid;
   }
 }
+
+.leaflet-control-attribution {
+  display: none !important;
+}
