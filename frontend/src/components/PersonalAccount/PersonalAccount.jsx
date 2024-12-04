@@ -20,6 +20,7 @@ export default function PersonalAccount() {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("sensors");
+
   const tabObject = {
     sensors: (
       <Sensors
@@ -30,6 +31,7 @@ export default function PersonalAccount() {
     ),
     mnemoscheme: <Mnemoscheme />,
   };
+
   let flag_error = false;
 
   const getAllDevices = useCallback(async () => {
