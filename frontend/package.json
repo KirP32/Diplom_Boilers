@@ -18,10 +18,12 @@
     "express": "^4.21.0",
     "js-sha256": "^0.11.0",
     "jwt-decode": "^4.0.0",
+    "leaflet": "^1.9.4",
     "material-icons": "^1.13.12",
     "pg": "^8.13.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.26.2",
     "sass": "^1.79.3",
     "uuid": "^11.0.3"
