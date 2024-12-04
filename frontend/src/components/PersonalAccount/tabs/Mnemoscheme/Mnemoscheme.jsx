@@ -1,7 +1,7 @@
 import React from "react";
 import { MapContainer, ImageOverlay } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-
+//import "leaflet/dist/leaflet.css";
+import "./Mnemoscheme.scss";
 export default function Mnemoscheme() {
   const imageSize = 1;
   const gap = 0.1;
