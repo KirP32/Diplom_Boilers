@@ -40,15 +40,15 @@ export default function Mnemoscheme() {
       scrollWheelZoom={true}
     >
       <ImageOverlay
-        url="https://geffen.ru/upload/resize_cache/iblock/862/vz3gpzut4973eb6a9sa9rrq9i4v64bqn/490_490_0/d644d6d3_ad55_11e9_9930_00155d016401_2f898086_0589_11ec_a597_005056010522.jpg"
+        url="../../../../../public/boiler_default.png"
         bounds={bounds1}
       />
       <ImageOverlay
-        url="https://geffen.ru/upload/resize_cache/iblock/862/vz3gpzut4973eb6a9sa9rrq9i4v64bqn/490_490_0/d644d6d3_ad55_11e9_9930_00155d016401_2f898086_0589_11ec_a597_005056010522.jpg"
+        url="../../../../../public/boiler_default.png"
         bounds={bounds2}
       />
       <ImageOverlay
-        url="https://geffen.ru/upload/resize_cache/iblock/862/vz3gpzut4973eb6a9sa9rrq9i4v64bqn/490_490_0/d644d6d3_ad55_11e9_9930_00155d016401_2f898086_0589_11ec_a597_005056010522.jpg"
+        url="../../../../../public/boiler_default.png"
         bounds={bounds3}
       />
     </MapContainer>
