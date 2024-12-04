@@ -2,6 +2,7 @@ import React from "react";
 import { MapContainer, TileLayer, useMap, ImageOverlay } from "react-leaflet";
 //import "leaflet/dist/leaflet.css";
 import "./Mnemoscheme.scss";
+import ads_boiler from "../../../../images/boiler_default.png";
 
 export default function Mnemoscheme() {
   const imageSize = 1;
@@ -29,19 +30,21 @@ export default function Mnemoscheme() {
   ];
 
   return (
-    <MapContainer
-      center={[0, 0]}
-      zoom={8}
-      style={{
-        width: "100%",
-        height: "500px",
-        backgroundColor: "hsl(0, 0%, 50%)",
-      }}
-      scrollWheelZoom={true}
-    >
-      <ImageOverlay url="./src/images/boiler_default.png" bounds={bounds1} />
-      <ImageOverlay url="./src/images/boiler_default.png" bounds={bounds2} />
-      <ImageOverlay url="./src/images/boiler_default.png" bounds={bounds3} />
-    </MapContainer>
+    <>
+      <MapContainer
+        center={[0.35, 1.5]}
+        zoom={8}
+        style={{
+          width: "100%",
+          height: "500px",
+          backgroundColor: "hsl(0, 0%, 50%)",
+        }}
+        scrollWheelZoom={true}
+      >
+        <ImageOverlay url={ads_boiler} bounds={bounds1} />
+        <ImageOverlay url={ads_boiler} bounds={bounds2} />
+        <ImageOverlay url={ads_boiler} bounds={bounds3} />
+      </MapContainer>
+    </>
   );
 }
