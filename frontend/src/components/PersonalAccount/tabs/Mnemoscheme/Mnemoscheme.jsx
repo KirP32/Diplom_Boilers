@@ -31,7 +31,11 @@ export default function Mnemoscheme() {
     <MapContainer
       center={[0, 0]}
       zoom={8}
-      style={{ width: "100%", height: "500px" }}
+      style={{
+        width: "100%",
+        height: "500px",
+        backgroundColor: "hsl(0, 0%, 50%)",
+      }}
       scrollWheelZoom={true}
     >
       <ImageOverlay
