@@ -9,6 +9,7 @@ export default defineConfig({
         find: /^~(.*)$/,
         replacement: "$1",
       },
+      { find: "react-leaflet", replacement: "node_modules/react-leaflet" },
     ],
   },
   optimizeDeps: {

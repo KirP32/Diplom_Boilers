@@ -1,5 +1,5 @@
 import React from "react";
-import { MapContainer, ImageOverlay } from "react-leaflet";
+import { MapContainer, TileLayer, useMap, ImageOverlay } from "react-leaflet";
 //import "leaflet/dist/leaflet.css";
 import "./Mnemoscheme.scss";
 
