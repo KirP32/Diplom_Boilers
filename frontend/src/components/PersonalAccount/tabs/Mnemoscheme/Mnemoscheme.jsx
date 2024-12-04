@@ -39,18 +39,9 @@ export default function Mnemoscheme() {
       }}
       scrollWheelZoom={true}
     >
-      <ImageOverlay
-        url="../../../../../public/boiler_default.png"
-        bounds={bounds1}
-      />
-      <ImageOverlay
-        url="../../../../../public/boiler_default.png"
-        bounds={bounds2}
-      />
-      <ImageOverlay
-        url="../../../../../public/boiler_default.png"
-        bounds={bounds3}
-      />
+      <ImageOverlay url="./src/images/boiler_default.png" bounds={bounds1} />
+      <ImageOverlay url="./src/images/boiler_default.png" bounds={bounds2} />
+      <ImageOverlay url="./src/images/boiler_default.png" bounds={bounds3} />
     </MapContainer>
   );
 }
