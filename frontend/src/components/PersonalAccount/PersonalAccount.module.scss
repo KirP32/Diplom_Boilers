@@ -67,8 +67,8 @@
             background-color: var(--background-color);
             position: relative;
             &__wrapper {
-                display: grid;
-                grid-template-rows: 98px 200px 1fr;
+                // display: grid;
+                // grid-template-rows: 98px 200px 1fr;
                 height: 100%;
                 background-color: var(--backgorund-color-on-surface);
                 border-radius: 6px;

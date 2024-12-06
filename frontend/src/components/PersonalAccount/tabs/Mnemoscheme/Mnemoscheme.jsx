@@ -1,7 +1,8 @@
 import React from "react";
 import { MapContainer, TileLayer, useMap, ImageOverlay } from "react-leaflet";
 //import "leaflet/dist/leaflet.css";
-import "./Mnemoscheme.scss";
+import styles from "./Mnemoscheme.module.scss";
+import "leaflet/dist/leaflet.css";
 import ads_boiler from "../../../../images/boiler_default.png";
 
 export default function Mnemoscheme() {
@@ -30,7 +31,7 @@ export default function Mnemoscheme() {
   ];
 
   return (
-    <>
+    <div className={styles.map_wrapper}>
       <MapContainer
         center={[0.35, 1.5]}
         zoom={8}
@@ -45,6 +46,6 @@ export default function Mnemoscheme() {
         <ImageOverlay url={ads_boiler} bounds={bounds2} />
         <ImageOverlay url={ads_boiler} bounds={bounds3} />
       </MapContainer>
-    </>
+    </div>
   );
 }
