@@ -8,7 +8,7 @@ import { Menu, MenuItem } from "@mui/material";
 import logout from "../../Logout/logout";
 import { useNavigate } from "react-router-dom";
 
-export default function Indicators({ setSelectedTab }) {
+export default function Indicators({ setSelectedTab, tab }) {
   const [user_name, setUser_name] = useState("");
   const [options_flag, setOptions_flag] = useState(false);
   const [user_email, setUserEmail] = useState(null);
@@ -62,8 +62,24 @@ export default function Indicators({ setSelectedTab }) {
     <div className={styles.indicators}>
       <div className={styles.indicators__wrapper}>
         <Button onClick={handleOpenMonitoringMenu}>
-          <h4>Мониторинг</h4>
-          <span className="material-icons-outlined">query_stats</span>
+          <h4
+            className={
+              ["mnemoscheme", "information", "drawing", "sensors"].includes(tab)
+                ? `${styles.active}`
+                : ""
+            }
+          >
+            Мониторинг
+          </h4>
+          <span
+            className={`material-icons-outlined ${
+              ["mnemoscheme", "information", "drawing", "sensors"].includes(tab)
+                ? `${styles.active}`
+                : ""
+            }`}
+          >
+            query_stats
+          </span>
         </Button>
         <Menu
           className={styles.menu}
@@ -82,8 +98,24 @@ export default function Indicators({ setSelectedTab }) {
         </Menu>
 
         <Button onClick={handleOpenSystemMenu}>
-          <h4>О системе</h4>
-          <span className="material-icons-outlined">info</span>
+          <h4
+            className={
+              ["systemInfo", "indicators", "documentation"].includes(tab)
+                ? `${styles.active}`
+                : ""
+            }
+          >
+            О системе
+          </h4>
+          <span
+            className={`material-icons-outlined ${
+              ["systemInfo", "indicators", "documentation"].includes(tab)
+                ? `${styles.active}`
+                : ""
+            }`}
+          >
+            info
+          </span>
         </Button>
         <Menu
           className={styles.menu}
@@ -111,8 +143,28 @@ export default function Indicators({ setSelectedTab }) {
         </Menu>
 
         <Button onClick={handleOpenRequestsMenu}>
-          <h4>Заявки</h4>
-          <span className="material-icons-outlined">warning</span>
+          <h4
+            className={
+              ["viewRequests", "createRequests", "additionalRequests"].includes(
+                tab
+              )
+                ? `${styles.active}`
+                : ""
+            }
+          >
+            Заявки
+          </h4>
+          <span
+            className={`material-icons-outlined ${
+              ["viewRequests", "createRequests", "additionalRequests"].includes(
+                tab
+              )
+                ? `${styles.active}`
+                : ""
+            }`}
+          >
+            warning
+          </span>
         </Button>
         <Menu
           className={styles.menu}

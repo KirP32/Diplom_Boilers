@@ -88,6 +88,7 @@ class DataController {
       res.cookie("refreshToken", refreshToken, {
         maxAge: 31 * 24 * 60 * 60 * 1000,
         httpOnly: true,
+        sameSite: "Strict",
       });
       return res.send({ accessToken });
     } catch (error) {
@@ -131,19 +132,20 @@ class DataController {
           access_level,
           isSession
         );
+        await updateToken(login, refreshToken, UUID4);
         if (!isSession) {
-          await updateToken(login, refreshToken, UUID4);
           res.cookie("refreshToken", refreshToken, {
             maxAge: 31 * 24 * 60 * 60 * 1000,
             httpOnly: true,
-          });
-          res.cookie("UUID4", UUID4, {
-            maxAge: 31 * 24 * 60 * 60 * 1000,
-            httpOnly: true,
+            sameSite: "Strict",
           });
         } else {
-          res.cookie("refreshToken", refreshToken);
+          res.cookie("refreshToken", refreshToken, { sameSite: "Strict" });
         }
+        res.cookie("UUID4", UUID4, {
+          httpOnly: true,
+          sameSite: "Strict",
+        });
         res.send({ accessToken });
       } else {
         res.status(401).json({ error: "Invalid credentials" });
@@ -184,8 +186,6 @@ class DataController {
     const { refreshToken, UUID4 } = req.cookies;
     if (UUID4) {
       await deleteCookieDB(refreshToken, UUID4);
-
-      res.clearCookie("UUID4", { httpOnly: true });
     }
 
     res.clearCookie("refreshToken", { httpOnly: true });
@@ -420,7 +420,7 @@ async function updateToken(login, refreshToken, UUID4) {
     const userResult = await pool.query(getUserQuery, [login]);
 
     if (userResult.rows.length === 0) {
-      console.log("User not found");
+      console.error("User not found");
       return;
     }
 
@@ -456,8 +456,8 @@ const checkTokenExists = async (refreshToken) => {
 async function deleteCookieDB(refreshToken, UUID4) {
   try {
     const userResult = await pool.query(
-      "DELETE FROM refreshtokens WHERE refreshtoken = $1 AND uuid = $2",
-      [refreshToken, UUID4]
+      "DELETE FROM refreshtokens WHERE uuid = $1",
+      [UUID4]
     );
     console.log("deleted successfully");
     return userResult;

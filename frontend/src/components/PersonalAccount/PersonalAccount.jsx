@@ -62,7 +62,7 @@ export default function PersonalAccount() {
 
     const intervalId = setInterval(() => {
       getAllDevices();
-    }, 10000);
+    }, 15000);
 
     return () => clearInterval(intervalId);
   }, [getAllDevices]);
@@ -83,12 +83,8 @@ export default function PersonalAccount() {
           {devicesArray && (
             <>
               {devicesArray
-                .filter(
-                  (item) =>
-                    item.name &&
-                    item.name
-                      .toLowerCase()
-                      .includes(deviceFindName.toLowerCase())
+                .filter((item) =>
+                  item.name.toLowerCase().includes(deviceFindName.toLowerCase())
                 )
                 .map((item) => (
                   <div
@@ -122,7 +118,7 @@ export default function PersonalAccount() {
       {devicesArray.length > 0 && (
         <div className={styles.lk__wrapper__main__content}>
           <div className={styles.lk__wrapper__main__content__wrapper}>
-            <Indicators setSelectedTab={setSelectedTab} />
+            <Indicators setSelectedTab={setSelectedTab} tab={selectedTab} />
             {tabObject[selectedTab]}
           </div>
         </div>

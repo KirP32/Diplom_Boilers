@@ -26,8 +26,8 @@ export default function Mnemoscheme() {
   ];
 
   const bounds4 = [
-    [0, imageSize * 1 + gap],
-    [imageSize * 1, imageSize * 2],
+    [0, imageSize * 3 + gap * 3],
+    [imageSize * 1, imageSize * 4 + gap * 3],
   ];
 
   return (
