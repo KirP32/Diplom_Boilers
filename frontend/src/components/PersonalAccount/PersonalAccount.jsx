@@ -47,7 +47,11 @@ export default function PersonalAccount() {
         console.log("Unauthorized");
       }
     } catch (error) {
-      if (error.response && error.response.status === 401 && !flag_error) {
+      if (
+        ((error.response && error.response.status === 401) || // 401 - не авторизован
+          error.response.status === 400) &&
+        !flag_error // 400 - нет refreshToken в БД
+      ) {
         alert("Ваш сеанс истёк, пожалуйста, войдите снова");
         logout(navigate);
         flag_error = true;

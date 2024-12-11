@@ -56,37 +56,52 @@ class DataController {
     try {
       const token = req.cookies.refreshToken;
       const UUID4 = req.cookies.UUID4;
-      if (!token) {
-        console.error("Refresh token not provided");
-        return res.status(401).send("UnauthorizedError: No token provided");
+      const RememberMe = req.query.stay_logged === "true";
+
+      if (!token || !UUID4) {
+        console.error("Refresh token not provided or UUID4");
+        return res
+          .status(401)
+          .send("UnauthorizedError: No token provided or UUID4");
       }
 
-      let flag_token;
+      let token_data;
+
       try {
-        const userData = jwt.verify(token, process.env.JWT_REFRESH_KEY);
-        flag_token = userData;
+        token_data = jwt.verify(token, process.env.JWT_REFRESH_KEY);
       } catch (e) {
-        flag_token = null;
-        console.error("Error refreshing token:", e);
-        return res.status(500).send("Internal Server Error");
+        token_data = null;
+        console.error("Error refreshing token:", e.message);
+        return res.status(401).send("TokenExpired");
       }
 
-      if (!flag_token || !(await checkTokenExists(token))) {
+      if (!token_data) {
         return res.status(401).send("UnauthorizedError");
       }
-      const access_level = (
-        await pool.query("SELECT access_level FROM users WHERE username = $1", [
-          flag_token.login,
-        ])
-      ).rows[0].access_level;
-      const { accessToken, refreshToken } = getTokens(
-        flag_token.login,
-        access_level
+
+      const userQuery = await pool.query(
+        "SELECT access_level FROM users WHERE username = $1",
+        [token_data.login]
       );
-      await updateToken(flag_token.login, refreshToken, UUID4); // в БД
+
+      if (userQuery.rows.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const access_level = userQuery.rows[0].access_level;
+      const { accessToken, refreshToken } = getTokens(
+        token_data.login,
+        access_level,
+        RememberMe,
+        token
+      );
+
+      await updateToken(token_data.login, refreshToken, UUID4);
+
+      const maxAge = RememberMe ? 31 * 24 * 60 * 60 * 1000 : 1000 * 60 * 60 * 2;
 
       res.cookie("refreshToken", refreshToken, {
-        maxAge: 31 * 24 * 60 * 60 * 1000,
+        maxAge,
         httpOnly: true,
         sameSite: "Strict",
       });
@@ -98,7 +113,7 @@ class DataController {
   }
 
   async login(req, res, next) {
-    const { login, password, isSession } = req.body;
+    const { login, password, RememberMe } = req.body;
     let { UUID4 } = req.body;
     const oldUUID4 = req.cookies.UUID4;
 
@@ -130,21 +145,28 @@ class DataController {
         const { accessToken, refreshToken } = getTokens(
           login,
           access_level,
-          isSession
+          RememberMe
         );
+
         await updateToken(login, refreshToken, UUID4);
-        if (!isSession) {
+
+        if (RememberMe) {
           res.cookie("refreshToken", refreshToken, {
             maxAge: 31 * 24 * 60 * 60 * 1000,
             httpOnly: true,
             sameSite: "Strict",
           });
         } else {
-          res.cookie("refreshToken", refreshToken, { sameSite: "Strict" });
+          res.cookie("refreshToken", refreshToken, {
+            sameSite: "Strict",
+            httpOnly: true,
+            maxAge: 1000 * 60 * 60 * 2,
+          });
         }
         res.cookie("UUID4", UUID4, {
           httpOnly: true,
           sameSite: "Strict",
+          maxAge: 31 * 24 * 60 * 60 * 1000,
         });
         res.send({ accessToken });
       } else {
@@ -410,6 +432,133 @@ class DataController {
       console.log("catched error");
       console.log(error);
       res.sendStatus(500);
+    }
+  }
+
+  async getSystems(req, res) {
+    try {
+      const data = [
+        {
+          name: "ADS-Line",
+          server_bridge_mode: 0,
+          t_int: 0,
+          t_ext: 0,
+          module_list: [
+            {
+              s_number: "sn_00015",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00019",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00020",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00018",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00004",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00005",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00007",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00006",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00017",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00016",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00013",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00014",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00010",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00011",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00003",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00012",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00002",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+            {
+              s_number: "sn_00009",
+              data: "foobar",
+              connected: 1,
+              local: 0,
+            },
+          ],
+        },
+      ];
+      res.send(data);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send("Server Error: cant get Boilers Systems");
     }
   }
 }

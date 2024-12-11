@@ -8,17 +8,20 @@ async function checkCookie(req, res, next) {
   const refreshToken = req.cookies["refreshToken"];
 
   if (!accesstoken) {
+    console.log("Нет accessToken");
     return res.sendStatus(401);
   }
+
   if ((await checkTokenExists(refreshToken)) === false) {
-    console.log("token not exist");
-    return res.sendStatus(401);
+    // console.log("token not exist");
+    return res.sendStatus(400);
   }
+
   jwt.verify(accesstoken, process.env.JWT_SECRET_KEY, (err, data) => {
     if (err) {
+      // console.log("Проблема с accessToken в Cookie");
       return res.sendStatus(401);
     } else {
-      //console.log("Checked successfully");
       req.user = data;
       next();
     }

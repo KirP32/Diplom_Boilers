@@ -1,17 +1,32 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-const getTokens = (login, access_level, isSession) => {
-  const accessTokenAge = "1h";
-  const refreshTokenAge = isSession ? "1h" : "31d";
+const getTokens = (login, access_level, RememberMe, token) => {
+  const accessTokenAge = 60 * 20;
+  let refreshTokenAge = RememberMe ? 60 * 60 * 24 * 31 : 60 * 60;
+
+  if (token) {
+    const tokenData = jwt.decode(token);
+    if (tokenData) {
+      const currentTime = Math.floor(Date.now() / 1000);
+      const timePassed = currentTime - tokenData.iat;
+      const tokenLifeTime = tokenData.exp - tokenData.iat;
+      refreshTokenAge = Math.max(tokenLifeTime - timePassed, 0);
+    } else {
+      // console.log("Невалидный токен.");
+    }
+  }
+  // console.log(
+  //   `Оставшееся время жизни Refresh-токена: ${refreshTokenAge} секунд`
+  // );
   return {
     accessToken: jwt.sign({ login, access_level }, process.env.JWT_SECRET_KEY, {
-      expiresIn: `${accessTokenAge}`,
+      expiresIn: accessTokenAge,
     }),
     refreshToken: jwt.sign(
       { login, access_level },
       process.env.JWT_REFRESH_KEY,
-      { expiresIn: `${refreshTokenAge}` }
+      { expiresIn: refreshTokenAge }
     ),
   };
 };

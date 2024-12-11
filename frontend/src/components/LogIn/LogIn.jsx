@@ -46,7 +46,7 @@ export default function LogIn() {
       login: login,
       password: hash,
       UUID4: UUID4,
-      isSession: !checked,
+      RememberMe: checked,
     };
     $api
       .post("/login", data)

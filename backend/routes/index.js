@@ -10,6 +10,7 @@ router.get("/test", DataController.test);
 router.get("/devices", checkCookie, DataController.devices);
 router.get("/refresh", DataController.refresh);
 router.get("/test_esp", checkCookie, DataController.test_esp);
+router.get("/getSystems", checkCookie, DataController.getSystems);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
