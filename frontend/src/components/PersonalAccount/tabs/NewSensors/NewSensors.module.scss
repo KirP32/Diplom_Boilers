@@ -1,0 +1,46 @@
+.sensors_wrapper {
+    padding: 0px 15px;
+}
+.control_buttons {
+    & button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        & h4 {
+            font-size: 19px;
+        }
+        & span {
+            font-size: 21px;
+        }
+    }
+}
+
+.in_active {
+    display: none;
+}
+
+.wrapper_container {
+    overflow: auto;
+    height: 676px;
+}
+
+.grid_container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 16px;
+}
+
+.grid_item {
+    cursor: pointer;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 116px;
+    font-size: 18px;
+    text-align: center;
+}

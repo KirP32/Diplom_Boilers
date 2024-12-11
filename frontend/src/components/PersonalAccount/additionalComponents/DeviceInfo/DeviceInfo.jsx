@@ -7,10 +7,13 @@ export default function DeviceInfo({ deviceObject }) {
         <section className={styles.__device_info__header}>
           <h4>{deviceObject.name} |</h4>{" "}
           <div
-            className={`${styles[`circle__` + `${deviceObject.status}`]} ${
-              styles.circle
-            } ${styles.no_select}`}
+            className={`${styles[`circle__online`]} ${styles.circle} ${
+              styles.no_select
+            }`}
           />
+          {/* className={`${styles[`circle__` + `${deviceObject.status}`]} ${
+              styles.circle
+            } ${styles.no_select}`} */}
         </section>
         <section className={styles.__device_info__connection}>
           <span

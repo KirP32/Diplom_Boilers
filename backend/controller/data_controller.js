@@ -240,20 +240,21 @@ class DataController {
   }
 
   async test_esp(req, res, next) {
-    const api = req.headers["authorization"];
-    await axios
-      .get("http://185.113.139.204:8000/module/get/0-00002", {
-        headers: {
-          Authorization: api,
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        res.send(response.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    try {
+      const api = req.headers["authorization"];
+      await axios
+        .get("http://185.113.139.204:8000/module/get/0-00002", {
+          headers: {
+            Authorization: api,
+            "Content-Type": "application/json",
+          },
+        })
+        .then((response) => {
+          res.send(response.data);
+        });
+    } catch (error) {
+      console.log(error.message);
+    }
   }
 
   async off_esp(req, res, next) {

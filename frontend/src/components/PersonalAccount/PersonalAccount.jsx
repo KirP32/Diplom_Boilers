@@ -11,6 +11,7 @@ import { ThemeContext } from "../../Theme";
 import Indicators from "./Indicators/Indicators";
 import Sensors from "./tabs/Sensors/Sensors";
 import Mnemoscheme from "./tabs/Mnemoscheme/Mnemoscheme";
+import NewSensors from "./tabs/NewSensors/NewSensors";
 
 export default function PersonalAccount() {
   const [devicesArray, setdevicesArray] = useState([]);
@@ -23,11 +24,12 @@ export default function PersonalAccount() {
 
   const tabObject = {
     sensors: (
-      <Sensors
-        deviceObject={deviceObject}
-        setdevicesArray={setdevicesArray}
-        devicesArray={devicesArray}
-      />
+      // <Sensors
+      //   deviceObject={deviceObject}
+      //   setdevicesArray={setdevicesArray}
+      //   devicesArray={devicesArray}
+      // />
+      <NewSensors deviceObject={deviceObject} />
     ),
     mnemoscheme: <Mnemoscheme />,
   };
@@ -36,10 +38,11 @@ export default function PersonalAccount() {
 
   const getAllDevices = useCallback(async () => {
     try {
-      const response = await $api.get("/test_esp");
+      const response = await $api.get("/getSystems");
       if (response.status === 200) {
         const devices = [formatResponseData(response.data)];
         setdevicesArray(devices);
+        // console.log(devices);
         if (!deviceObject) {
           setDeviceObject(devices[0]);
         }
@@ -134,7 +137,6 @@ export default function PersonalAccount() {
           </div>
         </>
       )}
-
       <SettingsDialog
         open={settingsDialog}
         setSettingsDialog={(e) => setSettingsDialog(e)}
