@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const router = require("./routes/index").default;
+const router = require("./routes/index");
 const pool = require("./dataBase/pool");
 
 const app = express();
