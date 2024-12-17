@@ -12,6 +12,7 @@ import Indicators from "./Indicators/Indicators";
 import Sensors from "./tabs/Sensors/Sensors";
 import Mnemoscheme from "./tabs/Mnemoscheme/Mnemoscheme";
 import NewSensors from "./tabs/NewSensors/NewSensors";
+import ViewRequests from "./tabs/ViewRequests/ViewRequests";
 
 export default function PersonalAccount() {
   const [devicesArray, setdevicesArray] = useState([]);
@@ -21,6 +22,7 @@ export default function PersonalAccount() {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("sensors");
+  console.log("PersonalAccount render");
 
   const tabObject = {
     sensors: (
@@ -32,6 +34,7 @@ export default function PersonalAccount() {
       <NewSensors deviceObject={deviceObject} />
     ),
     mnemoscheme: <Mnemoscheme />,
+    viewRequests: <ViewRequests />,
   };
 
   let flag_error = false;

@@ -1,0 +1,98 @@
+.backdrop {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: flex-end;
+    z-index: 15;
+}
+
+.panel {
+    background: #fff;
+    width: 75%;
+    height: 100%;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    overflow-y: auto;
+    animation: slideInRight 0.25s ease-out;
+
+    &__stepper {
+        display: flex;
+        gap: 15px;
+        justify-content: space-between;
+        padding-bottom: 15px;
+
+        &__item_holder {
+            background-color: #a5c1d3;
+            padding: 6px;
+            border-radius: 6px;
+            z-index: 3;
+            position: relative;
+            padding: 10px 15px;
+            cursor: pointer;
+            & h4 {
+                position: relative;
+                z-index: 2;
+            }
+            &::after {
+                content: "";
+                position: absolute;
+                cursor: default;
+                top: 50%;
+                left: 100%;
+                width: 100px;
+                height: 2px;
+                background-color: #ccc;
+                transform: translateY(-50%);
+                z-index: 1;
+            }
+            &::before {
+                background-color: #a5c1d3;
+            }
+
+            &:last-child::after {
+                display: none;
+            }
+        }
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.active_stage {
+    position: relative;
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: lightgreen;
+        border-radius: 6px;
+        z-index: 2;
+        animation: pulse 2s infinite;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.08);
+    }
+    100% {
+        transform: scale(1);
+    }
+}

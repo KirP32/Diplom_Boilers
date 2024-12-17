@@ -16,6 +16,7 @@ export default function Indicators({ setSelectedTab, tab }) {
   const [systemAnchorEl, setSystemAnchorEl] = useState(null);
   const [requestsAnchorEl, setRequestsAnchorEl] = useState(null);
   const navigate = useNavigate();
+  console.log("Indicators render");
 
   const handleOpenMonitoringMenu = (event) => {
     setMonitoringAnchorEl(event.currentTarget);

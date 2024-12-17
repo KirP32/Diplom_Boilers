@@ -11,6 +11,7 @@ import WorkerPanel from "./components/WorkerPanel/WorkerPanel.jsx";
 import WorkerGuard from "./components/Guards/WorkerGuard.jsx";
 import "material-icons/iconfont/material-icons.css";
 import { ThemeProvider } from "./Theme.jsx";
+import RequestDetails from "./components/PersonalAccount/tabs/ViewRequests/RequestDetails/RequestDetails";
 
 const router = createBrowserRouter(
   [
@@ -30,6 +31,12 @@ const router = createBrowserRouter(
           <PersonalAccount />
         </PrivateRoute>
       ),
+      children: [
+        {
+          path: "request/:id",
+          element: <RequestDetails />,
+        },
+      ],
     },
     {
       path: "/workerpanel",

@@ -11,6 +11,7 @@ router.get("/devices", checkCookie, DataController.devices);
 router.get("/refresh", DataController.refresh);
 router.get("/test_esp", checkCookie, DataController.test_esp);
 router.get("/getSystems", checkCookie, DataController.getSystems);
+router.get("/getSystemRequests", checkCookie, DataController.getSystemRequests);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

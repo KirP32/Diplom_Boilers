@@ -6,7 +6,7 @@ import Additionalinfo from "./Additionalinfo/Additionalinfo";
 export default function NewSensors({ deviceObject }) {
   const [dataSystems, setDataSystems] = useState([]);
   const [activeSensor, setActiveSensor] = useState(null);
-
+  console.log("NewSensors render");
   return (
     <div className={styles.sensors_wrapper}>
       <div

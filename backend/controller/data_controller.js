@@ -562,6 +562,76 @@ class DataController {
       res.status(500).send("Server Error: cant get Boilers Systems");
     }
   }
+  async getSystemRequests(req, res) {
+    try {
+      const data = {
+        inProgress: [
+          {
+            id: 1,
+            name: "Ошибка датчика температуры",
+            priority: "Средний",
+            type: 1,
+            stage: 1,
+          },
+          {
+            id: 2,
+            name: "Перестал включаться",
+            priority: "Средний",
+            type: 1,
+            stage: 1,
+          },
+          {
+            id: 3,
+            name: "Течет теплообменник",
+            priority: "Высокий",
+            type: 1,
+            stage: 1,
+          },
+          {
+            id: 4,
+            name: "Нет подключения к сети",
+            priority: "Низкий",
+            type: 1,
+            stage: 1,
+          },
+        ],
+        completed: [
+          {
+            id: 5,
+            name: "Проблема с подачей газа",
+            priority: "Высокий",
+            type: 1,
+            stage: 1,
+          },
+          {
+            id: 6,
+            name: "Засорение фильтра",
+            priority: "Низкий",
+            type: 1,
+            stage: 1,
+          },
+          {
+            id: 7,
+            name: "Требуется чистка горелки",
+            priority: "Средний",
+            type: 1,
+            stage: 1,
+          },
+          {
+            id: 8,
+            name: "Замена циркуляционного насоса",
+            priority: "Высокий",
+            type: 1,
+            stage: 1,
+          },
+        ],
+      };
+      res.send(data);
+    } catch (error) {
+      console.log(error);
+      res.sendStatus(500);
+    }
+  }
 }
 
 async function updateToken(login, refreshToken, UUID4) {
