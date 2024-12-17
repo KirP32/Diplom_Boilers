@@ -1,4 +1,5 @@
-import React, { useEffect, createContext, useState } from "react";
+import { jwtDecode } from "jwt-decode";
+import React, { useEffect, createContext, useState, useCallback } from "react";
 
 const ThemeContext = createContext();
 
@@ -14,6 +15,11 @@ const getTheme = () => {
 
 const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(getTheme);
+  const [access_level, setAccesslevel] = useState(0);
+
+  function refreshAccess(access_level) {
+    setAccesslevel(access_level);
+  }
 
   function toggleTheme() {
     if (theme === "dark-theme") {
@@ -37,6 +43,8 @@ const ThemeProvider = ({ children }) => {
         theme,
         setTheme,
         toggleTheme,
+        access_level,
+        refreshAccess,
       }}
     >
       {children}

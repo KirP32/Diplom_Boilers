@@ -20,10 +20,9 @@
     animation: slideInRight 0.25s ease-out;
 
     &__stepper {
-        display: flex;
-        gap: 15px;
-        justify-content: space-between;
-        padding-bottom: 15px;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
 
         &__item_holder {
             background-color: #a5c1d3;
@@ -32,6 +31,9 @@
             z-index: 3;
             position: relative;
             padding: 10px 15px;
+            width: fit-content;
+            min-width: 120px;
+            text-align: center;
             cursor: pointer;
             & h4 {
                 position: relative;
@@ -40,15 +42,15 @@
             &::after {
                 content: "";
                 position: absolute;
-                cursor: default;
                 top: 50%;
                 left: 100%;
-                width: 100px;
+                width: 155px;
                 height: 2px;
                 background-color: #ccc;
                 transform: translateY(-50%);
                 z-index: 1;
             }
+
             &::before {
                 background-color: #a5c1d3;
             }

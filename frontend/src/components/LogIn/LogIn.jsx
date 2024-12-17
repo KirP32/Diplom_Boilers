@@ -2,12 +2,13 @@ import styles from "./LogIn.module.scss";
 import Input from "../Input/Input";
 import Button from "../Button/Button";
 import { Link } from "react-router-dom";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { sha256 } from "js-sha256";
 import $api from "../../http";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { v4 as uuidv4 } from "uuid";
+import { ThemeContext } from "../../Theme";
 
 export default function LogIn() {
   const [checked, setChecked] = useState(false);
@@ -17,6 +18,7 @@ export default function LogIn() {
   const [password, setPassword] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [decoded, setDecoded] = useState({});
+  const { refreshAccess } = useContext(ThemeContext);
 
   useEffect(() => {
     const token =
@@ -59,6 +61,7 @@ export default function LogIn() {
         }
         setToken_access(accessToken);
         navigate("/personalaccount");
+        refreshAccess(jwtDecode(accessToken).access_level);
       })
       .catch((error) => {
         if (error.response && error.response.status === 401) {
