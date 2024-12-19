@@ -9,10 +9,11 @@ import formatResponseData from "./Functions/formatResponseData";
 import SettingsDialog from "./Dialogs/SettingsDialog/SettingsDialog";
 import { ThemeContext } from "../../Theme";
 import Indicators from "./Indicators/Indicators";
-import Sensors from "./tabs/Sensors/Sensors";
 import Mnemoscheme from "./tabs/Mnemoscheme/Mnemoscheme";
 import NewSensors from "./tabs/NewSensors/NewSensors";
 import ViewRequests from "./tabs/ViewRequests/ViewRequests";
+import CircularProgress from "@mui/material/CircularProgress";
+import CreateRequests from "./tabs/createRequests/CreateRequests";
 
 export default function PersonalAccount() {
   const [devicesArray, setdevicesArray] = useState([]);
@@ -22,6 +23,7 @@ export default function PersonalAccount() {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("sensors");
+
   console.log("PersonalAccount render");
 
   const tabObject = {
@@ -35,6 +37,7 @@ export default function PersonalAccount() {
     ),
     mnemoscheme: <Mnemoscheme />,
     viewRequests: <ViewRequests />,
+    createRequests: <CreateRequests />,
   };
 
   let flag_error = false;
@@ -43,9 +46,8 @@ export default function PersonalAccount() {
     try {
       const response = await $api.get("/getSystems");
       if (response.status === 200) {
-        const devices = [formatResponseData(response.data)];
+        const devices = formatResponseData(response.data);
         setdevicesArray(devices);
-        // console.log(devices);
         if (!deviceObject) {
           setDeviceObject(devices[0]);
         }
@@ -72,7 +74,7 @@ export default function PersonalAccount() {
 
     const intervalId = setInterval(() => {
       getAllDevices();
-    }, 15000);
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, [getAllDevices]);
@@ -94,13 +96,21 @@ export default function PersonalAccount() {
             <>
               {devicesArray
                 .filter((item) =>
-                  item.name.toLowerCase().includes(deviceFindName.toLowerCase())
+                  item?.name
+                    .toLowerCase()
+                    .includes(deviceFindName.toLowerCase())
                 )
                 .map((item) => (
                   <div
                     key={item.name}
-                    className={styles.devices_container}
-                    onClick={() => setDeviceObject(item)}
+                    className={`${styles.devices_container} ${
+                      item.name === deviceObject.name
+                        ? styles.container_active
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setDeviceObject(item);
+                    }}
                   >
                     <div
                       className={`${styles[`circle__` + `${item.status}`]} ${
@@ -136,7 +146,10 @@ export default function PersonalAccount() {
       {devicesArray.length == 0 && (
         <>
           <div className={`${styles.noContent}`}>
-            <h3>Для продолжения работы добавьте устройство</h3>
+            <section className={styles.noContent__section}>
+              <h3>Загружаем ваши данные, пожалуйста, подождите</h3>
+              <CircularProgress disableShrink />
+            </section>
           </div>
         </>
       )}

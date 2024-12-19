@@ -182,8 +182,8 @@ class DataController {
 
     try {
       const userResult = await pool.query(
-        "INSERT INTO users (username, phone_number, password_hash, access_level) VALUES ($1, $2, $3, 0)",
-        [login, "123456789", hash]
+        "INSERT INTO users (username, phone_number, password_hash, access_level, email) VALUES ($1, $2, $3, 0, $4)",
+        [login, "123456789", hash, email]
       );
       //console.log(decodeJWT(authcookie).login);
       if (userResult.rowCount > 0) {
@@ -438,125 +438,59 @@ class DataController {
 
   async getSystems(req, res) {
     try {
-      const data = [
-        {
-          name: "ADS-Line",
-          server_bridge_mode: 0,
-          t_int: 0,
-          t_ext: 0,
-          module_list: [
-            {
-              s_number: "sn_00015",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00019",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00020",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00018",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00004",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00005",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00007",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00006",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00017",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00016",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00013",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00014",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00010",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00011",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00003",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00012",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00002",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-            {
-              s_number: "sn_00009",
-              data: "foobar",
-              connected: 1,
-              local: 0,
-            },
-          ],
-        },
+      const api = req.headers["authorization"];
+      const request = await pool.query(
+        `SELECT * FROM user_systems WHERE user_id = (
+          SELECT id FROM users WHERE username = $1
+        );`,
+        [decodeJWT(req.cookies.refreshToken).login]
+      );
+
+      const systems = request.rows;
+
+      if (!systems.length) {
+        return res.send([]);
+      }
+
+      // const allSystems = await Promise.allSettled(
+      //   systems.map((system) => {
+      //     return axios.get(
+      //       `http://185.113.139.204:8000/module/get/${system.system_id}`,
+      //       {
+      //         headers: {
+      //           Authorization: api,
+      //           "Content-Type": "application/json",
+      //         },
+      //       }
+      //     );
+      //   })
+      // ).then((results) =>
+      //   results.map((result, i) => {
+      //     if (result.status === "fulfilled") {
+      //       if (result.value.data === null || undefined) {
+      //         return {
+      //           user_id: request.rows[i].user_id,
+      //           name: request.rows[i].name,
+      //           system_id: request.rows[i].system_id,
+      //         };
+      //       }
+      //       return result.value.data;
+      //     }
+      //     if (result.status === "rejected") {
+      //       return {
+      //         user_id: request.rows[i].user_id,
+      //         name: request.rows[i].name,
+      //         system_id: request.rows[i].system_id,
+      //       };
+      //     }
+      //   })
+      // );
+      const allSystems = [
+        { user_id: 1, name: "ADS-Line", system_id: "0-00002" },
+        { user_id: 1, name: "Test", system_id: "SysTest" },
       ];
-      res.send(data);
+      console.log(allSystems);
+      res.send(allSystems);
     } catch (error) {
       console.log(error);
       res.status(500).send("Server Error: cant get Boilers Systems");

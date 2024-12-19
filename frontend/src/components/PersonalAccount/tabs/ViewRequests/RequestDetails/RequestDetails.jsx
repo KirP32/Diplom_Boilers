@@ -28,39 +28,39 @@ export default function RequestDetails({ item, setItem }) {
     setItem(null);
   };
 
-  const [activeStep, setActiveStep] = React.useState(0);
-
   const handleStep = (step) => () => {
-    setActiveStep(step);
+    setItemStage(step);
   };
 
   const { access_level } = useContext(ThemeContext);
 
-  const [itemStage, setItemStage] = useState(item.stage);
+  const [itemStage, setItemStage] = useState(item.stage - 1); // Первый этап, но индекс с 0 в массивах
 
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
         <h3 style={{ textAlign: "center", marginBottom: 15 }}>{item.name}</h3>
-        {/* <div className={styles.panel__stepper}>
-          {item.type === 1 &&
-            data_type_1.map((string, index) => {
-              return (
-                <div
-                  key={data_type_1[index]}
-                  className={`${styles.panel__stepper__item_holder} ${
-                    itemStage - 1 === index ? styles.active_stage : ""
-                  }`}
-                  onClick={() => {
-                    if (access_level === 1) setItemStage(index + 1);
-                  }}
-                >
-                  <h4>{string}</h4>
-                </div>
-              );
-            })}
-        </div> */}
-        <Stepper nonLinear activeStep={activeStep}>
+        <Stepper
+          nonLinear
+          activeStep={itemStage}
+          sx={{
+            "& .MuiStepLabel-iconContainer .Mui-active": {
+              animation: "pulse 2s infinite",
+              color: "green",
+            },
+            "@keyframes pulse": {
+              "0%": {
+                transform: "scale(1)",
+              },
+              "50%": {
+                transform: "scale(1.2)",
+              },
+              "100%": {
+                transform: "scale(1)",
+              },
+            },
+          }}
+        >
           {data_type_1.map((label, index) => (
             <Step key={index}>
               <StepButton color="inherit" onClick={handleStep(index)}>
@@ -69,7 +69,7 @@ export default function RequestDetails({ item, setItem }) {
             </Step>
           ))}
         </Stepper>
-        {react_functional_components[data_type_1[itemStage - 1]][access_level]}
+        {react_functional_components[data_type_1[itemStage]][access_level]}
         <button onClick={closePanel}>Закрыть</button>
       </div>
     </div>

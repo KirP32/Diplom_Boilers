@@ -101,7 +101,6 @@
         border-radius: 20px;
         background-color: antiquewhite;
         cursor: pointer;
-
         &::before {
             content: " ";
             position: absolute;
@@ -155,6 +154,14 @@
     color: var(--text-color);
     opacity: 0;
     animation: fadeIn 1.5s ease-in-out forwards;
+    &__section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        h3 {
+            margin: 0;
+        }
+    }
 }
 
 @keyframes fadeIn {
@@ -190,4 +197,9 @@
             border-radius: 6px;
         }
     }
+}
+
+.container_active {
+    background-color: hsl(216, 40%, 42%) !important;
+    color: white;
 }

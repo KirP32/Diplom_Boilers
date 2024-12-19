@@ -9,10 +9,18 @@ export default function formatResponseData(data) {
   //         });
   //     }
   // }
-  return {
-    id: Math.floor(Math.random() * 100) + 1, // ДОЛЖНО БРАТЬСЯ ИЗ БД, СЕЙЧАС ЗАГЛУШКА
-    name: data[0].name,
-    status: "online",
-    boilers: data[0].module_list,
-  };
+  let foo_array = [];
+  try {
+    data.map((item) =>
+      foo_array.push({
+        id: Math.floor(Math.random() * 100) + 1, // ДОЛЖНО БРАТЬСЯ ИЗ БД, СЕЙЧАС ЗАГЛУШКА
+        name: item.name,
+        status: "online",
+        boilers: item.module_list || [],
+      })
+    );
+  } catch (error) {
+    console.log(error);
+  }
+  return foo_array;
 }
