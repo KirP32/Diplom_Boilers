@@ -13,7 +13,7 @@ import Mnemoscheme from "./tabs/Mnemoscheme/Mnemoscheme";
 import NewSensors from "./tabs/NewSensors/NewSensors";
 import ViewRequests from "./tabs/ViewRequests/ViewRequests";
 import CircularProgress from "@mui/material/CircularProgress";
-import CreateRequests from "./tabs/createRequests/CreateRequests";
+import CreateRequests from "./tabs/CreateSomeRequest/CreateRequests";
 
 export default function PersonalAccount() {
   const [devicesArray, setdevicesArray] = useState([]);
