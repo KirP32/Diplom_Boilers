@@ -452,44 +452,39 @@ class DataController {
         return res.send([]);
       }
 
-      // const allSystems = await Promise.allSettled(
-      //   systems.map((system) => {
-      //     return axios.get(
-      //       `http://185.113.139.204:8000/module/get/${system.system_id}`,
-      //       {
-      //         headers: {
-      //           Authorization: api,
-      //           "Content-Type": "application/json",
-      //         },
-      //       }
-      //     );
-      //   })
-      // ).then((results) =>
-      //   results.map((result, i) => {
-      //     if (result.status === "fulfilled") {
-      //       if (result.value.data === null || undefined) {
-      //         return {
-      //           user_id: request.rows[i].user_id,
-      //           name: request.rows[i].name,
-      //           system_id: request.rows[i].system_id,
-      //         };
-      //       }
-      //       return result.value.data;
-      //     }
-      //     if (result.status === "rejected") {
-      //       return {
-      //         user_id: request.rows[i].user_id,
-      //         name: request.rows[i].name,
-      //         system_id: request.rows[i].system_id,
-      //       };
-      //     }
-      //   })
-      // );
-      const allSystems = [
-        { user_id: 1, name: "ADS-Line", system_id: "0-00002" },
-        { user_id: 1, name: "Test", system_id: "SysTest" },
-      ];
-      console.log(allSystems);
+      const allSystems = await Promise.allSettled(
+        systems.map((system) => {
+          return axios.get(
+            `http://185.113.139.204:8000/module/get/${system.system_id}`,
+            {
+              headers: {
+                Authorization: api,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        })
+      ).then((results) =>
+        results.map((result, i) => {
+          if (result.status === "fulfilled") {
+            if (result.value.data === null || undefined) {
+              return {
+                user_id: request.rows[i].user_id,
+                name: request.rows[i].name,
+                system_id: request.rows[i].system_id,
+              };
+            }
+            return result.value.data;
+          }
+          if (result.status === "rejected") {
+            return {
+              user_id: request.rows[i].user_id,
+              name: request.rows[i].name,
+              system_id: request.rows[i].system_id,
+            };
+          }
+        })
+      );
       res.send(allSystems);
     } catch (error) {
       console.log(error);

@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "dotenv": "^16.4.5",
-    "leaflet": "^1.9.4",
-    "react-leaflet": "^4.2.1",
-    "react-phone-number-input": "^3.4.10"
-  }
-}

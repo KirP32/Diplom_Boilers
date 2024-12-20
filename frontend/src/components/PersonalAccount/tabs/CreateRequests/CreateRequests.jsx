@@ -3,10 +3,10 @@ import styles from "./CreateRequests.module.scss";
 import PhoneInput from "../../additionalComponents/PhoneInput/PhoneInput";
 
 export default function CreateRequests() {
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phone, setPhone] = useState("");
 
-  const handlePhoneChange = (newPhone) => {
-    setPhoneNumber(newPhone);
+  const handlePhoneChange = (value) => {
+    setPhone(value);
   };
 
   return (
