@@ -5,10 +5,6 @@ import PhoneInput from "../../additionalComponents/PhoneInput/PhoneInput";
 export default function CreateRequests() {
   const [phone, setPhone] = useState("");
 
-  const handlePhoneChange = (value) => {
-    setPhone(value);
-  };
-
   return (
     <div className={styles.create_wrapper}>
       <h3>Заполните вашу заявку</h3>
@@ -22,7 +18,13 @@ export default function CreateRequests() {
       </section>
       <section>
         <h4>Номер для связи</h4>
-        <PhoneInput phone={phsone} onPhoneChange={handlePhoneChange} />
+        <PhoneInput
+          phone={phone}
+          onPhoneChange={(newPhone) => {
+            setPhone(newPhone);
+            console.log(phone);
+          }}
+        />
       </section>
     </div>
   );
