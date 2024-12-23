@@ -522,14 +522,15 @@ class DataController {
 
   async updateBoiler(req, res, next) {
     try {
-      const { id, name, sensor_data } = req.body;
-      console.log(id, name, sensor_data);
+      const { id, name, sensor_data, status = "f" } = req.body;
+      console.log(id, name, sensor_data, status);
+
       const result = await pool.query(
         `UPDATE boilers
-         SET name = $1, sensor_data = $2
-         WHERE id = $3
+         SET name = $1, sensor_data = $2, status = $3
+         WHERE id = $4
          RETURNING *`,
-        [name, sensor_data, id]
+        [name, sensor_data, status, id]
       );
 
       if (result.rowCount > 0) {
