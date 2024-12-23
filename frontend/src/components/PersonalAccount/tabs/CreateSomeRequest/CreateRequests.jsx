@@ -22,7 +22,7 @@ export default function CreateRequests() {
       </section>
       <section>
         <h4>Номер для связи</h4>
-        <PhoneInput phone={phoneNumber} onPhoneChange={handlePhoneChange} />
+        <PhoneInput phone={phsone} onPhoneChange={handlePhoneChange} />
       </section>
     </div>
   );

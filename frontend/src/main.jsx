@@ -12,6 +12,7 @@ import WorkerGuard from "./components/Guards/WorkerGuard.jsx";
 import "material-icons/iconfont/material-icons.css";
 import { ThemeProvider } from "./Theme.jsx";
 import RequestDetails from "./components/PersonalAccount/tabs/ViewRequests/RequestDetails/RequestDetails";
+import ErrorComponent from "./components/ErrorComponent/ErrorComponent.jsx";
 
 const router = createBrowserRouter(
   [
@@ -37,6 +38,7 @@ const router = createBrowserRouter(
           element: <RequestDetails />,
         },
       ],
+      errorElement: <ErrorComponent />,
     },
     {
       path: "/workerpanel",
