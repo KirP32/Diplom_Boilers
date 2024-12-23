@@ -491,6 +491,84 @@ class DataController {
       res.status(500).send("Server Error: cant get Boilers Systems");
     }
   }
+  //ANDROID
+  async getBoilers(req, res, next) {
+    try {
+      const info = await pool.query("SELECT * FROM boilers");
+      res.send(info.rows);
+    } catch (error) {
+      console.error("Error fetching boilers:", error);
+      res.status(500).send({ error: "An error occurred while fetching data" });
+    }
+  }
+
+  async deleteBoiler(req, res, next) {
+    try {
+      const { id } = req.body;
+      const result = await pool.query("DELETE FROM boilers WHERE id = $1", [
+        id,
+      ]);
+
+      if (result.rowCount > 0) {
+        res.send({ message: "Boiler deleted successfully" });
+      } else {
+        res.status(404).send({ error: "Boiler not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting boiler:", error);
+      res.status(500).send({ error: "An error occurred while deleting data" });
+    }
+  }
+
+  async updateBoiler(req, res, next) {
+    try {
+      const { id, name, sensor_data } = req.body;
+      console.log(id, name, sensor_data);
+      const result = await pool.query(
+        `UPDATE boilers
+         SET name = $1, sensor_data = $2
+         WHERE id = $3
+         RETURNING *`,
+        [name, sensor_data, id]
+      );
+
+      if (result.rowCount > 0) {
+        res.send({
+          message: "Boiler updated successfully",
+          boiler: result.rows[0],
+        });
+      } else {
+        res.status(404).send({ error: "Boiler not found" });
+      }
+    } catch (error) {
+      console.error("Error updating boiler:", error);
+      res.status(500).send({ error: "An error occurred while updating data" });
+    }
+  }
+
+  async createBoiler(req, res, next) {
+    try {
+      const { name, sensor_data, status } = req.body;
+
+      const boilerStatus = status !== undefined ? status : false;
+
+      const result = await pool.query(
+        `INSERT INTO boilers (id, name, status, sensor_data)
+         VALUES (gen_random_uuid(), $1, $2, $3)
+         RETURNING *`,
+        [name, boilerStatus, sensor_data]
+      );
+
+      res.status(201).send({
+        message: "Boiler created successfully",
+        boiler: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Error creating boiler:", error);
+      res.status(500).send({ error: "An error occurred while creating data" });
+    }
+  }
+  //ANDROID
   async getSystemRequests(req, res) {
     try {
       const data = {

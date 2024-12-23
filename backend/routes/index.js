@@ -12,7 +12,12 @@ router.get("/refresh", DataController.refresh);
 router.get("/test_esp", checkCookie, DataController.test_esp);
 router.get("/getSystems", checkCookie, DataController.getSystems);
 router.get("/getSystemRequests", checkCookie, DataController.getSystemRequests);
-
+// ANDROID
+router.get("/getBoilers", DataController.getBoilers);
+router.post("/deleteBoiler", DataController.deleteBoiler);
+router.post("/changeBoiler", DataController.updateBoiler);
+router.post("/createBoiler", DataController.createBoiler);
+// ANDROID
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
 router.post("/logout", DataController.logout);
