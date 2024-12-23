@@ -37,7 +37,7 @@ export default function PersonalAccount() {
     ),
     mnemoscheme: <Mnemoscheme />,
     viewRequests: <ViewRequests />,
-    createRequests: <CreateRequests />,
+    createRequests: <CreateRequests deviceObject={deviceObject} />,
   };
 
   let flag_error = false;

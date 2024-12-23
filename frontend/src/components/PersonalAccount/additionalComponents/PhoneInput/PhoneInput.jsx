@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
 
-export default function PhoneInputComponent({ phone, onPhoneChange }) {
+export default function PhoneInputComponent({ phone, onPhoneChange, style }) {
   return (
     <div className="phone-input-container">
       <PhoneInput
@@ -10,6 +10,7 @@ export default function PhoneInputComponent({ phone, onPhoneChange }) {
         value={phone}
         onChange={(value) => onPhoneChange(value)}
         disableCountryGuess={true}
+        inputStyle={style}
       />
     </div>
   );
