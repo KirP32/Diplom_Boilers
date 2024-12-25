@@ -51,3 +51,18 @@
 .phone_section {
     place-items: center;
 }
+
+.error {
+    color: red;
+    font-size: 14px;
+    margin-top: 0.5em;
+}
+
+.success {
+    color: green;
+    background-color: antiquewhite;
+    padding: 2em;
+    border-radius: 5px;
+    font-size: 17px;
+    text-align: center;
+}

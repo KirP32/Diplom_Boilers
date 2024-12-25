@@ -7,6 +7,7 @@ export default function NewSensors({ deviceObject }) {
   const [dataSystems, setDataSystems] = useState([]);
   const [activeSensor, setActiveSensor] = useState(null);
   console.log("NewSensors render");
+  console.log(deviceObject);
   return (
     <div className={styles.sensors_wrapper}>
       <div
@@ -42,23 +43,3 @@ export default function NewSensors({ deviceObject }) {
     </div>
   );
 }
-
-//   async function getSystems() {
-//     try {
-//       const result = await $api.get("/getSystems");
-//       setDataSystems(result.data);
-//       console.log(result.data);
-//     } catch (error) {
-//       console.error(error);
-//     }
-//   }
-
-//   useEffect(() => {
-//     getSystems();
-
-//     const intervalId = setInterval(() => {
-//       getSystems();
-//     }, 15000);
-
-//     return () => clearInterval(intervalId);
-//   }, []);

@@ -3,7 +3,7 @@ import styles from "./ViewRequests.module.scss";
 import $api from "../../../../http";
 import RequestDetails from "./RequestDetails/RequestDetails";
 
-export default function ViewRequests() {
+export default function ViewRequests({ deviceObject }) {
   const [data, setData] = useState(null);
   const [filters, setFilters] = useState({
     available: false,
@@ -15,7 +15,7 @@ export default function ViewRequests() {
 
   useEffect(() => {
     $api
-      .get("/getSystemRequests")
+      .get("/getSystemRequests", { params: { name: deviceObject.name } })
       .then((result) => {
         setData(result.data);
       })
@@ -36,14 +36,18 @@ export default function ViewRequests() {
     const filtered = [];
     if (data !== null) {
       if (filters.inProgress) {
-        filtered.push(
-          ...data.inProgress.map((item) => ({ ...item, status: "inProgress" }))
-        );
+        data.forEach((item) => {
+          if (item.status === 0) {
+            filtered.push(item);
+          }
+        });
       }
       if (filters.completed) {
-        filtered.push(
-          ...data.completed.map((item) => ({ ...item, status: "completed" }))
-        );
+        data.forEach((item) => {
+          if (item.status === 1) {
+            filtered.push(item);
+          }
+        });
       }
       return filtered;
     }
@@ -95,15 +99,13 @@ export default function ViewRequests() {
               key={item.id}
               onClick={() => handleCardClick(item)}
             >
-              <h5>{item.name}</h5>
+              <h5>{item.problem_name}</h5>
               <span
                 className={`${
-                  item.status === "inProgress"
-                    ? styles.inProgress
-                    : styles.completed
+                  item.status === 0 ? styles.inProgress : styles.completed
                 } ${styles.status_badge}`}
               >
-                {item.status === "inProgress" ? "В работе" : "Завершено"}
+                {item.status === 0 ? "В работе" : "Завершено"}
               </span>
             </div>
           ))

@@ -129,7 +129,7 @@ class DataController {
       }
 
       if (result.rows.length === 0) {
-        return res.status(401).json({ error: "User not found" });
+        return res.status(400).json({ error: "User not found" });
       }
 
       const pass_hash = result.rows[0].password_hash;
@@ -170,7 +170,7 @@ class DataController {
         });
         res.send({ accessToken });
       } else {
-        res.status(401).json({ error: "Invalid credentials" });
+        res.status(400).json({ error: "Invalid credentials" });
       }
     });
   }
@@ -572,72 +572,105 @@ class DataController {
   //ANDROID
   async getSystemRequests(req, res) {
     try {
-      const data = {
-        inProgress: [
-          {
-            id: 1,
-            name: "Ошибка датчика температуры",
-            priority: "Средний",
-            type: 1,
-            stage: 1,
-          },
-          {
-            id: 2,
-            name: "Перестал включаться",
-            priority: "Средний",
-            type: 1,
-            stage: 1,
-          },
-          {
-            id: 3,
-            name: "Течет теплообменник",
-            priority: "Высокий",
-            type: 1,
-            stage: 1,
-          },
-          {
-            id: 4,
-            name: "Нет подключения к сети",
-            priority: "Низкий",
-            type: 1,
-            stage: 1,
-          },
-        ],
-        completed: [
-          {
-            id: 5,
-            name: "Проблема с подачей газа",
-            priority: "Высокий",
-            type: 1,
-            stage: 1,
-          },
-          {
-            id: 6,
-            name: "Засорение фильтра",
-            priority: "Низкий",
-            type: 1,
-            stage: 1,
-          },
-          {
-            id: 7,
-            name: "Требуется чистка горелки",
-            priority: "Средний",
-            type: 1,
-            stage: 1,
-          },
-          {
-            id: 8,
-            name: "Замена циркуляционного насоса",
-            priority: "Высокий",
-            type: 1,
-            stage: 1,
-          },
-        ],
-      };
-      res.send(data);
+      const { name } = req.query;
+      await pool
+        .query(`SELECT * FROM user_requests WHERE system_name = $1`, [name])
+        .catch((error) => {
+          console.log(error);
+          res.sendStatus(500);
+        })
+        .then((result) => {
+          res.send(result.rows);
+        });
     } catch (error) {
       console.log(error);
       res.sendStatus(500);
+    }
+  }
+  async createRequest(req, res) {
+    try {
+      const {
+        problem_name,
+        system_id,
+        created_by,
+        description,
+        system_name,
+        phone,
+      } = req.body;
+      const result = await pool.query(
+        `INSERT INTO user_requests (problem_name, type, status, assigned_to, created_at, module, created_by, description, system_name, phone_number)
+VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
+        [
+          problem_name,
+          system_id,
+          await getID(created_by),
+          description,
+          system_name,
+          phone,
+        ]
+      );
+      if (result.rowCount === 1) {
+        res.sendStatus(200);
+      } else {
+        res.sendStatus(500);
+      }
+    } catch (error) {
+      console.error("Ошибка при выполнении запроса:", error);
+      res.sendStatus(500);
+    }
+  }
+  async getRequests(req, res, next) {
+    try {
+      const allDevices = await pool.query(
+        "SELECT * FROM user_requests WHERE assigned_to IS NULL;"
+      );
+      const id = await getID(decodeJWT(req.cookies.refreshToken).login);
+      const workerDevices = await pool.query(
+        "SELECT * FROM user_requests WHERE assigned_to = $1",
+        [id]
+      );
+      const resultData = {
+        allDevices: allDevices.rowCount > 0 ? allDevices.rows : [],
+        workerDevices: workerDevices.rowCount > 0 ? workerDevices.rows : [],
+      };
+      res.send(resultData);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+  async addRequest(req, res, next) {
+    try {
+      const { system_name, user, request_id, systems_names } = req.body;
+      const userId = await getID(user);
+      const resultRequest = await pool.query(
+        "UPDATE user_requests SET assigned_to = $1 WHERE id = $2;",
+        [userId, request_id]
+      );
+
+      let resultSystem = { rowCount: 1 };
+      if (!systems_names.includes(system_name)) {
+        resultSystem = await pool.query(
+          "INSERT INTO user_systems VALUES ($1, $2);",
+          [userId, system_name]
+        );
+      }
+
+      if (resultRequest.rowCount > 0 && resultSystem.rowCount > 0) {
+        res.sendStatus(200);
+      } else if (resultRequest.rowCount > 0) {
+        res.status(200).json({ message: "Не удалось добавить систему." });
+      } else {
+        res.status(500).json({ message: "Не удалось добавить заявку." });
+      }
+    } catch (error) {
+      console.error(error);
+
+      if (error.code === "23505") {
+        res.status(409).json({ message: "Такая система уже существует." });
+      } else {
+        res.status(500).json({ message: "Внутренняя ошибка сервера." });
+      }
     }
   }
 }

@@ -6,13 +6,44 @@ import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import Button from "../../../Button/Button";
 import { fontSize, padding } from "@mui/system";
+import { jwtDecode } from "jwt-decode";
+import $api from "../../../../http";
 
 export default function CreateRequests({ deviceObject }) {
   const [phone, setPhone] = useState("");
+  const [problem, setProblem] = useState("");
   const [object, setObject] = useState("Другое");
   const deviceObjectTemp = [...deviceObject.boilers, { s_number: "Другое" }];
+  const [errors, setErrors] = useState({ problem: false, phone: false });
+  const [description, setDescription] = useState("");
+  const [successFlag, setSuccessFlag] = useState(false);
 
-  function handleCreateRequest() {}
+  function validate() {
+    const problemError = problem.length < 1;
+    const phoneError = phone.length !== 12;
+
+    setErrors({ problem: problemError, phone: phoneError });
+
+    return !(problemError || phoneError);
+  }
+  function handleCreateRequest() {
+    if (validate()) {
+      const data = {
+        problem_name: problem,
+        system_id: object,
+        created_by: jwtDecode(
+          localStorage.getItem("accessToken") ||
+            sessionStorage.getItem("accessToken")
+        ).login,
+        description: description,
+        system_name: deviceObject.name,
+        phone: phone,
+      };
+      $api.post("/createRequest", data).then((result) => {
+        setSuccessFlag(true);
+      });
+    }
+  }
 
   return (
     <div className={styles.create_wrapper}>
@@ -20,7 +51,14 @@ export default function CreateRequests({ deviceObject }) {
       <div className={styles.form_wrapper}>
         <section className={styles.problem_input}>
           <h4>Ваша проблема</h4>
-          <input type="text" />
+          <input
+            type="text"
+            autoFocus
+            required
+            value={problem}
+            onChange={(e) => setProblem(e.target.value)}
+          />
+          {errors.problem && <h5 className={styles.error}>Укажите проблему</h5>}
         </section>
         <section>
           <h4>Проблема с:</h4>
@@ -55,7 +93,13 @@ export default function CreateRequests({ deviceObject }) {
         </section>
         <section>
           <h4>Подробности</h4>
-          <textarea name="" id="" className={styles.textarea_input} />
+          <textarea
+            name=""
+            id=""
+            className={styles.textarea_input}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
         </section>
         <section className={styles.phone_section}>
           <h4>Номер для связи</h4>
@@ -66,12 +110,18 @@ export default function CreateRequests({ deviceObject }) {
             }}
             style={{ fontSize: 17 }}
           />
+          {errors.phone && <h5 className={styles.error}>Неправильный номер</h5>}
         </section>
 
         <Button style={{ fontSize: 17 }} onClick={handleCreateRequest}>
           Создать
         </Button>
       </div>
+      {successFlag && (
+        <h4 className={styles.success}>
+          Завка успешно создана <br /> Проверь её в Заявки - Просмотр
+        </h4>
+      )}
     </div>
   );
 }

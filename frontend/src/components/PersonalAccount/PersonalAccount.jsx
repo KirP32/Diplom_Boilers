@@ -14,6 +14,7 @@ import NewSensors from "./tabs/NewSensors/NewSensors";
 import ViewRequests from "./tabs/ViewRequests/ViewRequests";
 import CircularProgress from "@mui/material/CircularProgress";
 import CreateRequests from "./tabs/CreateSomeRequest/CreateRequests";
+import WorkerRequests from "./WorkerRequests/WorkerRequests";
 
 export default function PersonalAccount() {
   const [devicesArray, setdevicesArray] = useState([]);
@@ -23,8 +24,10 @@ export default function PersonalAccount() {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("sensors");
-
+  const { access_level } = useContext(ThemeContext);
+  const [seeWorkerRequests, setSeeWorkerRequests] = useState(true);
   console.log("PersonalAccount render");
+  let systems_names = devicesArray.map((item) => item.name);
 
   const tabObject = {
     sensors: (
@@ -36,7 +39,7 @@ export default function PersonalAccount() {
       <NewSensors deviceObject={deviceObject} />
     ),
     mnemoscheme: <Mnemoscheme />,
-    viewRequests: <ViewRequests />,
+    viewRequests: <ViewRequests deviceObject={deviceObject} />,
     createRequests: <CreateRequests deviceObject={deviceObject} />,
   };
 
@@ -110,6 +113,7 @@ export default function PersonalAccount() {
                     }`}
                     onClick={() => {
                       setDeviceObject(item);
+                      setSeeWorkerRequests(false);
                     }}
                   >
                     <div
@@ -123,7 +127,16 @@ export default function PersonalAccount() {
             </>
           )}
         </div>
+
         <div className={styles.lk__wrapper__sidebar__options}>
+          {access_level === 1 && (
+            <Button
+              className={styles.requests}
+              onClick={() => setSeeWorkerRequests(!seeWorkerRequests)}
+            >
+              <h4>Заявки</h4>
+            </Button>
+          )}
           <Button className={styles.lk__wrapper__sidebar__options__btn_delete}>
             <h4>Удаление</h4>
           </Button>
@@ -135,24 +148,31 @@ export default function PersonalAccount() {
           </Button>
         </div>
       </div>
-      {devicesArray.length > 0 && (
-        <div className={styles.lk__wrapper__main__content}>
-          <div className={styles.lk__wrapper__main__content__wrapper}>
-            <Indicators setSelectedTab={setSelectedTab} tab={selectedTab} />
-            {tabObject[selectedTab]}
-          </div>
+      <div className={styles.lk__wrapper__main__content}>
+        <div className={styles.lk__wrapper__main__content__wrapper}>
+          {devicesArray.length > 0 &&
+            (seeWorkerRequests === false || access_level === 0) && (
+              <>
+                <Indicators setSelectedTab={setSelectedTab} tab={selectedTab} />
+                {tabObject[selectedTab]}
+              </>
+            )}
+          {devicesArray.length == 0 && seeWorkerRequests === false && (
+            <>
+              <div className={`${styles.noContent}`}>
+                <section className={styles.noContent__section}>
+                  <h3>Ищем ваши системы, пожалуйста, подождите</h3>
+                  <CircularProgress disableShrink />
+                </section>
+              </div>
+            </>
+          )}
+          {access_level === 1 && seeWorkerRequests && (
+            <WorkerRequests systems_names={systems_names} />
+          )}
         </div>
-      )}
-      {devicesArray.length == 0 && (
-        <>
-          <div className={`${styles.noContent}`}>
-            <section className={styles.noContent__section}>
-              <h3>Загружаем ваши данные, пожалуйста, подождите</h3>
-              <CircularProgress disableShrink />
-            </section>
-          </div>
-        </>
-      )}
+      </div>
+
       <SettingsDialog
         open={settingsDialog}
         setSettingsDialog={(e) => setSettingsDialog(e)}

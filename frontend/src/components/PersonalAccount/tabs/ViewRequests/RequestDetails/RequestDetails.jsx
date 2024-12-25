@@ -34,12 +34,14 @@ export default function RequestDetails({ item, setItem }) {
 
   const { access_level } = useContext(ThemeContext);
 
-  const [itemStage, setItemStage] = useState(item.stage - 1); // Первый этап, но индекс с 0 в массивах
+  const [itemStage, setItemStage] = useState(item.stage);
 
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
-        <h3 style={{ textAlign: "center", marginBottom: 15 }}>{item.name}</h3>
+        <h3 style={{ textAlign: "center", marginBottom: 15 }}>
+          {item.problem_name}
+        </h3>
         <Stepper
           nonLinear
           activeStep={itemStage}

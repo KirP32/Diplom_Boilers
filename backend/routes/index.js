@@ -12,11 +12,13 @@ router.get("/refresh", DataController.refresh);
 router.get("/test_esp", checkCookie, DataController.test_esp);
 router.get("/getSystems", checkCookie, DataController.getSystems);
 router.get("/getSystemRequests", checkCookie, DataController.getSystemRequests);
+router.get("/getRequests", checkCookie, DataController.getRequests);
 // ANDROID
 router.get("/getBoilers", DataController.getBoilers);
 router.post("/deleteBoiler", DataController.deleteBoiler);
 router.post("/changeBoiler", DataController.updateBoiler);
 router.post("/createBoiler", DataController.createBoiler);
+router.post("/createRequest", DataController.createRequest);
 // ANDROID
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
@@ -26,6 +28,7 @@ router.post("/getUser_info", checkCookie, DataController.getUser_info);
 router.post("/getUser_email", checkCookie, DataController.getUser_email);
 router.post("/add_device", checkCookie, DataController.add_device);
 router.post("/getActions", checkCookie, DataController.getActions);
+router.post("/addRequest", checkCookie, DataController.addRequest);
 
 router.delete(
   "/delete_device/:device_uid",

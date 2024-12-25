@@ -13,9 +13,22 @@ const getTheme = () => {
   }
 };
 
+const getAccessLevel = () => {
+  try {
+    const token =
+      localStorage.getItem("accessToken") ||
+      sessionStorage.getItem("accessToken");
+    if (!token) return 0;
+    return jwtDecode(token)?.access_level || 0;
+  } catch (error) {
+    console.error("Token decode error:", error);
+    return 0;
+  }
+};
+
 const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(getTheme);
-  const [access_level, setAccesslevel] = useState(0);
+  const [access_level, setAccesslevel] = useState(getAccessLevel());
 
   function refreshAccess(access_level) {
     setAccesslevel(access_level);

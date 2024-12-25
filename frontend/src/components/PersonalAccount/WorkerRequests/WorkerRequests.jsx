@@ -1,0 +1,93 @@
+import React, { useEffect } from "react";
+import $api from "../../../http";
+import { useState } from "react";
+import styles from "./WorkerRequests.module.scss";
+import Button from "./../../Button/Button";
+import { jwtDecode } from "jwt-decode";
+
+export default function WorkerRequests({ systems_names }) {
+  const [availData, setAvailData] = useState([]);
+
+  async function getData() {
+    await $api.get("/getRequests").then((response) => {
+      setAvailData(response.data);
+    });
+  }
+
+  async function removeRequest(id) {
+    await $api.delete("/deleteRequest");
+  }
+
+  async function addRequest(system_name, id) {
+    await $api
+      .post("/addRequest", {
+        systems_names: systems_names,
+        system_name: system_name,
+        user: jwtDecode(
+          sessionStorage.getItem("accessToken") ||
+            localStorage.getItem("accessToken")
+        ).login,
+        request_id: id,
+      })
+      .then((result) => {
+        getData();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+  useEffect(() => {
+    getData();
+  }, []);
+  return (
+    <div className={styles.worker_requests__wrapper}>
+      <div className={styles.available_requests}>
+        <h2>Доступные заявки</h2>
+        <div className={styles.available_requests__grid__container}>
+          <div className={styles.available_requests__grid}>
+            {availData?.allDevices?.map((item) => (
+              <div
+                key={item.id}
+                className={styles.available_requests__grid__item}
+              >
+                <div className={styles.available_requests__grid__item__header}>
+                  <h3>{item.problem_name}</h3>
+                  <p>Датчик: {item.module}</p>
+                  <h3>Система: {item.system_name}</h3>
+                </div>
+                <button onClick={() => addRequest(item.system_name, item.id)}>
+                  Принять
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className={styles.available_requests}>
+        <h2>Заявки в работе</h2>
+        <div className={styles.available_requests__grid}>
+          {availData?.workerDevices?.map((item) => (
+            <div
+              key={item.id}
+              className={styles.available_requests__grid__item}
+            >
+              <div className={styles.available_requests__grid__item__header}>
+                <h3>{item.problem_name}</h3>
+                <p>Датчик: {item.module}</p>
+                <h3>Система: {item.system_name}</h3>
+              </div>
+              <div className={styles.span__wrapper}>
+                <span
+                  className={`material-icons ${styles.no_select}`}
+                  onClick={() => removeRequest(item.id)}
+                >
+                  cancel
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -19,6 +19,7 @@ export default function LogIn() {
   const [verifying, setVerifying] = useState(false);
   const [decoded, setDecoded] = useState({});
   const { refreshAccess } = useContext(ThemeContext);
+  const [errorFlag, setErrorFlag] = useState({ login: false, password: false });
 
   useEffect(() => {
     const token =
@@ -64,15 +65,26 @@ export default function LogIn() {
         refreshAccess(jwtDecode(accessToken).access_level);
       })
       .catch((error) => {
-        if (error.response && error.response.status === 401) {
-          console.log("User not found");
-        } else if (
-          error.response &&
-          error.response.data.error === "Invalid credentials"
-        ) {
-          console.log("Invalid credentials");
+        if (error.response) {
+          switch (error.response.status) {
+            case 400:
+              if (error.response.data.error === "User not found") {
+                console.log("Неверный логин");
+                setErrorFlag({ login: true, password: false });
+              } else if (error.response.data.error === "Invalid credentials") {
+                console.log("Неверный пароль");
+                setErrorFlag({ login: false, password: true });
+              } else {
+                console.log("Ошибка валидации:", error.response.data);
+              }
+              break;
+            default:
+              console.log("Ошибка:", error.response.data);
+          }
+        } else if (error.request) {
+          console.log("Нет ответа от сервера");
         } else {
-          console.log("An error occurred:", error.message);
+          console.log("Ошибка запроса:", error.message);
         }
       })
       .finally(() => {
@@ -97,12 +109,18 @@ export default function LogIn() {
                   value={login}
                   onChange={(event) => setLogin(event.target.value)}
                 />
+                {errorFlag.login && (
+                  <h5 className={styles.error}>Неверный логин</h5>
+                )}
                 <Input
                   type="password"
                   placeholder="Пароль"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                 />
+                {errorFlag.password && (
+                  <h5 className={styles.error}>Неверный пароль</h5>
+                )}
               </div>
               <div className={styles.sign_in__remember}>
                 <input
@@ -133,6 +151,7 @@ export default function LogIn() {
               <Link to="/PersonalAccount">Личный кабинет</Link>
             </div>
           )}
+          {}
         </div>
       </div>
     </main>
