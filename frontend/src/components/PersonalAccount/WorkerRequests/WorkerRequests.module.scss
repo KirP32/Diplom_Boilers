@@ -27,6 +27,9 @@
             background-color: hsl(34, 78%, 81%);
             min-width: 225px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            & button {
+                cursor: pointer;
+            }
             &__header {
                 display: grid;
                 grid-template-rows: 25px 1fr 1fr;

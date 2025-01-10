@@ -72,7 +72,7 @@ export default function RequestDetails({ item, setItem }) {
           ))}
         </Stepper>
         {react_functional_components[data_type_1[itemStage]][access_level]}
-        <button onClick={closePanel}>Закрыть</button>
+        {/* <button onClick={closePanel}>Закрыть</button> */}
       </div>
     </div>
   );
