@@ -70,7 +70,7 @@ $api.interceptors.response.use(
         return $api.request(originalRequest);
       } catch (e) {
         console.log("Ошибка авторизации");
-        console.log(e);
+        //console.log(e);
         throw e;
       }
     }
