@@ -2,6 +2,7 @@ import { jwtDecode } from "jwt-decode";
 import React, { useEffect, createContext, useState, useCallback } from "react";
 import $api from "./http";
 import formatResponseData from "./components/PersonalAccount/Functions/formatResponseData";
+import logout from "./components/Logout/logout";
 
 const ThemeContext = createContext();
 
@@ -33,6 +34,7 @@ const ThemeProvider = ({ children }) => {
   const [access_level, setAccesslevel] = useState(getAccessLevel());
   const [devicesArray, setDevicesArray] = useState([]);
   const [deviceObject, setDeviceObject] = useState(null);
+  let flag_error = false;
   const getAllDevices = useCallback(async () => {
     try {
       const response = await $api.get("/getSystems");
@@ -80,6 +82,16 @@ const ThemeProvider = ({ children }) => {
     refreshTheme();
   }, [theme]);
 
+  useEffect(() => {
+    getAllDevices();
+
+    const intervalId = setInterval(() => {
+      getAllDevices();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [getAllDevices]);
+
   return (
     <ThemeContext.Provider
       value={{
@@ -88,6 +100,10 @@ const ThemeProvider = ({ children }) => {
         toggleTheme,
         access_level,
         refreshAccess,
+        devicesArray,
+        deviceObject,
+        setDeviceObject,
+        getAllDevices,
       }}
     >
       {children}

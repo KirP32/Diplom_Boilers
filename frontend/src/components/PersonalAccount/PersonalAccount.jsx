@@ -17,12 +17,12 @@ import CreateRequests from "./tabs/CreateSomeRequest/CreateRequests";
 import WorkerRequests from "./WorkerRequests/WorkerRequests";
 
 export default function PersonalAccount() {
-  const [devicesArray, setdevicesArray] = useState([]);
   const [deviceFindName, setdeviceFindName] = useState("");
-  const [deviceObject, setDeviceObject] = useState();
+  const { devicesArray, deviceObject, setDeviceObject } =
+    useContext(ThemeContext);
+
   const [settingsDialog, setSettingsDialog] = useState(false);
   const { theme } = useContext(ThemeContext);
-  const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("sensors");
   const { access_level } = useContext(ThemeContext);
   const [seeWorkerRequests, setSeeWorkerRequests] = useState(true);
@@ -40,45 +40,6 @@ export default function PersonalAccount() {
     viewRequests: <ViewRequests deviceObject={deviceObject} />,
     createRequests: <CreateRequests deviceObject={deviceObject} />,
   };
-
-  let flag_error = false;
-
-  const getAllDevices = useCallback(async () => {
-    try {
-      const response = await $api.get("/getSystems");
-      if (response.status === 200) {
-        const devices = formatResponseData(response.data);
-        setdevicesArray(devices);
-        if (!deviceObject) {
-          setDeviceObject(devices[0]);
-        }
-      } else if (response.status === 401) {
-        console.log("Unauthorized");
-      }
-    } catch (error) {
-      if (
-        ((error.response && error.response?.status === 401) || // 401 - не авторизован
-          error?.response?.status === 400) &&
-        !flag_error // 400 - нет refreshToken в БД
-      ) {
-        alert("Ваш сеанс истёк, пожалуйста, войдите снова");
-        logout(navigate);
-        flag_error = true;
-      } else {
-        console.error(error);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    getAllDevices();
-
-    const intervalId = setInterval(() => {
-      getAllDevices();
-    }, 30000);
-
-    return () => clearInterval(intervalId);
-  }, [getAllDevices]);
 
   return (
     <div className={`${styles.lk__wrapper} ${theme}`}>

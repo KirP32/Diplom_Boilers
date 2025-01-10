@@ -581,8 +581,6 @@ VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
   async addRequest(req, res, next) {
     try {
       const { system_name, user, request_id, systems_names } = req.body;
-      console.log(systems_names);
-      console.log(system_name);
       const userId = await getID(user);
       const resultRequest = await pool.query(
         "UPDATE user_requests SET assigned_to = $1 WHERE id = $2;",

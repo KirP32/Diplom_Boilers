@@ -1,24 +1,27 @@
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import $api from "../../../http";
 import { useState } from "react";
 import styles from "./WorkerRequests.module.scss";
 import Button from "./../../Button/Button";
 import { jwtDecode } from "jwt-decode";
+import { ThemeContext } from "../../../Theme";
 
 export default function WorkerRequests({ systems_names }) {
   const [availData, setAvailData] = useState([]);
+  const { getAllDevices } = useContext(ThemeContext);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   async function getData() {
     await $api.get("/getRequests").then((response) => {
       setAvailData(response.data);
     });
   }
-
   async function removeRequest(id) {
     await $api
       .delete(`/removeRequest/${id}`)
-      .then((result) => {
+      .then(async (result) => {
         getData();
+        await getAllDevices();
       })
       .catch((error) => {
         console.log(error);
@@ -26,8 +29,10 @@ export default function WorkerRequests({ systems_names }) {
   }
 
   async function addRequest(system_name, id) {
-    await $api
-      .post("/addRequest", {
+    setIsProcessing(true);
+
+    try {
+      await $api.post("/addRequest", {
         systems_names: systems_names,
         system_name: system_name,
         user: jwtDecode(
@@ -35,14 +40,17 @@ export default function WorkerRequests({ systems_names }) {
             localStorage.getItem("accessToken")
         ).login,
         request_id: id,
-      })
-      .then((result) => {
-        getData();
-      })
-      .catch((error) => {
-        console.log(error);
       });
+
+      await getData();
+      await getAllDevices();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsProcessing(false);
+    }
   }
+
   useEffect(() => {
     getData();
   }, []);
@@ -62,7 +70,10 @@ export default function WorkerRequests({ systems_names }) {
                   <p>Датчик: {item.module}</p>
                   <h3>Система: {item.system_name}</h3>
                 </div>
-                <button onClick={() => addRequest(item.system_name, item.id)}>
+                <button
+                  onClick={() => addRequest(item.system_name, item.id)}
+                  disabled={isProcessing}
+                >
                   Принять
                 </button>
               </div>
