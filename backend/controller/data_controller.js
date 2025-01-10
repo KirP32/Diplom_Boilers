@@ -491,85 +491,24 @@ class DataController {
       res.status(500).send("Server Error: cant get Boilers Systems");
     }
   }
-  //ANDROID
-  async getBoilers(req, res, next) {
-    try {
-      const info = await pool.query("SELECT * FROM boilers");
-      res.send(info.rows);
-    } catch (error) {
-      console.error("Error fetching boilers:", error);
-      res.status(500).send({ error: "An error occurred while fetching data" });
-    }
-  }
 
-  async deleteBoiler(req, res, next) {
+  async removeRequest(req, res, next) {
     try {
-      const { id } = req.body;
-      const result = await pool.query("DELETE FROM boilers WHERE id = $1", [
-        id,
-      ]);
-
+      const { id } = req.params;
+      const result = await pool.query(
+        `UPDATE user_requests SET assigned_to = null WHERE id = $1;`,
+        [id]
+      );
       if (result.rowCount > 0) {
-        res.send({ message: "Boiler deleted successfully" });
+        res.sendStatus(200);
       } else {
-        res.status(404).send({ error: "Boiler not found" });
+        res.status(500).json({ message: "removeRequest failed" });
       }
     } catch (error) {
-      console.error("Error deleting boiler:", error);
-      res.status(500).send({ error: "An error occurred while deleting data" });
+      res.status(500).send(error);
     }
   }
 
-  async updateBoiler(req, res, next) {
-    try {
-      const { id, name, sensor_data, status = "f" } = req.body;
-      console.log(id, name, sensor_data, status);
-
-      const result = await pool.query(
-        `UPDATE boilers
-         SET name = $1, sensor_data = $2, status = $3
-         WHERE id = $4
-         RETURNING *`,
-        [name, sensor_data, status, id]
-      );
-
-      if (result.rowCount > 0) {
-        res.send({
-          message: "Boiler updated successfully",
-          boiler: result.rows[0],
-        });
-      } else {
-        res.status(404).send({ error: "Boiler not found" });
-      }
-    } catch (error) {
-      console.error("Error updating boiler:", error);
-      res.status(500).send({ error: "An error occurred while updating data" });
-    }
-  }
-
-  async createBoiler(req, res, next) {
-    try {
-      const { name, sensor_data, status } = req.body;
-
-      const boilerStatus = status !== undefined ? status : false;
-
-      const result = await pool.query(
-        `INSERT INTO boilers (id, name, status, sensor_data)
-         VALUES (gen_random_uuid(), $1, $2, $3)
-         RETURNING *`,
-        [name, boilerStatus, sensor_data]
-      );
-
-      res.status(201).send({
-        message: "Boiler created successfully",
-        boiler: result.rows[0],
-      });
-    } catch (error) {
-      console.error("Error creating boiler:", error);
-      res.status(500).send({ error: "An error occurred while creating data" });
-    }
-  }
-  //ANDROID
   async getSystemRequests(req, res) {
     try {
       const { name } = req.query;
@@ -642,6 +581,8 @@ VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
   async addRequest(req, res, next) {
     try {
       const { system_name, user, request_id, systems_names } = req.body;
+      console.log(systems_names);
+      console.log(system_name);
       const userId = await getID(user);
       const resultRequest = await pool.query(
         "UPDATE user_requests SET assigned_to = $1 WHERE id = $2;",
@@ -665,7 +606,6 @@ VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
       }
     } catch (error) {
       console.error(error);
-
       if (error.code === "23505") {
         res.status(409).json({ message: "Такая система уже существует." });
       } else {
@@ -673,8 +613,45 @@ VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
       }
     }
   }
-}
 
+  async removeRequestFrom(req, res, next) {
+    try {
+      const { id } = req.params;
+      const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
+      const result = await pool.query(
+        `WITH updated AS (
+          UPDATE user_requests
+          SET assigned_to = NULL
+          WHERE id = $1
+          RETURNING system_name
+        )
+        SELECT COUNT(*), (SELECT system_name FROM updated) AS system_name
+        FROM user_requests
+        WHERE assigned_to = $2
+          AND system_name = (SELECT system_name FROM updated)
+          AND id != $1;`,
+        [id, user_id]
+      );
+      if (result.rows[0].count > 0) {
+        res.send("Removed");
+      } else if (Number(result.rows[0].count) == 0) {
+        const result_del = await pool.query(
+          "DELETE from user_systems where user_id = $1 AND name = $2;",
+          [user_id, result.rows[0].system_name]
+        );
+        if (result_del.rowCount > 0) {
+          res.send("OK");
+        } else {
+          res.status(400).send("Error removing request");
+        }
+      } else {
+        res.status(500).send("Error removing system: Server Error");
+      }
+    } catch (error) {
+      res.status(500).json({ message: error });
+    }
+  }
+}
 async function updateToken(login, refreshToken, UUID4) {
   try {
     const getUserQuery = `SELECT id FROM users WHERE username = $1`;

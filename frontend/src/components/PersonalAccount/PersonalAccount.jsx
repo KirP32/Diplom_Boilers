@@ -26,9 +26,7 @@ export default function PersonalAccount() {
   const [selectedTab, setSelectedTab] = useState("sensors");
   const { access_level } = useContext(ThemeContext);
   const [seeWorkerRequests, setSeeWorkerRequests] = useState(true);
-  console.log("PersonalAccount render");
   let systems_names = devicesArray.map((item) => item.name);
-
   const tabObject = {
     sensors: (
       // <Sensors
@@ -59,8 +57,8 @@ export default function PersonalAccount() {
       }
     } catch (error) {
       if (
-        ((error.response && error.response.status === 401) || // 401 - не авторизован
-          error.response.status === 400) &&
+        ((error.response && error.response?.status === 401) || // 401 - не авторизован
+          error?.response?.status === 400) &&
         !flag_error // 400 - нет refreshToken в БД
       ) {
         alert("Ваш сеанс истёк, пожалуйста, войдите снова");
@@ -157,16 +155,17 @@ export default function PersonalAccount() {
                 {tabObject[selectedTab]}
               </>
             )}
-          {devicesArray.length == 0 && seeWorkerRequests === false && (
-            <>
-              <div className={`${styles.noContent}`}>
-                <section className={styles.noContent__section}>
-                  <h3>Ищем ваши системы, пожалуйста, подождите</h3>
-                  <CircularProgress disableShrink />
-                </section>
-              </div>
-            </>
-          )}
+          {devicesArray.length == 0 &&
+            (seeWorkerRequests === false || access_level === 0) && (
+              <>
+                <div className={`${styles.noContent}`}>
+                  <section className={styles.noContent__section}>
+                    <h3>Ищем ваши системы, пожалуйста, подождите</h3>
+                    <CircularProgress disableShrink />
+                  </section>
+                </div>
+              </>
+            )}
           {access_level === 1 && seeWorkerRequests && (
             <WorkerRequests systems_names={systems_names} />
           )}

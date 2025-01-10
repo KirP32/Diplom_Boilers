@@ -15,7 +15,14 @@ export default function WorkerRequests({ systems_names }) {
   }
 
   async function removeRequest(id) {
-    await $api.delete("/deleteRequest");
+    await $api
+      .delete(`/removeRequest/${id}`)
+      .then((result) => {
+        getData();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
   async function addRequest(system_name, id) {
