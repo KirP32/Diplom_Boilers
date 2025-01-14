@@ -1,5 +1,5 @@
 import React from "react";
 
 export default function A_SearchWorker() {
-  return <div>A_SearchWorker</div>;
+  return <div style={{ margin: "auto", fontSize: 25 }}>Это ваша заявка!</div>;
 }

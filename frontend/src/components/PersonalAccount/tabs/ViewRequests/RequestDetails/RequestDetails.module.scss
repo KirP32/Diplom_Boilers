@@ -18,6 +18,8 @@
     padding: 20px;
     overflow-y: auto;
     animation: slideInRight 0.25s ease-out;
+    display: flex;
+    flex-direction: column;
 
     &__stepper {
         display: grid;

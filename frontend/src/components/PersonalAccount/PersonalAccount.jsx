@@ -18,9 +18,10 @@ import WorkerRequests from "./WorkerRequests/WorkerRequests";
 
 export default function PersonalAccount() {
   const [deviceFindName, setdeviceFindName] = useState("");
-  const { devicesArray, deviceObject, setDeviceObject } =
-    useContext(ThemeContext);
-
+  const [devicesArray, setDevicesArray] = useState([]);
+  const [deviceObject, setDeviceObject] = useState(null);
+  let flag_error = false;
+  const navigate = useNavigate();
   const [settingsDialog, setSettingsDialog] = useState(false);
   const { theme } = useContext(ThemeContext);
   const [selectedTab, setSelectedTab] = useState("sensors");
@@ -40,6 +41,43 @@ export default function PersonalAccount() {
     viewRequests: <ViewRequests deviceObject={deviceObject} />,
     createRequests: <CreateRequests deviceObject={deviceObject} />,
   };
+
+  const getAllDevices = useCallback(async () => {
+    try {
+      const response = await $api.get("/getSystems");
+      if (response.status === 200) {
+        const devices = formatResponseData(response.data);
+        setDevicesArray(devices);
+        if (!deviceObject) {
+          setDeviceObject(devices[0]);
+        }
+      } else if (response.status === 401) {
+        console.log("Unauthorized");
+      }
+    } catch (error) {
+      if (
+        ((error.response && error.response?.status === 401) ||
+          error?.response?.status === 400) &&
+        !flag_error
+      ) {
+        alert("Ваш сеанс истёк, пожалуйста, войдите снова");
+        logout(navigate);
+        flag_error = true;
+      } else {
+        console.error(error);
+      }
+    }
+  }, [deviceObject]);
+
+  useEffect(() => {
+    getAllDevices();
+
+    const intervalId = setInterval(() => {
+      getAllDevices();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [getAllDevices]);
 
   return (
     <div className={`${styles.lk__wrapper} ${theme}`}>
@@ -128,7 +166,10 @@ export default function PersonalAccount() {
               </>
             )}
           {access_level === 1 && seeWorkerRequests && (
-            <WorkerRequests systems_names={systems_names} />
+            <WorkerRequests
+              systems_names={systems_names}
+              getAllDevices={getAllDevices}
+            />
           )}
         </div>
       </div>

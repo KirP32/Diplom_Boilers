@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import styles from "./ViewRequests.module.scss";
 import $api from "../../../../http";
 import RequestDetails from "./RequestDetails/RequestDetails";
+import { jwtDecode } from "jwt-decode";
 
 export default function ViewRequests({ deviceObject }) {
   const [data, setData] = useState(null);
@@ -10,7 +11,9 @@ export default function ViewRequests({ deviceObject }) {
     inProgress: true,
     completed: false,
   });
-
+  const decoded_token = jwtDecode(
+    localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken")
+  );
   const [item, setItem] = useState(null);
 
   useEffect(() => {
@@ -97,7 +100,12 @@ export default function ViewRequests({ deviceObject }) {
             <div
               className={styles.request_card}
               key={item.id}
-              onClick={() => handleCardClick(item)}
+              onClick={
+                decoded_token.access_level === 0 ||
+                item.assigned_to == decoded_token.userID
+                  ? () => handleCardClick(item)
+                  : null
+              }
             >
               <h5>{item.problem_name}</h5>
               <span

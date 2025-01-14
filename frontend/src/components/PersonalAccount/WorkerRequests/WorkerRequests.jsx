@@ -6,9 +6,8 @@ import Button from "./../../Button/Button";
 import { jwtDecode } from "jwt-decode";
 import { ThemeContext } from "../../../Theme";
 
-export default function WorkerRequests({ systems_names }) {
+export default function WorkerRequests({ systems_names, getAllDevices }) {
   const [availData, setAvailData] = useState([]);
-  const { getAllDevices } = useContext(ThemeContext);
   const [isProcessing, setIsProcessing] = useState(false);
 
   async function getData() {

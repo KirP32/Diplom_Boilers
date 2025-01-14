@@ -15,15 +15,14 @@ const data_type_1 = [
   "Завершенно",
 ];
 
-const react_functional_components = {
-  "Поиск специалиста": [<U_SearchWorker />, <A_SearchWorker />],
-  Материалы: <></>,
-  "В пути": <></>,
-  "Проводятся работы": <></>,
-  Завершенно: <></>,
-};
-
 export default function RequestDetails({ item, setItem }) {
+  const react_functional_components = {
+    "Поиск специалиста": [<U_SearchWorker item={item} />, <A_SearchWorker />],
+    Материалы: <></>,
+    "В пути": <></>,
+    "Проводятся работы": <></>,
+    Завершенно: <></>,
+  };
   const closePanel = () => {
     setItem(null);
   };

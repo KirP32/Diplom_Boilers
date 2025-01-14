@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-const getTokens = (login, access_level, RememberMe, token) => {
+const getTokens = (login, access_level, RememberMe, token, userID) => {
   const accessTokenAge = 60 * 20;
   let refreshTokenAge = RememberMe ? 60 * 60 * 24 * 31 : 60 * 60;
 
@@ -20,11 +20,15 @@ const getTokens = (login, access_level, RememberMe, token) => {
   //   `Оставшееся время жизни Refresh-токена: ${refreshTokenAge} секунд`
   // );
   return {
-    accessToken: jwt.sign({ login, access_level }, process.env.JWT_SECRET_KEY, {
-      expiresIn: accessTokenAge,
-    }),
+    accessToken: jwt.sign(
+      { login, access_level, userID },
+      process.env.JWT_SECRET_KEY,
+      {
+        expiresIn: accessTokenAge,
+      }
+    ),
     refreshToken: jwt.sign(
-      { login, access_level },
+      { login, access_level, userID },
       process.env.JWT_REFRESH_KEY,
       { expiresIn: refreshTokenAge }
     ),

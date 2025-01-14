@@ -93,7 +93,8 @@ class DataController {
         token_data.login,
         access_level,
         RememberMe,
-        token
+        token,
+        token_data.userID
       );
 
       await updateToken(token_data.login, refreshToken, UUID4);
@@ -142,10 +143,13 @@ class DataController {
             [login]
           )
         ).rows[0].access_level;
+        const userID = await getID(login);
         const { accessToken, refreshToken } = getTokens(
           login,
           access_level,
-          RememberMe
+          RememberMe,
+          "",
+          userID
         );
 
         await updateToken(login, refreshToken, UUID4);
@@ -513,17 +517,50 @@ class DataController {
     try {
       const { name } = req.query;
       await pool
-        .query(`SELECT * FROM user_requests WHERE system_name = $1`, [name])
+        .query(
+          `SELECT 
+                ur.*, 
+                u.username 
+            FROM 
+                user_requests ur
+            LEFT JOIN 
+                users u 
+             ON 
+                ur.assigned_to = u.id
+            WHERE 
+                 ur.system_name = $1`,
+          [name]
+        )
         .catch((error) => {
           console.log(error);
           res.sendStatus(500);
         })
         .then((result) => {
-          res.send(result.rows);
+          const decoded = decodeJWT(req.cookies.refreshToken);
+          if (decoded.access_level === 0) {
+            res.send(result.rows);
+          } else {
+            res.send(
+              result.rows.map((item) =>
+                item.assigned_to === decoded.userID
+                  ? { ...item }
+                  : {
+                      description: item.description,
+                      id: item.id,
+                      module: item.module,
+                      phone_number: item.phone_number,
+                      problem_name: item.problem_name,
+                      stage: item.stage,
+                      status: item.status,
+                      system_name: item.system_name,
+                      type: item.type,
+                    }
+              )
+            );
+          }
         });
     } catch (error) {
       console.log(error);
-      res.sendStatus(500);
     }
   }
   async createRequest(req, res) {
@@ -736,9 +773,13 @@ async function getID(login) {
 }
 
 function decodeJWT(token) {
-  const [, payloadB64] = token.split(".");
-  const payload = JSON.parse(atob(payloadB64));
-  return payload;
+  try {
+    const [, payloadB64] = token.split(".");
+    const payload = JSON.parse(atob(payloadB64));
+    return payload;
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 module.exports = {
