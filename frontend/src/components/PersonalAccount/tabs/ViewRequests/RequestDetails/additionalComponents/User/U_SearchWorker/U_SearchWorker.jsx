@@ -4,9 +4,9 @@ export default function U_SearchWorker({ item }) {
   return (
     <div
       className="search_worker__wrapper__main_content"
-      style={{ margin: "auto" }}
+      style={{ margin: "auto", fontSize: 20 }}
     >
-      {item.username ? (
+      {item.username === null ? (
         <>
           <section>Ожидаем подтверждения от специалиста</section>
         </>

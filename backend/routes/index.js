@@ -23,6 +23,7 @@ router.post("/getUser_email", checkCookie, DataController.getUser_email);
 router.post("/add_device", checkCookie, DataController.add_device);
 router.post("/getActions", checkCookie, DataController.getActions);
 router.post("/addRequest", checkCookie, DataController.addRequest);
+router.post("/createRequest", checkCookie, DataController.createRequest);
 
 router.delete(
   "/delete_device/:device_uid",
