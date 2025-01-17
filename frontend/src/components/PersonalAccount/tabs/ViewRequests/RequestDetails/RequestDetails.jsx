@@ -6,6 +6,8 @@ import U_SearchWorker from "./additionalComponents/User/U_SearchWorker/U_SearchW
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepButton from "@mui/material/StepButton";
+import U_Materials from "./additionalComponents/User/U_Materials/U_Materials";
+import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -18,7 +20,7 @@ const data_type_1 = [
 export default function RequestDetails({ item, setItem }) {
   const react_functional_components = {
     "Поиск специалиста": [<U_SearchWorker item={item} />, <A_SearchWorker />],
-    Материалы: <></>,
+    Материалы: [<U_Materials />, <A_Materials />],
     "В пути": <></>,
     "Проводятся работы": <></>,
     Завершенно: <></>,

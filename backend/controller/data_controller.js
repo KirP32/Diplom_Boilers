@@ -598,7 +598,7 @@ VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
   async getRequests(req, res, next) {
     try {
       const allDevices = await pool.query(
-        "SELECT * FROM user_requests WHERE assigned_to IS NULL;"
+        "SELECT * FROM user_requests WHERE assigned_to IS NULL AND status != 1;"
       );
       const id = await getID(decodeJWT(req.cookies.refreshToken).login);
       const workerDevices = await pool.query(
