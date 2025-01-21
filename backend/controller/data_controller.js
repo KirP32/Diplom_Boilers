@@ -183,11 +183,11 @@ class DataController {
     const { login, password, email } = req.body;
     const hash = bcrypt.hashSync(password);
     const authcookie = req.headers["accesstoken"];
-
+    const { access_level } = req.body;
     try {
       const userResult = await pool.query(
-        "INSERT INTO users (username, phone_number, password_hash, access_level, email) VALUES ($1, $2, $3, 0, $4)",
-        [login, "123456789", hash, email]
+        "INSERT INTO users (username, phone_number, password_hash, access_level, email) VALUES ($1, $2, $3, $4, $5)",
+        [login, "123456789", hash, access_level, email]
       );
       //console.log(decodeJWT(authcookie).login);
       if (userResult.rowCount > 0) {
@@ -204,7 +204,7 @@ class DataController {
       }
     } catch (error) {
       res.sendStatus(500);
-      console.error("Ошибка запроса:", error);
+      //console.error("Ошибка запроса:", error);
     }
   }
 
