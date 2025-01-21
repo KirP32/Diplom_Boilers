@@ -4,14 +4,13 @@ import styles from "./NewSensors.module.scss";
 import Additionalinfo from "./Additionalinfo/Additionalinfo";
 
 export default function NewSensors({ deviceObject }) {
-  const [dataSystems, setDataSystems] = useState([]);
   const [activeSensor, setActiveSensor] = useState(null);
   //console.log("NewSensors render");
   return (
     <div className={styles.sensors_wrapper}>
       <div
         className={`${styles.control_buttons} ${
-          activeSensor == null ? `${styles.in_active}` : ""
+          activeSensor === null ? `${styles.in_active}` : ""
         }`}
       >
         <Button onClick={() => setActiveSensor(null)}>

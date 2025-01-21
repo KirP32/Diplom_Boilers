@@ -1,11 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./ViewRequests.module.scss";
 import $api from "../../../../http";
 import RequestDetails from "./RequestDetails/RequestDetails";
 import { jwtDecode } from "jwt-decode";
+import DeleteDialog from "./DeleteDialog/DeleteDialog";
 
 export default function ViewRequests({ deviceObject }) {
   const [data, setData] = useState(null);
+  const [showDialog, setShowDialog] = useState({
+    flag: false,
+    item: {},
+  });
+
   const [filters, setFilters] = useState({
     available: false,
     inProgress: true,
@@ -15,17 +21,21 @@ export default function ViewRequests({ deviceObject }) {
     localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken")
   );
   const [item, setItem] = useState(null);
+  const getSystems = useCallback(async () => {
+    try {
+      const result = await $api.get("/getSystemRequests", {
+        params: { name: deviceObject.name },
+      });
+      setData(result.data);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [deviceObject.name]);
 
   useEffect(() => {
-    $api
-      .get("/getSystemRequests", { params: { name: deviceObject.name } })
-      .then((result) => {
-        setData(result.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, []);
+    getSystems();
+  }, [getSystems]);
+
   function handleCheckboxChange(param) {
     setFilters((prevFilter) => {
       return {
@@ -108,20 +118,41 @@ export default function ViewRequests({ deviceObject }) {
               }
             >
               <h5>{item.problem_name}</h5>
-              <span
-                className={`${
-                  item.status === 0 ? styles.inProgress : styles.completed
-                } ${styles.status_badge}`}
-              >
-                {item.status === 0 ? "В работе" : "Завершено"}
-              </span>
+              <div className={styles.status_wrapper}>
+                <span
+                  className={`${
+                    item.status === 0 ? styles.inProgress : styles.completed
+                  } ${styles.status_badge}`}
+                >
+                  {item.status === 0 ? "В работе" : "Завершено"}
+                </span>
+                <span
+                  className={`material-icons ${styles.no_select}`}
+                  style={{ color: "red" }}
+                  onClick={(e) => {
+                    setShowDialog({ flag: true, item: item });
+                    e.stopPropagation();
+                  }}
+                >
+                  cancel
+                </span>
+              </div>
             </div>
           ))
         ) : (
           <></>
         )}
       </div>
-      {item && <RequestDetails item={item} setItem={(e) => setItem(e)} />}
+      {item && showDialog.flag === false && (
+        <RequestDetails item={item} setItem={(e) => setItem(e)} />
+      )}
+      {showDialog.flag && (
+        <DeleteDialog
+          showDialog={showDialog}
+          setOpen={(e) => setShowDialog({ flag: e })}
+          getSystems={() => getSystems()}
+        />
+      )}
     </div>
   );
 }

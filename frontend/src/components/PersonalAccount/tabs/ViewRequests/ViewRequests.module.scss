@@ -45,7 +45,6 @@
 }
 
 .status_badge {
-    margin-top: 8px;
     padding: 4px 8px;
     font-size: 12px;
     font-weight: bold;
@@ -56,6 +55,20 @@
         content: "•";
         margin-right: 4px;
     }
+}
+
+.status_wrapper {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    justify-content: space-between;
+}
+
+.no_select {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .inProgress {

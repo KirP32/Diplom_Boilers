@@ -653,6 +653,7 @@ VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
     try {
       const { id } = req.params;
       const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
+
       const result = await pool.query(
         `WITH updated AS (
           UPDATE user_requests
@@ -667,23 +668,52 @@ VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
           AND id != $1;`,
         [id, user_id]
       );
+
       if (result.rows[0].count > 0) {
-        res.send("Removed");
+        return res.send("Removed");
       } else if (Number(result.rows[0].count) == 0) {
         const result_del = await pool.query(
           "DELETE from user_systems where user_id = $1 AND name = $2;",
           [user_id, result.rows[0].system_name]
         );
+
         if (result_del.rowCount > 0) {
-          res.send("OK");
+          return res.send("OK");
         } else {
-          res.status(400).send("Error removing request");
+          return res.status(400).send("Error removing request");
         }
       } else {
-        res.status(500).send("Error removing system: Server Error");
+        return res.status(500).send("Error removing system: Server Error");
       }
     } catch (error) {
-      res.status(500).json({ message: error });
+      return res.status(500).json({ message: error });
+    }
+  }
+
+  async deleteRequest(req, res) {
+    try {
+      const { id, system_name } = req.params;
+      const username = decodeJWT(req.cookies.refreshToken).login;
+      const checking_system = await pool.query(
+        `SELECT * FROM user_systems 
+         WHERE user_id = (SELECT id FROM users WHERE username = $1) 
+         AND name = $2`,
+        [username, system_name]
+      );
+      if (checking_system.rowCount > 0) {
+        const result = await pool.query(
+          `DELETE FROM user_requests where id = $1`,
+          [id]
+        );
+        if (result.rowCount > 0) {
+          return res.status(200).json({ message: "Запись успешно удалена" });
+        } else {
+          return res.status(404).json({ message: "Запись не найдена" });
+        }
+      }
+      return res.sendStatus(403);
+    } catch (error) {
+      return res.status(500).send(error);
     }
   }
 }

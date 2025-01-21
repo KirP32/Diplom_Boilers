@@ -4,7 +4,10 @@ import "react-international-phone/style.css";
 
 export default function PhoneInputComponent({ phone, onPhoneChange, style }) {
   return (
-    <div className="phone-input-container">
+    <div
+      className="phone-input-container"
+      style={{ position: "relative", zIndex: 2 }}
+    >
       <PhoneInput
         defaultCountry="ru"
         value={phone}

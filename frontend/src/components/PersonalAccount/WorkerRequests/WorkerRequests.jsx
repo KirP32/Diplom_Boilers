@@ -2,9 +2,7 @@ import React, { useContext, useEffect } from "react";
 import $api from "../../../http";
 import { useState } from "react";
 import styles from "./WorkerRequests.module.scss";
-import Button from "./../../Button/Button";
 import { jwtDecode } from "jwt-decode";
-import { ThemeContext } from "../../../Theme";
 
 export default function WorkerRequests({ systems_names, getAllDevices }) {
   const [availData, setAvailData] = useState([]);

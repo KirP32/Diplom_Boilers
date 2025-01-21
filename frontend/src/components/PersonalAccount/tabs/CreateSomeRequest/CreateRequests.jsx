@@ -8,6 +8,7 @@ import Button from "../../../Button/Button";
 import { fontSize, padding } from "@mui/system";
 import { jwtDecode } from "jwt-decode";
 import $api from "../../../../http";
+import zIndex from "@mui/material/styles/zIndex";
 
 export default function CreateRequests({ deviceObject }) {
   const [phone, setPhone] = useState("");
@@ -17,7 +18,6 @@ export default function CreateRequests({ deviceObject }) {
   const [errors, setErrors] = useState({ problem: false, phone: false });
   const [description, setDescription] = useState("");
   const [successFlag, setSuccessFlag] = useState(false);
-
   function validate() {
     const problemError = problem.length < 1;
     const phoneError = phone.length !== 12;

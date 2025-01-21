@@ -19,7 +19,6 @@ import WorkerRequests from "./WorkerRequests/WorkerRequests";
 export default function PersonalAccount() {
   const [deviceFindName, setdeviceFindName] = useState("");
   const [devicesArray, setDevicesArray] = useState([]);
-  //let devicesArr = [];
   const [deviceObject, setDeviceObject] = useState(null);
   let flag_error = false;
   const navigate = useNavigate();
