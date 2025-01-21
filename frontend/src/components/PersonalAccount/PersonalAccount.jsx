@@ -134,6 +134,11 @@ export default function PersonalAccount() {
               <h4>Заявки</h4>
             </Button>
           )}
+          {access_level === 0 && (
+            <Button>
+              <h4>Добавить систему</h4>
+            </Button>
+          )}
           <Button className={styles.lk__wrapper__sidebar__options__btn_delete}>
             <h4>Удаление</h4>
           </Button>
