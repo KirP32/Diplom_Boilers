@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import styles from "./PersonalAccount.module.scss";
 import Input from "../Input/Input";
 import Button from "../Button/Button";
@@ -35,42 +35,50 @@ export default function PersonalAccount() {
     createRequests: <CreateRequests deviceObject={deviceObject} />,
   };
 
-  const getAllDevices = useCallback(async () => {
+  const deviceObjectRef = useRef();
+  const flagErrorRef = useRef(false);
+
+  deviceObjectRef.current = deviceObject;
+
+  const getAllDevices = async (currentDeviceObject) => {
     try {
       const response = await $api.get("/getSystems");
       if (response.status === 200) {
-        const devices = formatResponseData(response.data);
-        setDevicesArray(devices);
-        if (!deviceObject) {
-          setDeviceObject(devices[0]);
+        const newDevices = formatResponseData(response.data);
+
+        // Сравнение по ID
+        const isSameDevices =
+          newDevices.length === devicesArray.length &&
+          newDevices.every((d, i) => d.id === devicesArray[i]?.id);
+
+        if (!isSameDevices) {
+          setDevicesArray(newDevices);
+          if (!currentDeviceObject) {
+            setDeviceObject(newDevices[0]);
+          }
         }
-      } else if (response.status === 401) {
-        console.log("Unauthorized");
       }
     } catch (error) {
       if (
-        ((error.response && error.response?.status === 401) ||
-          error?.response?.status === 400) &&
-        !flag_error
+        (error.response?.status === 401 || error.response?.status === 400) &&
+        !flagErrorRef.current
       ) {
         alert("Ваш сеанс истёк, пожалуйста, войдите снова");
         logout(navigate);
-        flag_error = true;
-      } else {
-        console.error(error);
+        flagErrorRef.current = true;
       }
     }
-  }, []);
+  };
 
   useEffect(() => {
-    getAllDevices();
+    getAllDevices(deviceObjectRef.current);
 
     const intervalId = setInterval(() => {
-      getAllDevices();
-    }, 30000);
+      getAllDevices(deviceObjectRef.current);
+    }, 10000);
 
     return () => clearInterval(intervalId);
-  }, [getAllDevices]);
+  }, []);
 
   return (
     <div className={`${styles.lk__wrapper} ${theme}`}>
@@ -97,7 +105,7 @@ export default function PersonalAccount() {
                   <div
                     key={item.name}
                     className={`${styles.devices_container} ${
-                      item.name === deviceObject.name
+                      item.name === deviceObject?.name
                         ? styles.container_active
                         : ""
                     }`}
@@ -167,8 +175,11 @@ export default function PersonalAccount() {
             <WorkerRequests
               systems_names={systems_names}
               getAllDevices={() => getAllDevices()}
-              setDeviceFirst={() => setDeviceObject(devicesArray[0])}
+              setDeviceFirst={() => {
+                setDeviceObject(devicesArray[0]);
+              }}
               deviceObject={deviceObject}
+              devicesArray={devicesArray}
             />
           )}
         </div>
