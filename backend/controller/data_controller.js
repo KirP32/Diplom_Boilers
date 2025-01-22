@@ -443,35 +443,41 @@ class DataController {
   async getSystems(req, res) {
     try {
       const api = req.headers["authorization"];
+      const login = decodeJWT(req.cookies.refreshToken).login;
       const request = await pool.query(
         `SELECT * FROM user_systems WHERE user_id = (
           SELECT id FROM users WHERE username = $1
         );`,
-        [decodeJWT(req.cookies.refreshToken).login]
+        [login]
       );
 
       const systems = request.rows;
-
       if (!systems.length) {
         return res.send([]);
       }
-
       const allSystems = await Promise.allSettled(
-        systems.map((system) => {
-          return axios.get(
-            `http://185.113.139.204:8000/module/get/${system.system_id}`,
-            {
-              headers: {
-                Authorization: api,
-                "Content-Type": "application/json",
-              },
+        systems
+          .map((system) => {
+            if (system.name === "ADS-Line") {
+              // ПОТОМ УДАЛИТЬ ПРОВЕРКУ, ЭТО ДЛЯ ТЕСТА ИСКУССТВЕННЫХ СИСТЕМ
+              return axios.get(
+                `http://185.113.139.204:8000/module/get/${system.name}`,
+                {
+                  headers: {
+                    Authorization: api,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+            } else {
+              return null;
             }
-          );
-        })
+          })
+          .filter((request) => request !== null)
       ).then((results) =>
         results.map((result, i) => {
           if (result.status === "fulfilled") {
-            if (result.value.data === null || undefined) {
+            if (result.value.data === null || result.value.data === undefined) {
               return {
                 user_id: request.rows[i].user_id,
                 name: request.rows[i].name,
@@ -489,10 +495,64 @@ class DataController {
           }
         })
       );
-      res.send(allSystems);
+      const fooArray = [
+        {
+          name: "Центральный р-н. 55",
+          s_number: "SB_00002",
+          module_list: [
+            { s_number: "Котёл основной", data: "80° стабильно" },
+            { s_number: "Резервный контур", data: "Стабильно" },
+            {
+              s_number: "Бойлер основной",
+              data: "Возможен сбой, проверьте оборудование",
+            },
+          ],
+        },
+        {
+          name: "Северный р-н. 12",
+          s_number: "SB_00003",
+          module_list: [
+            { s_number: "Котёл основной", data: "75° стабильно" },
+            { s_number: "Резервный контур", data: "Неактивен" },
+            {
+              s_number: "Бойлер основной",
+              data: "Работает в штатном режиме",
+            },
+            {
+              s_number: "Насосная станция",
+              data: "Требуется профилактика",
+            },
+          ],
+        },
+        {
+          name: "Южный р-н. 7",
+          s_number: "SB_00004",
+          module_list: [
+            { s_number: "Котёл основной", data: "85° стабильно" },
+            {
+              s_number: "Резервный контур",
+              data: "Включён, работает в штатном режиме",
+            },
+            {
+              s_number: "Бойлер основной",
+              data: "Температура ниже нормы, проверьте настройки",
+            },
+            {
+              s_number: "Система вентиляции",
+              data: "Работает стабильно",
+            },
+          ],
+        },
+      ];
+
+      const selectedSystems = systems
+        .map((system) => fooArray.find((item) => item.name === system.name))
+        .filter((item) => item !== undefined || null);
+
+      return res.send([...allSystems, ...selectedSystems]);
     } catch (error) {
       console.log(error);
-      res.status(500).send("Server Error: cant get Boilers Systems");
+      return res.status(500).send("Server Error: cant get Boilers Systems");
     }
   }
 
@@ -762,7 +822,6 @@ async function deleteCookieDB(refreshToken, UUID4) {
       "DELETE FROM refreshtokens WHERE uuid = $1",
       [UUID4]
     );
-    console.log("deleted successfully");
     return userResult;
   } catch (error) {
     console.log(error);
@@ -805,10 +864,13 @@ async function getID(login) {
 function decodeJWT(token) {
   try {
     const [, payloadB64] = token.split(".");
-    const payload = JSON.parse(atob(payloadB64));
+    const payload = JSON.parse(
+      Buffer.from(payloadB64, "base64").toString("utf-8")
+    );
     return payload;
   } catch (error) {
     console.error(error);
+    return null;
   }
 }
 

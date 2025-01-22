@@ -13,7 +13,7 @@ export default function formatResponseData(data) {
   try {
     data.map((item) =>
       foo_array.push({
-        id: Math.floor(Math.random() * 100) + 1, // ДОЛЖНО БРАТЬСЯ ИЗ БД, СЕЙЧАС ЗАГЛУШКА
+        id: Math.floor(Math.random() * 1000) + 1, // ДОЛЖНО БРАТЬСЯ ИЗ БД, СЕЙЧАС ЗАГЛУШКА
         name: item.name,
         status: "online",
         boilers: item.module_list || [],

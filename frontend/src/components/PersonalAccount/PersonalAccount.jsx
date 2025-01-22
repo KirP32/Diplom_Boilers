@@ -48,6 +48,8 @@ export default function PersonalAccount() {
       if (response.status === 200) {
         const devices = formatResponseData(response.data);
         setDevicesArray(devices);
+        //console.log(devicesArray);
+
         if (!deviceObject) {
           setDeviceObject(devices[0]);
         }
@@ -67,7 +69,7 @@ export default function PersonalAccount() {
         console.error(error);
       }
     }
-  }, [deviceObject]);
+  }, []);
 
   useEffect(() => {
     getAllDevices();
@@ -173,7 +175,7 @@ export default function PersonalAccount() {
           {access_level === 1 && seeWorkerRequests && (
             <WorkerRequests
               systems_names={systems_names}
-              getAllDevices={getAllDevices}
+              getAllDevices={() => getAllDevices()}
             />
           )}
         </div>
