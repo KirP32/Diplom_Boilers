@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import styles from "./PersonalAccount.module.scss";
 import Input from "../Input/Input";
 import Button from "../Button/Button";
@@ -45,15 +45,9 @@ export default function PersonalAccount() {
       const response = await $api.get("/getSystems");
       if (response.status === 200) {
         const newDevices = formatResponseData(response.data);
-
-        const isSameDevices =
-          newDevices.length === devicesArray.length &&
-          newDevices.every((d, i) => d.name === devicesArray[i]?.name);
-        if (!isSameDevices) {
-          setDevicesArray(newDevices);
-          if (!currentDeviceObject) {
-            setDeviceObject(newDevices[0]);
-          }
+        setDevicesArray(newDevices);
+        if (!currentDeviceObject) {
+          setDeviceObject(newDevices[0]);
         }
       }
     } catch (error) {
@@ -172,9 +166,14 @@ export default function PersonalAccount() {
           {access_level === 1 && seeWorkerRequests && (
             <WorkerRequests
               systems_names={systems_names}
-              getAllDevices={() => getAllDevices()}
-              setDeviceFirst={() => {
-                setDeviceObject(devicesArray[0]);
+              getAllDevices={getAllDevices}
+              setDeviceFirst={(name) => {
+                const firstDevice = devicesArray.find(
+                  (item) => item.name !== name
+                );
+                if (firstDevice) {
+                  setDeviceObject(firstDevice);
+                }
               }}
               deviceObject={deviceObject}
               devicesArray={devicesArray}

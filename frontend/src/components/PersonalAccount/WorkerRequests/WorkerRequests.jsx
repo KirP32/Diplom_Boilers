@@ -8,7 +8,7 @@ export default function WorkerRequests({
   systems_names,
   getAllDevices,
   setDeviceFirst,
-  deviceObject,
+  devicesArray,
 }) {
   const [availData, setAvailData] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -21,22 +21,18 @@ export default function WorkerRequests({
   async function removeRequest(item) {
     await $api
       .delete(`/removeRequest/${item.id}`)
-      .then((result) => {
-        getData();
-        getAllDevices();
-        console.log(availData?.workerDevices);
-        console.log(
-          availData?.workerDevices?.find(
-            (device) => deviceObject.name === device.system_name
-          )
-        );
+      .then(async (result) => {
+        await getData();
+        await getAllDevices();
         if (
-          availData?.workerDevices?.find(
-            (device) => deviceObject.name === device.system_name
-          ) == undefined
+          !availData?.workerDevices.find(
+            (object) =>
+              object.system_name === item.system_name &&
+              object.problem_name !== item.problem_name
+          )
         ) {
           console.log("Удаляю последний");
-          setDeviceFirst();
+          setDeviceFirst(item.system_name);
         }
       })
       .catch((error) => {
