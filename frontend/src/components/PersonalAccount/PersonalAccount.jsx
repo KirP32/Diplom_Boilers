@@ -29,14 +29,7 @@ export default function PersonalAccount() {
   const [seeWorkerRequests, setSeeWorkerRequests] = useState(true);
   let systems_names = devicesArray.map((item) => item.name);
   const tabObject = {
-    sensors: (
-      // <Sensors
-      //   deviceObject={deviceObject}
-      //   setdevicesArray={setdevicesArray}
-      //   devicesArray={devicesArray}
-      // />
-      <NewSensors deviceObject={deviceObject} />
-    ),
+    sensors: <NewSensors deviceObject={deviceObject} />,
     mnemoscheme: <Mnemoscheme />,
     viewRequests: <ViewRequests deviceObject={deviceObject} />,
     createRequests: <CreateRequests deviceObject={deviceObject} />,
@@ -48,8 +41,6 @@ export default function PersonalAccount() {
       if (response.status === 200) {
         const devices = formatResponseData(response.data);
         setDevicesArray(devices);
-        //console.log(devicesArray);
-
         if (!deviceObject) {
           setDeviceObject(devices[0]);
         }
@@ -176,6 +167,8 @@ export default function PersonalAccount() {
             <WorkerRequests
               systems_names={systems_names}
               getAllDevices={() => getAllDevices()}
+              setDeviceFirst={() => setDeviceObject(devicesArray[0])}
+              deviceObject={deviceObject}
             />
           )}
         </div>

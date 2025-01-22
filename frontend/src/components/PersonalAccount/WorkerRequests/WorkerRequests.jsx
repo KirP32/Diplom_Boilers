@@ -4,7 +4,12 @@ import { useState } from "react";
 import styles from "./WorkerRequests.module.scss";
 import { jwtDecode } from "jwt-decode";
 
-export default function WorkerRequests({ systems_names, getAllDevices }) {
+export default function WorkerRequests({
+  systems_names,
+  getAllDevices,
+  setDeviceFirst,
+  deviceObject,
+}) {
   const [availData, setAvailData] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -13,12 +18,20 @@ export default function WorkerRequests({ systems_names, getAllDevices }) {
       setAvailData(response.data);
     });
   }
-  async function removeRequest(id) {
+  async function removeRequest(item) {
     await $api
-      .delete(`/removeRequest/${id}`)
+      .delete(`/removeRequest/${item.id}`)
       .then((result) => {
         getData();
         getAllDevices();
+        if (
+          item.system_name === deviceObject.name &&
+          availData?.workerDevices?.filter(
+            (item) => item.name === deviceObject.name
+          ).length < 1
+        ) {
+          setDeviceFirst();
+        }
       })
       .catch((error) => {
         console.log(error);
@@ -94,7 +107,7 @@ export default function WorkerRequests({ systems_names, getAllDevices }) {
               <div className={styles.span__wrapper}>
                 <span
                   className={`material-icons ${styles.no_select}`}
-                  onClick={() => removeRequest(item.id)}
+                  onClick={() => removeRequest(item)}
                 >
                   cancel
                 </span>
