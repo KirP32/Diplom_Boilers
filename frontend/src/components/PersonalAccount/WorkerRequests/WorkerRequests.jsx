@@ -16,9 +16,9 @@ export default function WorkerRequests({ systems_names, getAllDevices }) {
   async function removeRequest(id) {
     await $api
       .delete(`/removeRequest/${id}`)
-      .then(async (result) => {
+      .then((result) => {
         getData();
-        await getAllDevices();
+        getAllDevices();
       })
       .catch((error) => {
         console.log(error);
