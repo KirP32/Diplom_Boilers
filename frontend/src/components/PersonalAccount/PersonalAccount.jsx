@@ -46,11 +46,9 @@ export default function PersonalAccount() {
       if (response.status === 200) {
         const newDevices = formatResponseData(response.data);
 
-        // Сравнение по ID
         const isSameDevices =
           newDevices.length === devicesArray.length &&
-          newDevices.every((d, i) => d.id === devicesArray[i]?.id);
-
+          newDevices.every((d, i) => d.name === devicesArray[i]?.name);
         if (!isSameDevices) {
           setDevicesArray(newDevices);
           if (!currentDeviceObject) {
@@ -75,7 +73,7 @@ export default function PersonalAccount() {
 
     const intervalId = setInterval(() => {
       getAllDevices(deviceObjectRef.current);
-    }, 10000);
+    }, 15000);
 
     return () => clearInterval(intervalId);
   }, []);
