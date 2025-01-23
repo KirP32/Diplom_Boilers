@@ -610,21 +610,23 @@ class DataController {
             res.send(result.rows);
           } else {
             res.send(
-              result.rows.map((item) =>
-                item.assigned_to === decoded.userID
-                  ? { ...item }
-                  : {
-                      description: item.description,
-                      id: item.id,
-                      module: item.module,
-                      phone_number: item.phone_number,
-                      problem_name: item.problem_name,
-                      stage: item.stage,
-                      status: item.status,
-                      system_name: item.system_name,
-                      type: item.type,
-                    }
-              )
+              result.rows
+                .map(
+                  (item) =>
+                    item.assigned_to === decoded.userID ? { ...item } : null
+                  // : {
+                  //     description: item.description,
+                  //     id: item.id,
+                  //     module: item.module,
+                  //     phone_number: item.phone_number,
+                  //     problem_name: item.problem_name,
+                  //     stage: item.stage,
+                  //     status: item.status,
+                  //     system_name: item.system_name,
+                  //     type: item.type,
+                  //   }
+                )
+                .filter((item) => item !== null)
             );
           }
         });
@@ -636,22 +638,24 @@ class DataController {
     try {
       const {
         problem_name,
-        system_id,
+        module,
         created_by,
         description,
         system_name,
         phone,
+        type,
       } = req.body;
       const result = await pool.query(
         `INSERT INTO user_requests (problem_name, type, status, assigned_to, created_at, module, created_by, description, system_name, phone_number)
-VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
+VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
         [
           problem_name,
-          system_id,
+          module, // module
           await getID(created_by),
           description,
           system_name,
           phone,
+          type,
         ]
       );
       if (result.rowCount === 1) {
@@ -666,10 +670,12 @@ VALUES ($1, 1, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
   }
   async getRequests(req, res, next) {
     try {
+      const login = decodeJWT(req.cookies.refreshToken).login;
       const allDevices = await pool.query(
-        "SELECT * FROM user_requests WHERE assigned_to IS NULL AND status != 1;"
+        "SELECT * FROM user_requests WHERE assigned_to IS NULL AND status != 1 AND type = (SELECT type from users where username = $1)",
+        [login]
       );
-      const id = await getID(decodeJWT(req.cookies.refreshToken).login);
+      const id = await getID(login);
       const workerDevices = await pool.query(
         "SELECT * FROM user_requests WHERE assigned_to = $1",
         [id]

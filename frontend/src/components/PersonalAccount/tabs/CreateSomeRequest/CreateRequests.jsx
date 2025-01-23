@@ -13,15 +13,17 @@ import zIndex from "@mui/material/styles/zIndex";
 export default function CreateRequests({ deviceObject }) {
   const [phone, setPhone] = useState("");
   const [problem, setProblem] = useState("");
-  const [object, setObject] = useState("Другое");
-  const deviceObjectTemp = [...deviceObject.boilers, { s_number: "Другое" }];
+  const [object, setObject] = useState({ s_number: "Другое", type: 0 });
+  const deviceObjectTemp = [
+    ...deviceObject.boilers,
+    { s_number: "Другое", type: 0 },
+  ];
   const [errors, setErrors] = useState({ problem: false, phone: false });
   const [description, setDescription] = useState("");
   const [successFlag, setSuccessFlag] = useState(false);
   function validate() {
     const problemError = problem.length < 1;
     const phoneError = phone.length !== 12;
-
     setErrors({ problem: problemError, phone: phoneError });
 
     return !(problemError || phoneError);
@@ -30,7 +32,7 @@ export default function CreateRequests({ deviceObject }) {
     if (validate()) {
       const data = {
         problem_name: problem,
-        system_id: object,
+        module: object.s_number,
         created_by: jwtDecode(
           localStorage.getItem("accessToken") ||
             sessionStorage.getItem("accessToken")
@@ -38,6 +40,7 @@ export default function CreateRequests({ deviceObject }) {
         description: description,
         system_name: deviceObject.name,
         phone: phone,
+        type: object.type,
       };
       $api.post("/createRequest", data).then((result) => {
         setSuccessFlag(true);
@@ -73,8 +76,13 @@ export default function CreateRequests({ deviceObject }) {
             }}
           >
             <Select
-              value={object}
-              onChange={(e) => setObject(e.target.value)}
+              value={object.s_number}
+              onChange={(e) => {
+                const selectedObject = deviceObjectTemp.find(
+                  (item) => item.s_number === e.target.value
+                );
+                setObject(selectedObject);
+              }}
               sx={{
                 fontSize: 17,
               }}

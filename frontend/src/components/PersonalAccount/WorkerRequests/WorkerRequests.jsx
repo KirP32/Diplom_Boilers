@@ -8,7 +8,6 @@ export default function WorkerRequests({
   systems_names,
   getAllDevices,
   setDeviceFirst,
-  devicesArray,
 }) {
   const [availData, setAvailData] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
