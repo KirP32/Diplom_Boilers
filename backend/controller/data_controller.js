@@ -791,6 +791,49 @@ VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
       return res.status(500).send(error);
     }
   }
+  async getAllSystems(req, res) {
+    try {
+      const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
+      const data = await pool.query(
+        `
+        SELECT s.*
+        FROM systems s
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM user_systems us
+          WHERE us.name = s.name
+            AND us.user_id = $1
+        )
+      `,
+        [user_id]
+      );
+      if (data.rowCount > 0) {
+        return res.send(data.rows);
+      } else {
+        return res.status(400);
+      }
+    } catch (error) {
+      return res.status(500).send({ message: error });
+    }
+  }
+  async addSystem(req, res) {
+    try {
+      const { systemName } = req.body;
+      console.log(systemName);
+      const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
+      const result = await pool.query(
+        "insert into user_systems values ($1, $2)",
+        [user_id, systemName]
+      );
+      if (result.rowCount > 0) {
+        return res.send("OK");
+      } else {
+        return res.status(500);
+      }
+    } catch (error) {
+      return res.status(500).send({ message: error });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

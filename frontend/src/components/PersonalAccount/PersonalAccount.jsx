@@ -15,6 +15,7 @@ import ViewRequests from "./tabs/ViewRequests/ViewRequests";
 import CircularProgress from "@mui/material/CircularProgress";
 import CreateRequests from "./tabs/CreateSomeRequest/CreateRequests";
 import WorkerRequests from "./WorkerRequests/WorkerRequests";
+import AddSystemsDialog from "./Dialogs/AddSystemsDialog/AddSystemsDialog";
 
 export default function PersonalAccount() {
   const [deviceFindName, setdeviceFindName] = useState("");
@@ -27,6 +28,7 @@ export default function PersonalAccount() {
   const [selectedTab, setSelectedTab] = useState("sensors");
   const { access_level } = useContext(ThemeContext);
   const [seeWorkerRequests, setSeeWorkerRequests] = useState(true);
+  const [addSystemFlag, setAddSystemFlag] = useState(false);
   let systems_names = devicesArray.map((item) => item.name);
   const tabObject = {
     sensors: <NewSensors deviceObject={deviceObject} />,
@@ -128,7 +130,7 @@ export default function PersonalAccount() {
             </Button>
           )}
           {access_level === 0 && (
-            <Button>
+            <Button onClick={() => setAddSystemFlag(!addSystemFlag)}>
               <h4>Добавить систему</h4>
             </Button>
           )}
@@ -186,6 +188,13 @@ export default function PersonalAccount() {
         open={settingsDialog}
         setSettingsDialog={(e) => setSettingsDialog(e)}
       ></SettingsDialog>
+      {addSystemFlag && (
+        <AddSystemsDialog
+          open={addSystemFlag}
+          setAddSystemFlag={() => setAddSystemFlag(!addSystemFlag)}
+          getAllDevices={getAllDevices}
+        ></AddSystemsDialog>
+      )}
     </div>
   );
 }

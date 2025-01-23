@@ -5,10 +5,8 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import Button from "../../../Button/Button";
-import { fontSize, padding } from "@mui/system";
 import { jwtDecode } from "jwt-decode";
 import $api from "../../../../http";
-import zIndex from "@mui/material/styles/zIndex";
 
 export default function CreateRequests({ deviceObject }) {
   const [phone, setPhone] = useState("");

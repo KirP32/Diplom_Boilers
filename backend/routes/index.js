@@ -13,6 +13,7 @@ router.get("/test_esp", checkCookie, DataController.test_esp);
 router.get("/getSystems", checkCookie, DataController.getSystems);
 router.get("/getSystemRequests", checkCookie, DataController.getSystemRequests);
 router.get("/getRequests", checkCookie, DataController.getRequests);
+router.get("/getAllSystems", checkCookie, DataController.getAllSystems);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
@@ -24,6 +25,7 @@ router.post("/add_device", checkCookie, DataController.add_device);
 router.post("/getActions", checkCookie, DataController.getActions);
 router.post("/addRequest", checkCookie, DataController.addRequest);
 router.post("/createRequest", checkCookie, DataController.createRequest);
+router.post("/addSystem", checkCookie, DataController.addSystem);
 
 router.delete(
   "/delete_device/:device_uid",
