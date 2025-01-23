@@ -53,3 +53,12 @@
     -moz-user-select: none;
     -ms-user-select: none;
 }
+
+.added__failed {
+    position: absolute;
+    color: hsl(0, 0%, 0%);
+    animation: reg_failed 2s forwards;
+    background-color: hsl(0, 100%, 65%);
+    padding: 15px;
+    border-radius: 5px;
+}

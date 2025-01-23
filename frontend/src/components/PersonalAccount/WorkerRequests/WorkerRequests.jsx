@@ -11,6 +11,7 @@ export default function WorkerRequests({
 }) {
   const [availData, setAvailData] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [add_failure, setAdd_Failure] = useState(false);
 
   async function getData() {
     await $api.get("/getRequests").then((response) => {
@@ -42,8 +43,8 @@ export default function WorkerRequests({
   async function addRequest(system_name, id) {
     setIsProcessing(true);
 
-    try {
-      await $api.post("/addRequest", {
+    await $api
+      .post("/addRequest", {
         systems_names: systems_names,
         system_name: system_name,
         user: jwtDecode(
@@ -51,15 +52,18 @@ export default function WorkerRequests({
             localStorage.getItem("accessToken")
         ).login,
         request_id: id,
-      });
-
-      await getData();
-      await getAllDevices();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsProcessing(false);
-    }
+      })
+      .then(async (result) => {
+        await getData();
+        await getAllDevices();
+      })
+      .catch((error) => {
+        setAdd_Failure(true);
+        setTimeout(() => {
+          setAdd_Failure(false);
+        }, 5000);
+      })
+      .finally(setIsProcessing(false));
   }
 
   useEffect(() => {
@@ -117,6 +121,11 @@ export default function WorkerRequests({
           ))}
         </div>
       </div>
+      {add_failure && (
+        <div className={styles.added__failed}>
+          <h4>Заявка уже взята в работу</h4>
+        </div>
+      )}
     </div>
   );
 }
