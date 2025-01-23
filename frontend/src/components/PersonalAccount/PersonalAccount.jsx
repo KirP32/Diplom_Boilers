@@ -27,6 +27,7 @@ export default function PersonalAccount() {
   const { theme } = useContext(ThemeContext);
   const [selectedTab, setSelectedTab] = useState("sensors");
   const { access_level } = useContext(ThemeContext);
+  console.log(access_level);
   const [seeWorkerRequests, setSeeWorkerRequests] = useState(true);
   const [addSystemFlag, setAddSystemFlag] = useState(false);
   let systems_names = devicesArray.map((item) => item.name);
