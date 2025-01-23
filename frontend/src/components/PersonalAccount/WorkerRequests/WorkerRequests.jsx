@@ -3,6 +3,10 @@ import $api from "../../../http";
 import { useState } from "react";
 import styles from "./WorkerRequests.module.scss";
 import { jwtDecode } from "jwt-decode";
+import Button from "../../Button/Button";
+import logout from "../../Logout/logout";
+import { useNavigate } from "react-router-dom";
+import OptionsDialog from "../Dialogs/OptionsDialog/OptionsDialog";
 
 export default function WorkerRequests({
   systems_names,
@@ -12,6 +16,9 @@ export default function WorkerRequests({
   const [availData, setAvailData] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [add_failure, setAdd_Failure] = useState(false);
+  const [user_name, setUser_name] = useState("");
+  const [user_email, setUserEmail] = useState(null);
+  const [options_flag, setOptions_flag] = useState(false);
 
   async function getData() {
     await $api.get("/getRequests").then((response) => {
@@ -65,12 +72,40 @@ export default function WorkerRequests({
       })
       .finally(setIsProcessing(false));
   }
-
   useEffect(() => {
     getData();
   }, []);
+
+  useEffect(() => {
+    const token =
+      sessionStorage.getItem("accessToken") ||
+      localStorage.getItem("accessToken");
+    if (token) {
+      setUser_name(jwtDecode(token).login);
+    }
+  }, []);
+
+  useEffect(() => {
+    $api
+      .post("/getUser_email")
+      .then((result) => {
+        setUserEmail(result?.data?.email);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, [user_email]);
+
   return (
     <div className={styles.worker_requests__wrapper}>
+      <div className={styles.indicators__wrapper}>
+        <Button
+          className={styles.indicators__button}
+          onClick={() => setOptions_flag(!options_flag)}
+        >
+          <h4>{user_name}</h4>
+        </Button>
+      </div>
       <div className={styles.available_requests}>
         <h2>Доступные заявки</h2>
         <div className={styles.available_requests__grid__container}>
@@ -126,6 +161,11 @@ export default function WorkerRequests({
           <h4>Заявка уже взята в работу</h4>
         </div>
       )}
+      <OptionsDialog
+        open={options_flag}
+        user={{ user_name, user_email }}
+        setOptions={(e) => setOptions_flag(e)}
+      ></OptionsDialog>
     </div>
   );
 }

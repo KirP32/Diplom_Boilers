@@ -1,6 +1,7 @@
 .worker_requests {
     &__wrapper {
         padding: 15px;
+        padding-top: 0px;
         & .available_requests {
             & h2 {
                 text-align: center;
@@ -61,4 +62,27 @@
     background-color: hsl(0, 100%, 65%);
     padding: 15px;
     border-radius: 5px;
+}
+
+.indicators {
+    &__wrapper {
+        display: flex;
+        justify-content: space-between;
+        place-items: center;
+        height: 98px;
+    }
+    &__button {
+        border-radius: 6px;
+        background-color: var(--special-btn-color);
+        color: hsl(0, 0%, 96%);
+        margin-left: auto;
+        &::before {
+            border-radius: 6px;
+        }
+        & h4 {
+            font-size: 20px;
+            align-self: center;
+            margin-right: 10px;
+        }
+    }
 }
