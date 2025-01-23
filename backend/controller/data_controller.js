@@ -819,7 +819,6 @@ VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
   async addSystem(req, res) {
     try {
       const { systemName } = req.body;
-      console.log(systemName);
       const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
       const result = await pool.query(
         "insert into user_systems values ($1, $2)",
