@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useCallback, useContext, useEffect } from "react";
 import $api from "../../../http";
 import { useState } from "react";
 import styles from "./WorkerRequests.module.scss";
@@ -19,16 +19,16 @@ export default function WorkerRequests({
   const [user_name, setUser_name] = useState("");
   const [user_email, setUserEmail] = useState(null);
   const [options_flag, setOptions_flag] = useState(false);
+  console.log("Rendered");
+  const getData = useCallback(async () => {
+    const response = await $api.get("/getRequests");
+    setAvailData(response.data);
+  }, []);
 
-  async function getData() {
-    await $api.get("/getRequests").then((response) => {
-      setAvailData(response.data);
-    });
-  }
-  async function removeRequest(item) {
-    await $api
-      .delete(`/removeRequest/${item.id}`)
-      .then(async (result) => {
+  const removeRequest = useCallback(
+    async (item) => {
+      try {
+        await $api.delete(`/removeRequest/${item.id}`);
         await getData();
         await getAllDevices();
         if (
@@ -38,40 +38,40 @@ export default function WorkerRequests({
               object.problem_name !== item.problem_name
           )
         ) {
-          console.log("Удаляю последний");
           setDeviceFirst(item.system_name);
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.log(error);
-      });
-  }
+      }
+    },
+    [getData, getAllDevices, availData, setDeviceFirst]
+  );
 
-  async function addRequest(system_name, id) {
-    setIsProcessing(true);
-
-    await $api
-      .post("/addRequest", {
-        systems_names: systems_names,
-        system_name: system_name,
-        user: jwtDecode(
-          sessionStorage.getItem("accessToken") ||
-            localStorage.getItem("accessToken")
-        ).login,
-        request_id: id,
-      })
-      .then(async (result) => {
+  const addRequest = useCallback(
+    async (system_name, id) => {
+      setIsProcessing(true);
+      try {
+        await $api.post("/addRequest", {
+          systems_names: systems_names,
+          system_name: system_name,
+          user: jwtDecode(
+            sessionStorage.getItem("accessToken") ||
+              localStorage.getItem("accessToken")
+          ).login,
+          request_id: id,
+        });
         await getData();
         await getAllDevices();
-      })
-      .catch((error) => {
+      } catch (error) {
         setAdd_Failure(true);
-        setTimeout(() => {
-          setAdd_Failure(false);
-        }, 5000);
-      })
-      .finally(setIsProcessing(false));
-  }
+        setTimeout(() => setAdd_Failure(false), 5000);
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [systems_names, getData, getAllDevices]
+  );
+
   useEffect(() => {
     getData();
   }, []);
@@ -82,6 +82,8 @@ export default function WorkerRequests({
       localStorage.getItem("accessToken");
     if (token) {
       setUser_name(jwtDecode(token).login);
+    } else {
+      console.log(token, "Токен не найден");
     }
   }, []);
 
@@ -92,6 +94,7 @@ export default function WorkerRequests({
         setUserEmail(result?.data?.email);
       })
       .catch((error) => {
+        setUserEmail("");
         console.log(error);
       });
   }, [user_email]);
