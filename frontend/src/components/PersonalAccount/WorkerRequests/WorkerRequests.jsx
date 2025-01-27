@@ -19,7 +19,7 @@ export default function WorkerRequests({
   const [user_name, setUser_name] = useState("");
   const [user_email, setUserEmail] = useState(null);
   const [options_flag, setOptions_flag] = useState(false);
-  console.log("Rendered");
+
   const getData = useCallback(async () => {
     const response = await $api.get("/getRequests");
     setAvailData(response.data);
@@ -97,7 +97,7 @@ export default function WorkerRequests({
         setUserEmail("");
         console.log(error);
       });
-  }, [user_email]);
+  }, []);
 
   return (
     <div className={styles.worker_requests__wrapper}>
