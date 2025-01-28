@@ -126,16 +126,18 @@ export default function ViewRequests({ deviceObject }) {
                 >
                   {item.status === 0 ? "В работе" : "Завершено"}
                 </span>
-                <span
-                  className={`material-icons ${styles.no_select}`}
-                  style={{ color: "red" }}
-                  onClick={(e) => {
-                    setShowDialog({ flag: true, item: item });
-                    e.stopPropagation();
-                  }}
-                >
-                  cancel
-                </span>
+                {item.status != 1 && (
+                  <span
+                    className={`material-icons ${styles.no_select}`}
+                    style={{ color: "red" }}
+                    onClick={(e) => {
+                      setShowDialog({ flag: true, item: item });
+                      e.stopPropagation();
+                    }}
+                  >
+                    cancel
+                  </span>
+                )}
               </div>
             </div>
           ))

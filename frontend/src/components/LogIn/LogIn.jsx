@@ -108,6 +108,11 @@ export default function LogIn() {
                   placeholder="Ваш логин"
                   value={login}
                   onChange={(event) => setLogin(event.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      comparePassword();
+                    }
+                  }}
                 />
                 {errorFlag.login && (
                   <h5 className={styles.error}>Неверный логин</h5>
@@ -117,6 +122,11 @@ export default function LogIn() {
                   placeholder="Пароль"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      comparePassword();
+                    }
+                  }}
                 />
                 {errorFlag.password && (
                   <h5 className={styles.error}>Неверный пароль</h5>

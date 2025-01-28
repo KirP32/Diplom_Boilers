@@ -643,11 +643,14 @@ class DataController {
         description,
         system_name,
         phone,
-        type,
       } = req.body;
+      let { type } = req.body;
+      if (!type) {
+        type = 0;
+      }
       const result = await pool.query(
         `INSERT INTO user_requests (problem_name, type, status, assigned_to, created_at, module, created_by, description, system_name, phone_number)
-VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
+        VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
         [
           problem_name,
           module, // module
@@ -677,12 +680,18 @@ VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
       );
       const id = await getID(login);
       const workerDevices = await pool.query(
-        "SELECT * FROM user_requests WHERE assigned_to = $1",
+        "SELECT * FROM user_requests WHERE assigned_to = $1 AND status = 0",
         [id]
       );
+      // const completedDevices = await pool.query(
+      //   `SELECT * FROM user_requests WHERE assigned_to = $1 AND status = 1`,
+      //   [id]
+      // );
       const resultData = {
         allDevices: allDevices.rowCount > 0 ? allDevices.rows : [],
         workerDevices: workerDevices.rowCount > 0 ? workerDevices.rows : [],
+        // completedDevices:
+        //   completedDevices.rowCount > 0 ? completedDevices.rows : [],
       };
       res.send(resultData);
     } catch (error) {
@@ -767,30 +776,81 @@ VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
 
   async deleteRequest(req, res) {
     try {
-      const { id, system_name } = req.params;
-      const username = decodeJWT(req.cookies.refreshToken).login;
-      const checking_system = await pool.query(
-        `SELECT * FROM user_systems 
+      const { id: requestId, system_name } = req.params;
+      const username = decodeJWT(req.cookies.refreshToken)?.login;
+      if (!requestId || !system_name || !username) {
+        return res.status(400).json({ message: "Неверный формат запроса" });
+      }
+      const systemCheck = await pool.query(
+        `SELECT 1 FROM user_systems 
          WHERE user_id = (SELECT id FROM users WHERE username = $1) 
          AND name = $2`,
         [username, system_name]
       );
-      if (checking_system.rowCount > 0) {
-        const result = await pool.query(
-          `DELETE FROM user_requests where id = $1`,
-          [id]
-        );
-        if (result.rowCount > 0) {
-          return res.status(200).json({ message: "Запись успешно удалена" });
-        } else {
-          return res.status(404).json({ message: "Запись не найдена" });
-        }
+
+      if (systemCheck.rowCount === 0) {
+        return res.status(403).json({ message: "Доступ запрещен" });
       }
-      return res.sendStatus(403);
+
+      const requestData = await pool.query(
+        `SELECT assigned_to FROM user_requests WHERE id = $1`,
+        [requestId]
+      );
+
+      if (requestData.rowCount === 0) {
+        return res.status(404).json({ message: "Заявка не найдена" });
+      }
+
+      const workerId = requestData.rows[0].assigned_to;
+
+      if (!workerId) {
+        const updateResult = await pool.query(
+          `UPDATE user_requests SET status = 1 WHERE id = $1`,
+          [requestId]
+        );
+
+        if (updateResult.rowCount === 0) {
+          return res.status(404).json({ message: "Ошибка с заявкой" });
+        }
+
+        return res.status(200).json({ message: "Запись успешно обновлена" });
+      }
+
+      const activeRequests = await pool.query(
+        `SELECT COUNT(*) as count 
+         FROM user_requests 
+         WHERE assigned_to = $1 
+           AND system_name = $2 
+           AND status = 0 
+           AND id != $3`,
+        [workerId, system_name, requestId]
+      );
+
+      if (Number(activeRequests.rows[0].count) === 0) {
+        await pool.query(
+          `DELETE FROM user_systems 
+           WHERE user_id = $1 AND name = $2`,
+          [workerId, system_name]
+        );
+      }
+
+      const updateResult = await pool.query(
+        `UPDATE user_requests SET status = 1 WHERE id = $1`,
+        [requestId]
+      );
+
+      if (updateResult.rowCount === 0) {
+        return res.status(404).json({ message: "Заявка не найдена" });
+      }
+
+      return res.status(200).json({ message: "Операция выполнена успешно" });
     } catch (error) {
-      return res.status(500).send(error);
+      return res
+        .status(500)
+        .json({ message: "Внутренняя ошибка сервера", error: error });
     }
   }
+
   async getAllSystems(req, res) {
     try {
       const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);

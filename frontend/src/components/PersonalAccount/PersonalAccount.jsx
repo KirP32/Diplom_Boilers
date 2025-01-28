@@ -16,6 +16,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CreateRequests from "./tabs/CreateSomeRequest/CreateRequests";
 import WorkerRequests from "./WorkerRequests/WorkerRequests";
 import AddSystemsDialog from "./Dialogs/AddSystemsDialog/AddSystemsDialog";
+import DeleteSystemDialog from "./Dialogs/DeleteSystemDialog/DeleteSystemDialog";
 
 export default function PersonalAccount() {
   const [deviceFindName, setdeviceFindName] = useState("");
@@ -29,12 +30,20 @@ export default function PersonalAccount() {
   const { access_level } = useContext(ThemeContext);
   const [seeWorkerRequests, setSeeWorkerRequests] = useState(true);
   const [addSystemFlag, setAddSystemFlag] = useState(false);
+  const [deleteFlag, setDeleteFlag] = useState(false);
+  const [deleteFlagDialog, setDeleteFlagDialog] = useState(false);
+
   let systems_names = devicesArray.map((item) => item.name);
   const tabObject = {
     sensors: <NewSensors deviceObject={deviceObject} />,
     mnemoscheme: <Mnemoscheme />,
     viewRequests: <ViewRequests deviceObject={deviceObject} />,
-    createRequests: <CreateRequests deviceObject={deviceObject} />,
+    createRequests: (
+      <CreateRequests
+        deviceObject={deviceObject}
+        setSelectedTab={() => setSelectedTab("viewRequests")}
+      />
+    ),
   };
 
   const deviceObjectRef = useRef();
@@ -114,6 +123,18 @@ export default function PersonalAccount() {
                       } ${styles.no_select}`}
                     />
                     <h4 className={styles.device__text}>{item.name}</h4>
+                    {deleteFlag && (
+                      <span
+                        className={`material-icons styles.no_select`}
+                        style={{ color: "red" }}
+                        onClick={(e) => {
+                          setDeleteFlagDialog({ flag: true, system: item });
+                          e.stopPropagation();
+                        }}
+                      >
+                        close
+                      </span>
+                    )}
                   </div>
                 ))}
             </>
@@ -134,7 +155,10 @@ export default function PersonalAccount() {
               <h4>Добавить систему</h4>
             </Button>
           )}
-          <Button className={styles.lk__wrapper__sidebar__options__btn_delete}>
+          <Button
+            className={styles.lk__wrapper__sidebar__options__btn_delete}
+            onClick={() => setDeleteFlag(!deleteFlag)}
+          >
             <h4>Удаление</h4>
           </Button>
           <Button
@@ -194,6 +218,15 @@ export default function PersonalAccount() {
           setAddSystemFlag={() => setAddSystemFlag(!addSystemFlag)}
           getAllDevices={getAllDevices}
         ></AddSystemsDialog>
+      )}
+      {deleteFlagDialog && (
+        <DeleteSystemDialog
+          open={deleteFlagDialog.flag}
+          setDeleteFlagDialog={() =>
+            setDeleteFlagDialog({ ...deleteFlagDialog, flag: false })
+          }
+          system={deleteFlagDialog.system}
+        />
       )}
     </div>
   );

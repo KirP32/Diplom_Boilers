@@ -50,3 +50,10 @@
 .MuiInputBase-input {
     padding-right: 0px !important;
 }
+
+.no_select {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}

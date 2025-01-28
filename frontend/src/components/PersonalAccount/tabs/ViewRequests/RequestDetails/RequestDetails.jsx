@@ -40,6 +40,36 @@ export default function RequestDetails({ item, setItem }) {
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
+        <div
+          className={styles.span__wrapper}
+          style={{
+            position: "absolute",
+            marginLeft: "-75px",
+            width: "55px",
+            height: "50px",
+            display: "flex",
+            alignItems: "center",
+            marginTop: "-20px",
+            borderRadius: "9px 0px 0px 9px",
+            backgroundColor: "white",
+          }}
+        >
+          <span
+            className={`material-icons no_select`}
+            style={{
+              color: "red",
+              fontSize: 55,
+              cursor: "pointer",
+            }}
+            onClick={(e) => {
+              closePanel();
+              e.stopPropagation();
+            }}
+          >
+            cancel
+          </span>
+        </div>
+
         <h3 style={{ textAlign: "center", marginBottom: 15 }}>
           {item.problem_name}
         </h3>

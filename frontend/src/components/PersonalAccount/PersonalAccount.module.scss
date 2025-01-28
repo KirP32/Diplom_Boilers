@@ -93,13 +93,14 @@
         position: relative;
         isolation: isolate;
         display: grid;
-        grid-template-columns: 19px 1fr;
+        grid-template-columns: 19px 1fr 25px;
         padding: 15px;
         justify-content: center;
         align-items: center;
         border-radius: 20px;
         background-color: antiquewhite;
         cursor: pointer;
+
         &::before {
             content: " ";
             position: absolute;

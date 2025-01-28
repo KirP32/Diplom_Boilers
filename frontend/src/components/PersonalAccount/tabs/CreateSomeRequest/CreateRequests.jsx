@@ -7,8 +7,7 @@ import Select from "@mui/material/Select";
 import Button from "../../../Button/Button";
 import { jwtDecode } from "jwt-decode";
 import $api from "../../../../http";
-
-export default function CreateRequests({ deviceObject }) {
+export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const [phone, setPhone] = useState("");
   const [problem, setProblem] = useState("");
   const [object, setObject] = useState({ s_number: "Другое", type: 0 });
@@ -26,6 +25,14 @@ export default function CreateRequests({ deviceObject }) {
 
     return !(problemError || phoneError);
   }
+
+  function clearForm() {
+    setPhone("");
+    setProblem("");
+    setObject({ s_number: "Другое", type: 0 });
+    setDescription("");
+  }
+
   function handleCreateRequest() {
     if (validate()) {
       const data = {
@@ -42,6 +49,8 @@ export default function CreateRequests({ deviceObject }) {
       };
       $api.post("/createRequest", data).then((result) => {
         setSuccessFlag(true);
+        setTimeout(() => setSuccessFlag(false), 5000);
+        clearForm();
       });
     }
   }
@@ -124,9 +133,12 @@ export default function CreateRequests({ deviceObject }) {
         </Button>
       </div>
       {successFlag && (
-        <h4 className={styles.success}>
-          Завка успешно создана <br /> Проверь её в Заявки - Просмотр
-        </h4>
+        <>
+          <h4 className={styles.success}>
+            Завка успешно создана <br /> Проверь её в Заявки - Просмотр
+          </h4>
+          <Button onClick={setSelectedTab}>Просмотр</Button>
+        </>
       )}
     </div>
   );

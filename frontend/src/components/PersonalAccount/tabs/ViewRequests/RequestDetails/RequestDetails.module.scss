@@ -88,3 +88,16 @@
         animation: pulse 2s infinite;
     }
 }
+
+@keyframes showCancel {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.span__wrapper {
+    animation: slideInRight 0.35s ease-out;
+}
