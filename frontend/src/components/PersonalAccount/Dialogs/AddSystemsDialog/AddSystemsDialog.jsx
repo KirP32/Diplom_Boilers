@@ -38,15 +38,17 @@ export default function AddSystemsDialog({
 
   const handleAddSystem = async () => {
     const data = { systemName };
-    await $api
-      .post("/addSystem", data)
-      .then((result) => {
-        getAllDevices();
-        setAddSystemFlag(false);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    if (systemName !== "") {
+      await $api
+        .post("/addSystem", data)
+        .then((result) => {
+          getAllDevices();
+          setAddSystemFlag(false);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
   };
 
   console.log(data);
@@ -77,6 +79,7 @@ export default function AddSystemsDialog({
           autoFocus
           color="success"
           variant="contained"
+          disabled={data.length < 1}
         >
           Добавить
         </Button>

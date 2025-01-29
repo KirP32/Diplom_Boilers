@@ -22,7 +22,6 @@ export default function PersonalAccount() {
   const [deviceFindName, setdeviceFindName] = useState("");
   const [devicesArray, setDevicesArray] = useState([]);
   const [deviceObject, setDeviceObject] = useState(null);
-  let flag_error = false;
   const navigate = useNavigate();
   const [settingsDialog, setSettingsDialog] = useState(false);
   const { theme } = useContext(ThemeContext);
@@ -171,6 +170,16 @@ export default function PersonalAccount() {
       </div>
       <div className={styles.lk__wrapper__main__content}>
         <div className={styles.lk__wrapper__main__content__wrapper}>
+          {(seeWorkerRequests === false || access_level === 0) && (
+            <h3
+              className={
+                styles.lk__wrapper__main__content__wrapper__system_title
+              }
+            >
+              {deviceObject && deviceObject?.name}
+            </h3>
+          )}
+
           {devicesArray.length > 0 &&
             (seeWorkerRequests === false || access_level === 0) && (
               <>

@@ -72,6 +72,14 @@
                 height: 100%;
                 background-color: var(--backgorund-color-on-surface);
                 border-radius: 6px;
+                &__system_title {
+                    text-align: center;
+                    color: var(--text-color);
+                    // padding: 10px;
+                    // padding-bottom: 0px;
+                    font-size: 25px;
+                    border: 1px solid;
+                }
             }
         }
         &__object {

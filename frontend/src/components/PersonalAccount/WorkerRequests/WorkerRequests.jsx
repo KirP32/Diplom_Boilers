@@ -62,7 +62,7 @@ export default function WorkerRequests({
         await getAllDevices();
       } catch (error) {
         setAdd_Failure(true);
-        setTimeout(() => setAdd_Failure(false), 5000);
+        setTimeout(() => setAdd_Failure(false), 115000);
       } finally {
         setIsProcessing(false);
       }

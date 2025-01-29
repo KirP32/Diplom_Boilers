@@ -749,7 +749,7 @@ class DataController {
         FROM user_requests
         WHERE assigned_to = $2
           AND system_name = (SELECT system_name FROM updated)
-          AND id != $1;`,
+          AND id != $1`,
         [id, user_id]
       );
 
@@ -874,8 +874,7 @@ class DataController {
         return res.send(data.rows);
       } else {
         console.log("getAllSystems ended with error");
-
-        return res.status(400);
+        return res.sendStatus(400);
       }
     } catch (error) {
       return res.status(500).send({ message: error });
