@@ -22,6 +22,7 @@ export default function AddSystemsDialog({
     try {
       const result = await $api.get("/getAllSystems");
       setData(result.data);
+      console.log(result);
     } catch (error) {
       console.error("Ошибка при загрузке систем:", error);
     }
@@ -47,6 +48,8 @@ export default function AddSystemsDialog({
         console.log(error);
       });
   };
+
+  console.log(data);
 
   return (
     <Dialog open={open} onClose={() => setAddSystemFlag(false)}>

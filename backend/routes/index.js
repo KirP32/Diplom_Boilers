@@ -44,6 +44,8 @@ router.delete(
   DataController.deleteRequest
 );
 
+router.delete(`/deleteSystem/:name`, checkCookie, DataController.deleteSystem);
+
 router.put("/off_esp", checkCookie, DataController.off_esp);
 
 module.exports = router;

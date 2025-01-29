@@ -14,12 +14,13 @@ export default function DeleteSystemDialog({
   open,
   setDeleteFlagDialog,
   system,
+  getAllDevices,
 }) {
-  console.log(system);
-  function handleDelete() {
-    $api
-      .delete(`/deleteSystem/${system.id}`)
+  async function handleDelete() {
+    await $api
+      .delete(`/deleteSystem/${system.name}`)
       .then((result) => {
+        getAllDevices();
         setDeleteFlagDialog(false);
       })
       .catch((error) => {

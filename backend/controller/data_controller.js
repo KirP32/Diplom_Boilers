@@ -853,6 +853,7 @@ class DataController {
 
   async getAllSystems(req, res) {
     try {
+      //console.log("getAllSystems called");
       const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
       const data = await pool.query(
         `
@@ -868,8 +869,12 @@ class DataController {
         [user_id]
       );
       if (data.rowCount > 0) {
+        // console.log("getAllSystems ended ok");
+        // console.log(data.rows);
         return res.send(data.rows);
       } else {
+        console.log("getAllSystems ended with error");
+
         return res.status(400);
       }
     } catch (error) {
@@ -891,6 +896,23 @@ class DataController {
       }
     } catch (error) {
       return res.status(500).send({ message: error });
+    }
+  }
+  async deleteSystem(req, res) {
+    try {
+      const { name: system_name } = req.params;
+      const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
+      const result = await pool.query(
+        "DELETE FROM user_systems WHERE user_id = $1 AND name = $2",
+        [user_id, system_name]
+      );
+      if (result.rowCount > 0) {
+        return res.sendStatus(200);
+      } else {
+        return res.status(500).send({ message: "Ошибка удаления системы" });
+      }
+    } catch (error) {
+      return res.send(error);
     }
   }
 }

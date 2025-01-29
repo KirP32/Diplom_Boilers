@@ -226,6 +226,7 @@ export default function PersonalAccount() {
             setDeleteFlagDialog({ ...deleteFlagDialog, flag: false })
           }
           system={deleteFlagDialog.system}
+          getAllDevices={() => getAllDevices()}
         />
       )}
     </div>
