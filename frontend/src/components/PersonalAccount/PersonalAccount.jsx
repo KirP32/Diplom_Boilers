@@ -170,15 +170,16 @@ export default function PersonalAccount() {
       </div>
       <div className={styles.lk__wrapper__main__content}>
         <div className={styles.lk__wrapper__main__content__wrapper}>
-          {(seeWorkerRequests === false || access_level === 0) && (
-            <h3
-              className={
-                styles.lk__wrapper__main__content__wrapper__system_title
-              }
-            >
-              {deviceObject && deviceObject?.name}
-            </h3>
-          )}
+          {(seeWorkerRequests === false || access_level === 0) &&
+            devicesArray.length > 0 && (
+              <h3
+                className={
+                  styles.lk__wrapper__main__content__wrapper__system_title
+                }
+              >
+                {deviceObject && deviceObject?.name}
+              </h3>
+            )}
 
           {devicesArray.length > 0 &&
             (seeWorkerRequests === false || access_level === 0) && (

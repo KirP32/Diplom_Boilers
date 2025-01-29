@@ -22,7 +22,6 @@ export default function AddSystemsDialog({
     try {
       const result = await $api.get("/getAllSystems");
       setData(result.data);
-      console.log(result);
     } catch (error) {
       console.error("Ошибка при загрузке систем:", error);
     }
@@ -37,13 +36,16 @@ export default function AddSystemsDialog({
   };
 
   const handleAddSystem = async () => {
-    const data = { systemName };
+    const data_name = { systemName };
     if (systemName !== "") {
       await $api
-        .post("/addSystem", data)
+        .post("/addSystem", data_name)
         .then((result) => {
           getAllDevices();
-          setAddSystemFlag(false);
+          showAllSystems();
+          setData(data.filter((item) => item.name !== data_name));
+          setSystemName("");
+          //setAddSystemFlag(false);
         })
         .catch((error) => {
           console.log(error);
@@ -51,26 +53,28 @@ export default function AddSystemsDialog({
     }
   };
 
-  console.log(data);
-
   return (
     <Dialog open={open} onClose={() => setAddSystemFlag(false)}>
       <DialogTitle id="alert-dialog-title">
         Добавьте себе следующую систему:
       </DialogTitle>
       <DialogContent>
-        <Select
-          value={systemName}
-          onChange={handleSystemChange}
-          sx={{ fontSize: 17 }}
-          fullWidth
-        >
-          {data.map((item) => (
-            <MenuItem key={item.id} value={item.name} sx={{ fontSize: 17 }}>
-              {item.name}
-            </MenuItem>
-          ))}
-        </Select>
+        {data.length > 0 ? (
+          <Select
+            value={systemName}
+            onChange={handleSystemChange}
+            sx={{ fontSize: 17 }}
+            fullWidth
+          >
+            {data.map((item) => (
+              <MenuItem key={item.id} value={item.name} sx={{ fontSize: 17 }}>
+                {item.name}
+              </MenuItem>
+            ))}
+          </Select>
+        ) : (
+          <p>Систем больше нет...</p>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setAddSystemFlag(false)}>Отмена</Button>
@@ -79,7 +83,7 @@ export default function AddSystemsDialog({
           autoFocus
           color="success"
           variant="contained"
-          disabled={data.length < 1}
+          disabled={data.length < 1 || systemName === ""}
         >
           Добавить
         </Button>

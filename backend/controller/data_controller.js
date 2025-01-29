@@ -868,14 +868,7 @@ class DataController {
       `,
         [user_id]
       );
-      if (data.rowCount > 0) {
-        // console.log("getAllSystems ended ok");
-        // console.log(data.rows);
-        return res.send(data.rows);
-      } else {
-        console.log("getAllSystems ended with error");
-        return res.sendStatus(400);
-      }
+      return res.send(data.rows);
     } catch (error) {
       return res.status(500).send({ message: error });
     }
