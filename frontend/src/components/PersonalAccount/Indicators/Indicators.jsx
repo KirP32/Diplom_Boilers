@@ -91,10 +91,10 @@ export default function Indicators({ setSelectedTab, tab }) {
           <MenuItem onClick={() => handleClose("mnemoscheme")}>
             Мнемосхема
           </MenuItem>
-          <MenuItem onClick={() => handleClose("information")}>
+          {/* <MenuItem onClick={() => handleClose("information")}>
             Информация
           </MenuItem>
-          <MenuItem onClick={() => handleClose("drawing")}>Чертёж</MenuItem>
+          <MenuItem onClick={() => handleClose("drawing")}>Чертёж</MenuItem> */}
           <MenuItem onClick={() => handleClose("sensors")}>Sensors</MenuItem>
         </Menu>
 
