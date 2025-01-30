@@ -121,14 +121,14 @@ class DataController {
     if (oldUUID4) {
       UUID4 = oldUUID4;
     }
-
+    console.log("Login here");
     const str = "SELECT password_hash FROM USERS WHERE username = $1";
     pool.query(str, [login], async (err, result) => {
       if (err) {
         console.error("Error executing query:", err);
         res.status(500).json({ error: "Internal Server Error" });
       }
-
+      console.log("Results here", result.rows);
       if (result.rows.length === 0) {
         return res.status(400).json({ error: "User not found" });
       }
