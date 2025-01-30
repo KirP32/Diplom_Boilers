@@ -137,6 +137,11 @@ export default function LogIn() {
                   type="checkbox"
                   checked={checked}
                   onChange={chengeCheckbox}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      chengeCheckbox();
+                    }
+                  }}
                 />
                 <h5 onClick={chengeCheckbox} className={styles.no_select}>
                   Запомнить меня
