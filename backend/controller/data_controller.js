@@ -121,14 +121,12 @@ class DataController {
     if (oldUUID4) {
       UUID4 = oldUUID4;
     }
-    console.log("Login here");
     const str = "SELECT password_hash FROM USERS WHERE username = $1";
     pool.query(str, [login], async (err, result) => {
       if (err) {
         console.error("Error executing query:", err);
         res.status(500).json({ error: "Internal Server Error" });
       }
-      console.log("Results here", result.rows);
       if (result.rows.length === 0) {
         return res.status(400).json({ error: "User not found" });
       }
@@ -699,19 +697,32 @@ class DataController {
       res.status(500).json({ error: "Internal Server Error" });
     }
   }
+
   async addRequest(req, res, next) {
     try {
       const { system_name, user, request_id, systems_names } = req.body;
       const userId = await getID(user);
+
+      const checkRequest = await pool.query(
+        "SELECT id FROM user_requests WHERE id = $1 AND assigned_to IS NULL",
+        [request_id]
+      );
+
+      if (checkRequest.rowCount === 0) {
+        return res
+          .status(400)
+          .json({ message: "Заявка уже назначена или не существует." });
+      }
+
       const resultRequest = await pool.query(
-        "UPDATE user_requests SET assigned_to = $1 WHERE id = $2;",
+        "UPDATE user_requests SET assigned_to = $1 WHERE id = $2",
         [userId, request_id]
       );
 
       let resultSystem = { rowCount: 1 };
       if (!systems_names.includes(system_name)) {
         resultSystem = await pool.query(
-          "INSERT INTO user_systems VALUES ($1, $2);",
+          "INSERT INTO user_systems (user_id, system_name) VALUES ($1, $2)",
           [userId, system_name]
         );
       }
@@ -719,14 +730,16 @@ class DataController {
       if (resultRequest.rowCount > 0 && resultSystem.rowCount > 0) {
         res.sendStatus(200);
       } else if (resultRequest.rowCount > 0) {
-        res.status(200).json({ message: "Не удалось добавить систему." });
+        res
+          .status(200)
+          .json({ message: "Система не была добавлена (уже существует)." });
       } else {
-        res.status(500).json({ message: "Не удалось добавить заявку." });
+        res.status(500).json({ message: "Ошибка при назначении заявки." });
       }
     } catch (error) {
       console.error(error);
       if (error.code === "23505") {
-        res.status(409).json({ message: "Такая система уже существует." });
+        res.status(409).json({ message: "Система уже существует." });
       } else {
         res.status(500).json({ message: "Внутренняя ошибка сервера." });
       }
