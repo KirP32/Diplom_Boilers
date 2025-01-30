@@ -1,3 +1,5 @@
+version: '3'
+
 networks:
   dev:
 
@@ -8,23 +10,20 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - './nginx.conf:/etc/nginx/nginx.conf'
-      - '/etc/letsencrypt:/etc/letsencrypt'
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt:/etc/letsencrypt
     depends_on:
       - backend
       - frontend
     networks:
       - dev
-    
 
   backend:
-    build:
-      context: ./backend
+    build: ./backend
     networks:
       - dev
 
   frontend:
-    build:
-      context: ./frontend
+    build: ./frontend
     networks:
       - dev
