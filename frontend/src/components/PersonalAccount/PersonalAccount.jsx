@@ -225,18 +225,18 @@ export default function PersonalAccount() {
       {addSystemFlag && (
         <AddSystemsDialog
           open={addSystemFlag}
-          setAddSystemFlag={() => setAddSystemFlag(!addSystemFlag)}
+          setAddSystemFlag={setAddSystemFlag}
           getAllDevices={getAllDevices}
-        ></AddSystemsDialog>
+        />
       )}
-      {deleteFlagDialog && (
+
+      {deleteFlagDialog?.flag && (
         <DeleteSystemDialog
           open={deleteFlagDialog.flag}
-          setDeleteFlagDialog={() =>
-            setDeleteFlagDialog({ ...deleteFlagDialog, flag: false })
-          }
+          setDeleteFlagDialog={setDeleteFlagDialog}
           system={deleteFlagDialog.system}
-          getAllDevices={() => getAllDevices()}
+          getAllDevices={getAllDevices}
+          setDeleteFlag={() => setDeleteFlag(false)}
         />
       )}
     </div>

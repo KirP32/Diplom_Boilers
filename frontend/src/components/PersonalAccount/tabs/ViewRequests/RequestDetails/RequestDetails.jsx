@@ -8,6 +8,7 @@ import Step from "@mui/material/Step";
 import StepButton from "@mui/material/StepButton";
 import U_Materials from "./additionalComponents/User/U_Materials/U_Materials";
 import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
+import Button from "@mui/material/Button";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -103,7 +104,11 @@ export default function RequestDetails({ item, setItem }) {
           ))}
         </Stepper>
         {react_functional_components[data_type_1[itemStage]][access_level]}
-        {/* <button onClick={closePanel}>Закрыть</button> */}
+        <section className={styles.request_buttons}>
+          <Button variant="contained">Назад {}</Button>
+          <Button variant="contained">Вперёд {"1 / 2"}</Button>
+          {/* // Добавить авто смену цвета когда кто-то жмёт вперёд или назад + Когда один нажал, у другого тоже должно поменяться */}
+        </section>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import {
   DialogTitle,
   Select,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import $api from "../../../../http";
 
@@ -17,6 +18,13 @@ export default function AddSystemsDialog({
 }) {
   const [data, setData] = useState([]);
   const [systemName, setSystemName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      showAllSystems();
+    }
+  }, [open]);
 
   async function showAllSystems() {
     try {
@@ -27,37 +35,34 @@ export default function AddSystemsDialog({
     }
   }
 
-  useEffect(() => {
-    showAllSystems();
-  }, []);
-
   const handleSystemChange = (event) => {
     setSystemName(event.target.value);
   };
 
   const handleAddSystem = async () => {
-    const data_name = { systemName };
-    if (systemName !== "") {
-      await $api
-        .post("/addSystem", data_name)
-        .then((result) => {
-          getAllDevices();
-          showAllSystems();
-          setData(data.filter((item) => item.name !== data_name));
-          setSystemName("");
-          //setAddSystemFlag(false);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+    if (!systemName || isLoading) return;
+
+    setIsLoading(true);
+
+    try {
+      await $api.post("/addSystem", { systemName });
+      await getAllDevices();
+
+      setData((prevData) =>
+        prevData.filter((item) => item.name !== systemName)
+      );
+
+      setSystemName("");
+    } catch (error) {
+      console.error("Ошибка при добавлении системы:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onClose={() => setAddSystemFlag(false)}>
-      <DialogTitle id="alert-dialog-title">
-        Добавьте себе следующую систему:
-      </DialogTitle>
+      <DialogTitle>Добавьте себе следующую систему:</DialogTitle>
       <DialogContent>
         {data.length > 0 ? (
           <Select
@@ -80,12 +85,11 @@ export default function AddSystemsDialog({
         <Button onClick={() => setAddSystemFlag(false)}>Отмена</Button>
         <Button
           onClick={handleAddSystem}
-          autoFocus
           color="success"
           variant="contained"
-          disabled={data.length < 1 || systemName === ""}
+          disabled={data.length < 1 || !systemName || isLoading}
         >
-          Добавить
+          {isLoading ? <CircularProgress size={24} /> : "Добавить"}
         </Button>
       </DialogActions>
     </Dialog>

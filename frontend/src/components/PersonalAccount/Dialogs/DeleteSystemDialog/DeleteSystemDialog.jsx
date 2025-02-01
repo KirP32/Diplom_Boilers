@@ -1,12 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Button,
   Dialog,
   DialogActions,
-  DialogContent,
   DialogTitle,
-  Select,
-  MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import $api from "../../../../http";
 
@@ -15,32 +13,41 @@ export default function DeleteSystemDialog({
   setDeleteFlagDialog,
   system,
   getAllDevices,
+  setDeleteFlag,
 }) {
-  async function handleDelete() {
-    await $api
-      .delete(`/deleteSystem/${system.name}`)
-      .then((result) => {
-        getAllDevices();
-        setDeleteFlagDialog(false);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!system?.name || isLoading) return;
+
+    setIsLoading(true);
+
+    try {
+      await $api.delete(`/deleteSystem/${system.name}`);
+      await getAllDevices();
+      setDeleteFlag();
+      setDeleteFlagDialog(false);
+    } catch (error) {
+      console.error("Ошибка при удалении системы:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onClose={() => setDeleteFlagDialog(false)}>
-      <DialogTitle id="alert-dialog-title">
-        {`Удалить: ${system.name} ?`}
-      </DialogTitle>
+      <DialogTitle>{`Удалить: ${system?.name} ?`}</DialogTitle>
       <DialogActions>
-        <Button onClick={() => setDeleteFlagDialog(false)}>Нет</Button>
+        <Button onClick={() => setDeleteFlagDialog(false)} disabled={isLoading}>
+          Нет
+        </Button>
         <Button
           onClick={handleDelete}
-          autoFocus
-          color="success"
+          color="error"
           variant="contained"
+          disabled={isLoading}
         >
-          Да
+          {isLoading ? <CircularProgress size={24} /> : "Да"}
         </Button>
       </DialogActions>
     </Dialog>

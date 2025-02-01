@@ -101,3 +101,9 @@
 .span__wrapper {
     animation: slideInRight 0.35s ease-out;
 }
+
+.request_buttons {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+}
