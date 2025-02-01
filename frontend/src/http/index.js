@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const API_URL = `https://ads-line.pro/api/`; //http://185.46.10.111/api
+export const API_URL = `http://localhost:8080`; //http://185.46.10.111/api
 //http://localhost:8080
 
 const $api = axios.create({
