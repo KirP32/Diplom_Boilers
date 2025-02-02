@@ -62,7 +62,7 @@ export default function WorkerRequests({
         await getAllDevices();
       } catch (error) {
         setAdd_Failure(true);
-        setTimeout(() => setAdd_Failure(false), 115000);
+        setTimeout(() => setAdd_Failure(false), 5000);
       } finally {
         setIsProcessing(false);
       }
@@ -160,18 +160,6 @@ export default function WorkerRequests({
           ))}
         </div>
       </div>
-      {/* <div className={styles.available_requests}>
-        <h2>Завершённые заявки</h2>
-        {availData?.completedDevices?.map((item) => (
-          <div key={item.id} className={styles.available_requests__grid__item}>
-            <div className={styles.available_requests__grid__item__header}>
-              <h3>{item.problem_name}</h3>
-              <p>Датчик: {item.module}</p>
-              <h3>Система: {item.system_name}</h3>
-            </div>
-          </div>
-        ))}
-      </div> */}
       {add_failure && (
         <div className={styles.added__failed}>
           <h4>Заявка уже взята в работу</h4>

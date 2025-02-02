@@ -26,6 +26,11 @@ router.post("/getActions", checkCookie, DataController.getActions);
 router.post("/addRequest", checkCookie, DataController.addRequest);
 router.post("/createRequest", checkCookie, DataController.createRequest);
 router.post("/addSystem", checkCookie, DataController.addSystem);
+router.post(
+  "/confirmStageTransition",
+  checkCookie,
+  DataController.confirmStageTransition
+);
 
 router.delete(
   "/delete_device/:device_uid",
@@ -37,13 +42,11 @@ router.delete(
   checkCookie,
   DataController.removeRequestFrom
 );
-
 router.delete(
   `/deleteRequest/:id/:system_name`,
   checkCookie,
   DataController.deleteRequest
 );
-
 router.delete(`/deleteSystem/:name`, checkCookie, DataController.deleteSystem);
 
 router.put("/off_esp", checkCookie, DataController.off_esp);

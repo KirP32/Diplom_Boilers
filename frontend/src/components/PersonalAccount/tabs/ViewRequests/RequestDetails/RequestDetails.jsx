@@ -9,6 +9,7 @@ import StepButton from "@mui/material/StepButton";
 import U_Materials from "./additionalComponents/User/U_Materials/U_Materials";
 import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
+import $api from "../../../../../http";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -33,11 +34,26 @@ export default function RequestDetails({ item, setItem }) {
   const handleStep = (step) => () => {
     setItemStage(step);
   };
+  const handleConfirmStage = async () => {
+    try {
+      const response = await $api.post("/confirmStageTransition", {
+        request_id: item.id,
+        user_type: access_level,
+      });
+
+      setItem((prev) => ({
+        ...prev,
+        user_confirmed: response.data.user_confirmed,
+        worker_confirmed: response.data.worker_confirmed,
+      }));
+    } catch (error) {
+      console.error("Ошибка подтверждения:", error);
+    }
+  };
 
   const { access_level } = useContext(ThemeContext);
 
   const [itemStage, setItemStage] = useState(item.stage);
-
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -106,7 +122,22 @@ export default function RequestDetails({ item, setItem }) {
         {react_functional_components[data_type_1[itemStage]][access_level]}
         <section className={styles.request_buttons}>
           <Button variant="contained">Назад {}</Button>
-          <Button variant="contained">Вперёд {"1 / 2"}</Button>
+          <Button
+            variant="contained"
+            color={
+              item.user_confirmed || item.worker_confirmed
+                ? "success"
+                : "primary"
+            }
+            onClick={handleConfirmStage}
+          >
+            {item.user_confirmed && item.worker_confirmed
+              ? "✅ Подтверждено"
+              : item.user_confirmed || item.worker_confirmed
+              ? "Вперёд 1/2"
+              : "Вперёд"}
+          </Button>
+
           {/* // Добавить авто смену цвета когда кто-то жмёт вперёд или назад + Когда один нажал, у другого тоже должно поменяться */}
         </section>
       </div>
