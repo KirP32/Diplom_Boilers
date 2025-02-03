@@ -45,16 +45,7 @@ pool.connect((err) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("Клиент подключен:", socket.id);
-
-  socket.on("message", (data) => {
-    console.log("Сообщение от клиента:", data);
-    io.emit("message", `Сервер получил: ${data}`);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Клиент отключен:", socket.id);
-  });
+  console.log("User connected");
 });
 
 app.use("/", router);
