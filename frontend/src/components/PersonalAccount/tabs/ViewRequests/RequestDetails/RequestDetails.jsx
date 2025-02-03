@@ -34,22 +34,6 @@ export default function RequestDetails({ item, setItem }) {
   const handleStep = (step) => () => {
     setItemStage(step);
   };
-  const handleConfirmStage = async () => {
-    try {
-      const response = await $api.post("/confirmStageTransition", {
-        request_id: item.id,
-        user_type: access_level,
-      });
-
-      setItem((prev) => ({
-        ...prev,
-        user_confirmed: response.data.user_confirmed,
-        worker_confirmed: response.data.worker_confirmed,
-      }));
-    } catch (error) {
-      console.error("Ошибка подтверждения:", error);
-    }
-  };
 
   const { access_level } = useContext(ThemeContext);
 
@@ -129,7 +113,7 @@ export default function RequestDetails({ item, setItem }) {
                 ? "success"
                 : "primary"
             }
-            onClick={handleConfirmStage}
+            onClick={null}
           >
             {item.user_confirmed && item.worker_confirmed
               ? "✅ Подтверждено"
