@@ -9,7 +9,9 @@ import StepButton from "@mui/material/StepButton";
 import U_Materials from "./additionalComponents/User/U_Materials/U_Materials";
 import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
-import $api from "../../../../../http";
+//import $api from "../../../../../http";
+import { socket } from "../../../../../socket";
+import { jwtDecode } from "jwt-decode";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -20,6 +22,57 @@ const data_type_1 = [
 ];
 
 export default function RequestDetails({ item, setItem }) {
+  const [isConnected, setIsConnected] = useState(socket.connected);
+  useEffect(() => {
+    const requestId = item.id;
+    socket.connect();
+    socket.emit("joinRequest", requestId, (response) => {
+      if (response.status === "error") {
+        console.error("Не удалось подключиться к комнате");
+      }
+    });
+
+    const handleRequestUpdate = (data) => {
+      console.log("Новый объект", data);
+    };
+
+    const handleUserJoined = (data) => {
+      console.log("Пользователь подключился");
+      console.log(data);
+    };
+
+    socket.on("requestData", handleRequestUpdate);
+    socket.on("requestUpdated", handleRequestUpdate);
+    socket.on("userJoined", handleUserJoined);
+
+    return () => {
+      socket.emit("leaveRequest", requestId);
+      socket.off("requestData", handleRequestUpdate);
+      socket.off("requestUpdated", handleRequestUpdate);
+      socket.off("userJoined", handleUserJoined);
+      socket.disconnect();
+    };
+  }, []);
+
+  async function sendMessage() {
+    console.log("send message");
+    const name = jwtDecode(
+      localStorage.getItem("accessToken") ||
+        sessionStorage.getItem("accessToken")
+    ).login;
+    try {
+      const response = await socket.emitWithAck("nextStage", {
+        login: name,
+        system_name: item.system_name,
+        id: item.id,
+        stage: item.stage,
+        access_level: access_level,
+      });
+      console.log(response.status);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   const react_functional_components = {
     "Поиск специалиста": [<U_SearchWorker item={item} />, <A_SearchWorker />],
     Материалы: [<U_Materials />, <A_Materials />],
@@ -28,6 +81,7 @@ export default function RequestDetails({ item, setItem }) {
     Завершенно: <></>,
   };
   const closePanel = () => {
+    socket.disconnect();
     setItem(null);
   };
 
@@ -104,6 +158,13 @@ export default function RequestDetails({ item, setItem }) {
           ))}
         </Stepper>
         {react_functional_components[data_type_1[itemStage]][access_level]}
+        <Button onClick={() => socket.connect()}>Подключить</Button>
+        <Button onClick={() => socket.disconnect()}>Отключить</Button>
+        {isConnected && (
+          <>
+            <h3>Подключен</h3>
+          </>
+        )}
         <section className={styles.request_buttons}>
           <Button variant="contained">Назад {}</Button>
           <Button
@@ -113,7 +174,7 @@ export default function RequestDetails({ item, setItem }) {
                 ? "success"
                 : "primary"
             }
-            onClick={null}
+            onClick={sendMessage}
           >
             {item.user_confirmed && item.worker_confirmed
               ? "✅ Подтверждено"

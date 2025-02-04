@@ -722,7 +722,7 @@ class DataController {
       let resultSystem = { rowCount: 1 };
       if (!systems_names.includes(system_name)) {
         resultSystem = await pool.query(
-          "INSERT INTO user_systems (user_id, system_name) VALUES ($1, $2)",
+          "INSERT INTO user_systems (user_id, name) VALUES ($1, $2)",
           [userId, system_name]
         );
       }
@@ -762,6 +762,7 @@ class DataController {
         FROM user_requests
         WHERE assigned_to = $2
           AND system_name = (SELECT system_name FROM updated)
+          AND status != 1
           AND id != $1`,
         [id, user_id]
       );
