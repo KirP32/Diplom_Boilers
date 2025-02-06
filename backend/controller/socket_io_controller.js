@@ -2,6 +2,7 @@ const pool = require("../dataBase/pool");
 
 async function handleStage(request_id, access_level, max_stage, action) {
   try {
+    console.log(action);
     let status = 0;
 
     const result = await pool.query(
@@ -11,20 +12,20 @@ async function handleStage(request_id, access_level, max_stage, action) {
 
     if (result.rows.length === 0) {
       await pool.query(
-        `INSERT INTO request_confirmations (request_id, user_confirmed, worker_confirmed)
-         VALUES ($1, $2, $3)`,
-        [request_id, access_level === 0, access_level === 1]
+        `INSERT INTO request_confirmations (request_id, user_confirmed, worker_confirmed, action)
+         VALUES ($1, $2, $3, $4)`,
+        [request_id, access_level === 0, access_level === 1, action]
       );
     } else {
       if (access_level === 0) {
         await pool.query(
-          `UPDATE request_confirmations SET user_confirmed = NOT user_confirmed WHERE request_id = $1`,
-          [request_id]
+          `UPDATE request_confirmations SET user_confirmed = NOT user_confirmed, action = $2 WHERE request_id = $1`,
+          [request_id, action]
         );
       } else if (access_level === 1) {
         await pool.query(
-          `UPDATE request_confirmations SET worker_confirmed = NOT worker_confirmed WHERE request_id = $1`,
-          [request_id]
+          `UPDATE request_confirmations SET worker_confirmed = NOT worker_confirmed, action = $2 WHERE request_id = $1`,
+          [request_id, action]
         );
       }
     }
@@ -46,9 +47,9 @@ async function handleStage(request_id, access_level, max_stage, action) {
 
       if (action === "next") {
         newStage = currentStage + 1;
-
+        console.log(currentStage, newStage);
         if (newStage >= max_stage) {
-          newStage = max_stage;
+          newStage = max_stage - 1;
           await pool.query(
             `UPDATE user_requests SET status = 1, stage = $1 WHERE id = $2`,
             [newStage, request_id]
@@ -81,7 +82,7 @@ async function handleStage(request_id, access_level, max_stage, action) {
       }
 
       await pool.query(
-        `UPDATE request_confirmations SET user_confirmed = FALSE, worker_confirmed = FALSE WHERE request_id = $1`,
+        `UPDATE request_confirmations SET user_confirmed = FALSE, worker_confirmed = FALSE, action = '' WHERE request_id = $1`,
         [request_id]
       );
 

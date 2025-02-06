@@ -21,11 +21,7 @@ const data_type_1 = [
 ];
 
 export default function RequestDetails({ item, setItem, getSystems }) {
-  const [itemStage, setItemStage] = useState(item.stage); // для завершённых заявок
-
-  const handleStep = (step) => () => {
-    setItemStage(step);
-  };
+  const { access_level } = useContext(ThemeContext);
   useEffect(() => {
     const requestId = item.id;
     socket.connect();
@@ -46,7 +42,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
       socket.emit("leaveRequest", requestId);
       socket.off("requestUpdated", handleRequestUpdate);
     };
-  }, []);
+  }, [item.id, setItem]);
 
   useEffect(() => {
     async function getStatus() {
@@ -54,13 +50,15 @@ export default function RequestDetails({ item, setItem, getSystems }) {
         const response = await $api.get("/getRequestButtonsStatus", {
           params: { id: item.id },
         });
-        const { user_confirmed, worker_confirmed, action } = response;
-        setItem((prev) => ({
-          ...prev,
-          user_confirmed,
-          worker_confirmed,
-          action,
-        }));
+        if (response.data) {
+          const { user_confirmed, worker_confirmed, action } = response.data;
+          setItem((prev) => ({
+            ...prev,
+            user_confirmed,
+            worker_confirmed,
+            action,
+          }));
+        }
       } catch (error) {
         console.error(error);
       }
@@ -69,13 +67,12 @@ export default function RequestDetails({ item, setItem, getSystems }) {
   }, []);
 
   function addToItem(data) {
-    console.log(data.action);
     if (data.status === 1) {
       setItem((prev) => ({
         ...prev,
         user_confirmed: data.user_confirmed,
         worker_confirmed: data.worker_confirmed,
-        stage: data.stage - 1,
+        stage: data.stage,
         status: 1,
         action: data.action,
       }));
@@ -95,17 +92,20 @@ export default function RequestDetails({ item, setItem, getSystems }) {
     try {
       const response = await socket.timeout(5000).emitWithAck("nextStage", {
         id: item.id,
-        access_level: access_level,
+        access_level,
         max_stage: data_type_1.length,
         action: "next",
       });
-
-      if (!response) {
-        console.warn("Ответ от сервера не содержит result:", response);
+      if (response) {
+        addToItem(response);
+      } else {
+        console.warn("Ответ от сервера не содержит данных:", response);
       }
     } catch (e) {
-      console.log("Ошибка: сервер не ответил вовремя или произошла ошибка.");
-      console.error(e);
+      console.error(
+        "Ошибка: сервер не ответил вовремя или произошла ошибка.",
+        e
+      );
     }
   }
 
@@ -113,18 +113,32 @@ export default function RequestDetails({ item, setItem, getSystems }) {
     try {
       const response = await socket.timeout(5000).emitWithAck("nextStage", {
         id: item.id,
-        access_level: access_level,
+        access_level,
         max_stage: data_type_1.length,
         action: "prev",
       });
-
-      if (!response) {
-        console.warn("Ответ от сервера не содержит result:", response);
+      if (response) {
+        addToItem(response);
+      } else {
+        console.warn("Ответ от сервера не содержит данных:", response);
       }
     } catch (e) {
-      console.log("Ошибка: сервер не ответил вовремя или произошла ошибка.");
+      console.error(
+        "Ошибка: сервер не ответил вовремя или произошла ошибка.",
+        e
+      );
     }
   }
+
+  const closePanel = () => {
+    socket.disconnect();
+    setItem(null);
+  };
+
+  const isConfirmed = item.user_confirmed || item.worker_confirmed;
+  const isNextAction = item.action === "next";
+  const isPrevAction = item.action === "prev";
+  const isLastStage = data_type_1.length - 1 === item.stage;
 
   const react_functional_components = {
     "Поиск специалиста": [<U_SearchWorker item={item} />, <A_SearchWorker />],
@@ -133,16 +147,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
     "Проводятся работы": <></>,
     Завершенно: <></>,
   };
-  const closePanel = () => {
-    socket.disconnect();
-    setItem(null);
-  };
 
-  const { access_level } = useContext(ThemeContext);
-
-  let isConfirmed = item.user_confirmed || item.worker_confirmed; // эти три для кнопки вперёд
-  let isNextAction = item.action === "next";
-  const isLastStage = data_type_1.length - 1 === item.stage;
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -159,6 +164,10 @@ export default function RequestDetails({ item, setItem, getSystems }) {
             borderRadius: "9px 0px 0px 9px",
             backgroundColor: "white",
           }}
+          onClick={(e) => {
+            closePanel();
+            e.stopPropagation();
+          }}
         >
           <span
             className={`material-icons no_select`}
@@ -166,10 +175,6 @@ export default function RequestDetails({ item, setItem, getSystems }) {
               color: "red",
               fontSize: 55,
               cursor: "pointer",
-            }}
-            onClick={(e) => {
-              closePanel();
-              e.stopPropagation();
             }}
           >
             cancel
@@ -188,15 +193,9 @@ export default function RequestDetails({ item, setItem, getSystems }) {
                 color: "green",
               },
               "@keyframes pulse": {
-                "0%": {
-                  transform: "scale(1)",
-                },
-                "50%": {
-                  transform: "scale(1.2)",
-                },
-                "100%": {
-                  transform: "scale(1)",
-                },
+                "0%": { transform: "scale(1)" },
+                "50%": { transform: "scale(1.2)" },
+                "100%": { transform: "scale(1)" },
               },
             }}
           >
@@ -209,7 +208,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
         ) : (
           <Stepper
             nonLinear
-            activeStep={itemStage}
+            activeStep={item.stage}
             sx={{
               "& .MuiStepLabel-iconContainer .Mui-active": {
                 animation: "pulse 2s infinite",
@@ -224,7 +223,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
           >
             {data_type_1.map((label, index) => (
               <Step key={index}>
-                <StepButton color="inherit" onClick={handleStep(index)}>
+                <StepButton color="inherit" onClick={() => {}}>
                   {label}
                 </StepButton>
               </Step>
@@ -232,22 +231,17 @@ export default function RequestDetails({ item, setItem, getSystems }) {
           </Stepper>
         )}
 
-        {
-          react_functional_components[
-            data_type_1[item.status === 0 ? item.stage : itemStage]
-          ][access_level]
-        }
-        {item.status != 1 && (
+        {react_functional_components[data_type_1[item.stage]][access_level]}
+
+        {item.status !== 1 && (
           <section className={styles.request_buttons}>
             <Button
               variant="contained"
               disabled={item.stage === 0}
-              color={
-                isConfirmed && item.action === "prev" ? "success" : "primary"
-              }
+              color={isConfirmed && isPrevAction ? "success" : "primary"}
               onClick={handlePrevStage}
             >
-              {item.action === "prev" && isConfirmed ? "Назад 1/2" : "Назад"}
+              {isPrevAction && isConfirmed ? "Назад 1/2" : "Назад"}
             </Button>
 
             <Button
