@@ -22,6 +22,12 @@ const data_type_1 = [
 
 export default function RequestDetails({ item, setItem, getSystems }) {
   const { access_level } = useContext(ThemeContext);
+
+  const [itemStage, setItemStage] = useState(item.stage); // ДЛЯ ЗАВЕРШЁННЫХ ЗАЯВОК
+  const handleStep = (step) => () => {
+    setItemStage(step);
+  };
+
   useEffect(() => {
     const requestId = item.id;
     socket.connect();
@@ -208,7 +214,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
         ) : (
           <Stepper
             nonLinear
-            activeStep={item.stage}
+            activeStep={itemStage}
             sx={{
               "& .MuiStepLabel-iconContainer .Mui-active": {
                 animation: "pulse 2s infinite",
@@ -223,7 +229,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
           >
             {data_type_1.map((label, index) => (
               <Step key={index}>
-                <StepButton color="inherit" onClick={() => {}}>
+                <StepButton color="inherit" onClick={handleStep(index)}>
                   {label}
                 </StepButton>
               </Step>
@@ -231,7 +237,11 @@ export default function RequestDetails({ item, setItem, getSystems }) {
           </Stepper>
         )}
 
-        {react_functional_components[data_type_1[item.stage]][access_level]}
+        {
+          react_functional_components[
+            data_type_1[item.status === 0 ? item.stage : itemStage]
+          ][access_level]
+        }
 
         {item.status !== 1 && (
           <section className={styles.request_buttons}>

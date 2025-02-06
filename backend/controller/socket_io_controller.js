@@ -47,7 +47,6 @@ async function handleStage(request_id, access_level, max_stage, action) {
 
       if (action === "next") {
         newStage = currentStage + 1;
-        console.log(currentStage, newStage);
         if (newStage >= max_stage) {
           newStage = max_stage - 1;
           await pool.query(
