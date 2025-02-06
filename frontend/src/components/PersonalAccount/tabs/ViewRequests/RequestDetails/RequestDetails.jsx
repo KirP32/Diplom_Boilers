@@ -23,8 +23,13 @@ const data_type_1 = [
 export default function RequestDetails({ item, setItem, getSystems }) {
   const { access_level } = useContext(ThemeContext);
 
-  const [itemStage, setItemStage] = useState(item.stage); // ДЛЯ ЗАВЕРШЁННЫХ ЗАЯВОК
+  const [itemStage, setItemStage] = useState(() => {
+    console.log("Инициализация itemStage:", item.stage);
+    return item.stage;
+  });
+
   const handleStep = (step) => () => {
+    console.log("Переход на шаг:", step);
     setItemStage(step);
   };
 
@@ -149,10 +154,20 @@ export default function RequestDetails({ item, setItem, getSystems }) {
     Завершенно: <></>,
   };
 
+  useEffect(() => {
+    console.log("Обновлён itemStage:", itemStage);
+  }, [itemStage]);
+
   const isConfirmed = item.user_confirmed || item.worker_confirmed;
   const isNextAction = item.action === "next";
   const isPrevAction = item.action === "prev";
   const isLastStage = data_type_1.length - 1 === item.stage;
+
+  const stepKey = data_type_1[item.status === 0 ? item.stage : itemStage];
+  console.log("Шаг:", itemStage, "Ключ:", stepKey);
+
+  const component =
+    react_functional_components[stepKey]?.[access_level] || null;
 
   return (
     <div className={styles.backdrop} onClick={closePanel}>
