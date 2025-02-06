@@ -11,7 +11,6 @@ import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
 //import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
-import { jwtDecode } from "jwt-decode";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -49,15 +48,16 @@ export default function RequestDetails({ item, setItem, getSystems }) {
   }, []);
 
   function addToItem(data) {
+    console.log(data.action);
     if (data.status === 1) {
       console.log("Заявка завершена");
-      console.log(data.status);
       setItem((prev) => ({
         ...prev,
         user_confirmed: data.user_confirmed,
         worker_confirmed: data.worker_confirmed,
         stage: data.stage - 1,
         status: 1,
+        action: data.action,
       }));
     } else {
       setItem((prev) => ({
@@ -65,6 +65,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
         user_confirmed: data.user_confirmed,
         worker_confirmed: data.worker_confirmed,
         stage: data.stage,
+        action: data.action,
       }));
     }
     getSystems();
@@ -117,12 +118,11 @@ export default function RequestDetails({ item, setItem, getSystems }) {
     setItem(null);
   };
 
-  // const handleStep = (step) => () => {
-  //   setItemStage(step);
-  // };
-
   const { access_level } = useContext(ThemeContext);
 
+  const isConfirmed = item.user_confirmed || item.worker_confirmed; // эти три для кнопки вперёд
+  const isNextAction = item.action === "next";
+  const isLastStage = data_type_1.length - 1 === item.stage;
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -222,22 +222,30 @@ export default function RequestDetails({ item, setItem, getSystems }) {
             <Button
               variant="contained"
               disabled={item.stage === 0}
-              onClick={handlePrevStage}
-            >
-              Назад
-            </Button>
-            <Button
-              variant="contained"
               color={
-                item.user_confirmed || item.worker_confirmed
+                (item.user_confirmed || item.worker_confirmed) &&
+                item.action === "prev"
                   ? "success"
                   : "primary"
               }
+              onClick={handlePrevStage}
+            >
+              {item.action === "prev" &&
+              (item.user_confirmed || item.worker_confirmed)
+                ? "Назад 1/2"
+                : "Назад"}
+            </Button>
+
+            <Button
+              variant="contained"
+              color={isConfirmed && isNextAction ? "success" : "primary"}
               onClick={handleNextStage}
             >
-              {data_type_1.length - 1 === item.stage
-                ? "Завершить"
-                : item.user_confirmed || item.worker_confirmed
+              {isLastStage
+                ? isConfirmed && isNextAction
+                  ? "Завершить 1/2"
+                  : "Завершить"
+                : isConfirmed && isNextAction
                 ? "Вперёд 1/2"
                 : "Вперёд"}
             </Button>

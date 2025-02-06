@@ -16,22 +16,19 @@ async function handleStage(request_id, access_level, max_stage, action) {
         [request_id, access_level === 0, access_level === 1]
       );
     } else {
-      const { user_confirmed, worker_confirmed } = result.rows[0];
-
       if (access_level === 0) {
         await pool.query(
-          `UPDATE request_confirmations SET user_confirmed = !user_confirmed WHERE request_id = $1`,
+          `UPDATE request_confirmations SET user_confirmed = NOT user_confirmed WHERE request_id = $1`,
           [request_id]
         );
       } else if (access_level === 1) {
         await pool.query(
-          `UPDATE request_confirmations SET worker_confirmed = !worker_confirmed WHERE request_id = $1`,
+          `UPDATE request_confirmations SET worker_confirmed = NOT worker_confirmed WHERE request_id = $1`,
           [request_id]
         );
       }
     }
 
-    // Получаем обновленные данные подтверждения
     const updatedResult = await pool.query(
       `SELECT * FROM request_confirmations WHERE request_id = $1`,
       [request_id]
@@ -39,7 +36,6 @@ async function handleStage(request_id, access_level, max_stage, action) {
 
     let { user_confirmed, worker_confirmed } = updatedResult.rows[0];
 
-    // Если оба подтвердили, двигаем стадию
     if (user_confirmed && worker_confirmed) {
       const stageResult = await pool.query(
         `SELECT stage FROM user_requests WHERE id = $1`,
@@ -49,7 +45,6 @@ async function handleStage(request_id, access_level, max_stage, action) {
       let newStage = currentStage;
 
       if (action === "next") {
-        console.log("next");
         newStage = currentStage + 1;
 
         if (newStage >= max_stage) {
@@ -66,7 +61,6 @@ async function handleStage(request_id, access_level, max_stage, action) {
           );
         }
       } else if (action === "prev") {
-        console.log("prev");
         newStage = currentStage - 1;
 
         if (newStage < 0) {
@@ -76,6 +70,7 @@ async function handleStage(request_id, access_level, max_stage, action) {
             worker_confirmed,
             stage: currentStage,
             status,
+            action,
           };
         }
 
@@ -85,7 +80,6 @@ async function handleStage(request_id, access_level, max_stage, action) {
         ]);
       }
 
-      // Сбрасываем подтверждения
       await pool.query(
         `UPDATE request_confirmations SET user_confirmed = FALSE, worker_confirmed = FALSE WHERE request_id = $1`,
         [request_id]
@@ -96,10 +90,10 @@ async function handleStage(request_id, access_level, max_stage, action) {
         user_confirmed: false,
         worker_confirmed: false,
         stage: newStage,
-        status: status,
+        status,
+        action,
       };
     } else {
-      // Если только один подтвердил, просто возвращаем текущую стадию
       const stageResult = await pool.query(
         `SELECT stage FROM user_requests WHERE id = $1`,
         [request_id]
@@ -109,6 +103,7 @@ async function handleStage(request_id, access_level, max_stage, action) {
         user_confirmed,
         worker_confirmed,
         stage: stageResult.rows[0].stage,
+        action,
       };
     }
   } catch (error) {
