@@ -14,6 +14,11 @@ router.get("/getSystems", checkCookie, DataController.getSystems);
 router.get("/getSystemRequests", checkCookie, DataController.getSystemRequests);
 router.get("/getRequests", checkCookie, DataController.getRequests);
 router.get("/getAllSystems", checkCookie, DataController.getAllSystems);
+router.get(
+  "/getRequestButtonsStatus",
+  checkCookie,
+  DataController.getRequestButtonsStatus
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

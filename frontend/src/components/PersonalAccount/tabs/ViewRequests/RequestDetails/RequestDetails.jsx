@@ -9,7 +9,7 @@ import StepButton from "@mui/material/StepButton";
 import U_Materials from "./additionalComponents/User/U_Materials/U_Materials";
 import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
-//import $api from "../../../../../http";
+import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
 
 const data_type_1 = [
@@ -22,6 +22,7 @@ const data_type_1 = [
 
 export default function RequestDetails({ item, setItem, getSystems }) {
   const [itemStage, setItemStage] = useState(item.stage); // для завершённых заявок
+
   const handleStep = (step) => () => {
     setItemStage(step);
   };
@@ -47,10 +48,29 @@ export default function RequestDetails({ item, setItem, getSystems }) {
     };
   }, []);
 
+  useEffect(() => {
+    async function getStatus() {
+      try {
+        const response = await $api.get("/getRequestButtonsStatus", {
+          params: { id: item.id },
+        });
+        const { user_confirmed, worker_confirmed, action } = response;
+        setItem((prev) => ({
+          ...prev,
+          user_confirmed,
+          worker_confirmed,
+          action,
+        }));
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    getStatus();
+  }, []);
+
   function addToItem(data) {
     console.log(data.action);
     if (data.status === 1) {
-      console.log("Заявка завершена");
       setItem((prev) => ({
         ...prev,
         user_confirmed: data.user_confirmed,
@@ -120,8 +140,8 @@ export default function RequestDetails({ item, setItem, getSystems }) {
 
   const { access_level } = useContext(ThemeContext);
 
-  const isConfirmed = item.user_confirmed || item.worker_confirmed; // эти три для кнопки вперёд
-  const isNextAction = item.action === "next";
+  let isConfirmed = item.user_confirmed || item.worker_confirmed; // эти три для кнопки вперёд
+  let isNextAction = item.action === "next";
   const isLastStage = data_type_1.length - 1 === item.stage;
   return (
     <div className={styles.backdrop} onClick={closePanel}>
@@ -223,17 +243,11 @@ export default function RequestDetails({ item, setItem, getSystems }) {
               variant="contained"
               disabled={item.stage === 0}
               color={
-                (item.user_confirmed || item.worker_confirmed) &&
-                item.action === "prev"
-                  ? "success"
-                  : "primary"
+                isConfirmed && item.action === "prev" ? "success" : "primary"
               }
               onClick={handlePrevStage}
             >
-              {item.action === "prev" &&
-              (item.user_confirmed || item.worker_confirmed)
-                ? "Назад 1/2"
-                : "Назад"}
+              {item.action === "prev" && isConfirmed ? "Назад 1/2" : "Назад"}
             </Button>
 
             <Button

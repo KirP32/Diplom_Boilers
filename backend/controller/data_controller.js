@@ -910,6 +910,19 @@ class DataController {
       return res.send(error);
     }
   }
+  async getRequestButtonsStatus(req, res) {
+    try {
+      const { id } = req.query;
+      const result = await pool.query(
+        "select user_confirmed, worker_confirmed, action from request_confirmations where request_id = $1",
+        [id]
+      );
+      if (result.rows.length > 0) {
+        const { user_confirmed, worker_confirmed, action } = result.rows[0];
+        return res.send({ user_confirmed, worker_confirmed, action });
+      }
+    } catch (error) {}
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

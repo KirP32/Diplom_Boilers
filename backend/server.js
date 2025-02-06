@@ -1,6 +1,5 @@
 const express = require("express");
 const http = require("http");
-
 const { Server } = require("socket.io");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -13,18 +12,17 @@ const port = 8080;
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  path: "/api/socket.io",
   cors: {
     origin: [
-      "https://ads-line.pro",
       "http://localhost:5173",
-      "https://185.46.10.111",
+      "http://185.46.10.111",
       "http://frontend:3000",
     ],
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
 });
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(
