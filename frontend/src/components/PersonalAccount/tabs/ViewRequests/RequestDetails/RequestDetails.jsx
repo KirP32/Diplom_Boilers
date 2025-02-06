@@ -21,11 +21,15 @@ const data_type_1 = [
   "Завершенно",
 ];
 
-export default function RequestDetails({ item, setItem }) {
-  const [isConnected, setIsConnected] = useState(socket.connected);
+export default function RequestDetails({ item, setItem, getSystems }) {
+  const [itemStage, setItemStage] = useState(item.stage); // для завершённых заявок
+  const handleStep = (step) => () => {
+    setItemStage(step);
+  };
   useEffect(() => {
     const requestId = item.id;
     socket.connect();
+
     socket.emit("joinRequest", requestId, (response) => {
       if (response.status === "error") {
         console.error("Не удалось подключиться к комнате");
@@ -33,46 +37,74 @@ export default function RequestDetails({ item, setItem }) {
     });
 
     const handleRequestUpdate = (data) => {
-      console.log("Новый объект", data);
+      addToItem(data);
     };
 
-    const handleUserJoined = (data) => {
-      console.log("Пользователь подключился");
-      console.log(data);
-    };
-
-    socket.on("requestData", handleRequestUpdate);
     socket.on("requestUpdated", handleRequestUpdate);
-    socket.on("userJoined", handleUserJoined);
 
     return () => {
       socket.emit("leaveRequest", requestId);
-      socket.off("requestData", handleRequestUpdate);
       socket.off("requestUpdated", handleRequestUpdate);
-      socket.off("userJoined", handleUserJoined);
-      socket.disconnect();
     };
   }, []);
 
-  async function sendMessage() {
-    console.log("send message");
-    const name = jwtDecode(
-      localStorage.getItem("accessToken") ||
-        sessionStorage.getItem("accessToken")
-    ).login;
+  function addToItem(data) {
+    if (data.status === 1) {
+      console.log("Заявка завершена");
+      console.log(data.status);
+      setItem((prev) => ({
+        ...prev,
+        user_confirmed: data.user_confirmed,
+        worker_confirmed: data.worker_confirmed,
+        stage: data.stage - 1,
+        status: 1,
+      }));
+    } else {
+      setItem((prev) => ({
+        ...prev,
+        user_confirmed: data.user_confirmed,
+        worker_confirmed: data.worker_confirmed,
+        stage: data.stage,
+      }));
+    }
+    getSystems();
+  }
+
+  async function handleNextStage() {
     try {
-      const response = await socket.emitWithAck("nextStage", {
-        login: name,
-        system_name: item.system_name,
+      const response = await socket.timeout(5000).emitWithAck("nextStage", {
         id: item.id,
-        stage: item.stage,
         access_level: access_level,
+        max_stage: data_type_1.length,
+        action: "next",
       });
-      console.log(response.status);
-    } catch (error) {
-      console.log(error);
+
+      if (!response) {
+        console.warn("Ответ от сервера не содержит result:", response);
+      }
+    } catch (e) {
+      console.log("Ошибка: сервер не ответил вовремя или произошла ошибка.");
+      console.error(e);
     }
   }
+
+  async function handlePrevStage() {
+    try {
+      const response = await socket.timeout(5000).emitWithAck("nextStage", {
+        id: item.id,
+        access_level: access_level,
+        max_stage: data_type_1.length,
+        action: "prev",
+      });
+
+      if (!response) {
+        console.warn("Ответ от сервера не содержит result:", response);
+      }
+    } catch (e) {
+      console.log("Ошибка: сервер не ответил вовремя или произошла ошибка.");
+    }
+  }
+
   const react_functional_components = {
     "Поиск специалиста": [<U_SearchWorker item={item} />, <A_SearchWorker />],
     Материалы: [<U_Materials />, <A_Materials />],
@@ -85,13 +117,12 @@ export default function RequestDetails({ item, setItem }) {
     setItem(null);
   };
 
-  const handleStep = (step) => () => {
-    setItemStage(step);
-  };
+  // const handleStep = (step) => () => {
+  //   setItemStage(step);
+  // };
 
   const { access_level } = useContext(ThemeContext);
 
-  const [itemStage, setItemStage] = useState(item.stage);
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -128,63 +159,90 @@ export default function RequestDetails({ item, setItem }) {
         <h3 style={{ textAlign: "center", marginBottom: 15 }}>
           {item.problem_name}
         </h3>
-        <Stepper
-          nonLinear
-          activeStep={itemStage}
-          sx={{
-            "& .MuiStepLabel-iconContainer .Mui-active": {
-              animation: "pulse 2s infinite",
-              color: "green",
-            },
-            "@keyframes pulse": {
-              "0%": {
-                transform: "scale(1)",
+        {item.status === 0 ? (
+          <Stepper
+            activeStep={item.stage}
+            sx={{
+              "& .MuiStepLabel-iconContainer .Mui-active": {
+                animation: "pulse 2s infinite",
+                color: "green",
               },
-              "50%": {
-                transform: "scale(1.2)",
+              "@keyframes pulse": {
+                "0%": {
+                  transform: "scale(1)",
+                },
+                "50%": {
+                  transform: "scale(1.2)",
+                },
+                "100%": {
+                  transform: "scale(1)",
+                },
               },
-              "100%": {
-                transform: "scale(1)",
-              },
-            },
-          }}
-        >
-          {data_type_1.map((label, index) => (
-            <Step key={index}>
-              <StepButton color="inherit" onClick={handleStep(index)}>
-                {label}
-              </StepButton>
-            </Step>
-          ))}
-        </Stepper>
-        {react_functional_components[data_type_1[itemStage]][access_level]}
-        <Button onClick={() => socket.connect()}>Подключить</Button>
-        <Button onClick={() => socket.disconnect()}>Отключить</Button>
-        {isConnected && (
-          <>
-            <h3>Подключен</h3>
-          </>
-        )}
-        <section className={styles.request_buttons}>
-          <Button variant="contained">Назад {}</Button>
-          <Button
-            variant="contained"
-            color={
-              item.user_confirmed || item.worker_confirmed
-                ? "success"
-                : "primary"
-            }
-            onClick={sendMessage}
+            }}
           >
-            {item.user_confirmed && item.worker_confirmed
-              ? "✅ Подтверждено"
-              : item.user_confirmed || item.worker_confirmed
-              ? "Вперёд 1/2"
-              : "Вперёд"}
-          </Button>
+            {data_type_1.map((label, index) => (
+              <Step key={index}>
+                <StepButton color="inherit">{label}</StepButton>
+              </Step>
+            ))}
+          </Stepper>
+        ) : (
+          <Stepper
+            nonLinear
+            activeStep={itemStage}
+            sx={{
+              "& .MuiStepLabel-iconContainer .Mui-active": {
+                animation: "pulse 2s infinite",
+                color: "green",
+              },
+              "@keyframes pulse": {
+                "0%": { transform: "scale(1)" },
+                "50%": { transform: "scale(1.2)" },
+                "100%": { transform: "scale(1)" },
+              },
+            }}
+          >
+            {data_type_1.map((label, index) => (
+              <Step key={index}>
+                <StepButton color="inherit" onClick={handleStep(index)}>
+                  {label}
+                </StepButton>
+              </Step>
+            ))}
+          </Stepper>
+        )}
 
-          {/* // Добавить авто смену цвета когда кто-то жмёт вперёд или назад + Когда один нажал, у другого тоже должно поменяться */}
-        </section>
+        {
+          react_functional_components[
+            data_type_1[item.status === 0 ? item.stage : itemStage]
+          ][access_level]
+        }
+        {item.status != 1 && (
+          <section className={styles.request_buttons}>
+            <Button
+              variant="contained"
+              disabled={item.stage === 0}
+              onClick={handlePrevStage}
+            >
+              Назад
+            </Button>
+            <Button
+              variant="contained"
+              color={
+                item.user_confirmed || item.worker_confirmed
+                  ? "success"
+                  : "primary"
+              }
+              onClick={handleNextStage}
+            >
+              {data_type_1.length - 1 === item.stage
+                ? "Завершить"
+                : item.user_confirmed || item.worker_confirmed
+                ? "Вперёд 1/2"
+                : "Вперёд"}
+            </Button>
+          </section>
+        )}
       </div>
     </div>
   );

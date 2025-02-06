@@ -453,46 +453,27 @@ class DataController {
       if (!systems.length) {
         return res.send([]);
       }
-      const allSystems = await Promise.allSettled(
-        systems
-          .map((system) => {
-            if (system.name === "ADS-Line") {
-              // ПОТОМ УДАЛИТЬ ПРОВЕРКУ, ЭТО ДЛЯ ТЕСТА ИСКУССТВЕННЫХ СИСТЕМ
-              return axios.get(
-                `http://185.113.139.204:8000/module/get/${system.name}`,
-                {
-                  headers: {
-                    Authorization: api,
-                    "Content-Type": "application/json",
-                  },
-                }
-              );
-            } else {
-              return null;
-            }
-          })
-          .filter((request) => request !== null)
-      ).then((results) =>
-        results.map((result, i) => {
-          if (result.status === "fulfilled") {
-            if (result.value.data === null || result.value.data === undefined) {
-              return {
-                user_id: request.rows[i].user_id,
-                name: request.rows[i].name,
-                system_id: request.rows[i].system_id,
-              };
-            }
-            return result.value.data;
-          }
-          if (result.status === "rejected") {
-            return {
-              user_id: request.rows[i].user_id,
-              name: request.rows[i].name,
-              system_id: request.rows[i].system_id,
-            };
-          }
-        })
-      );
+
+      const apiRequests = systems
+        .filter((system) => system.name === "ADS-Line")
+        .map((system) =>
+          axios
+            .get(`http://185.113.139.204:8000/module/get/${system.name}`, {
+              headers: {
+                Authorization: api,
+                "Content-Type": "application/json",
+              },
+            })
+            .then((response) => response.data)
+            .catch(() => ({
+              user_id: system.user_id,
+              name: system.name,
+              system_id: system.system_id,
+            }))
+        );
+
+      const fetchedSystems = await Promise.all(apiRequests);
+
       const fooArray = [
         {
           name: "Центральный р-н. 55",
@@ -554,11 +535,17 @@ class DataController {
 
       const selectedSystems = systems
         .map((system) => fooArray.find((item) => item.name === system.name))
-        .filter((item) => item !== undefined || null);
+        .filter(Boolean);
 
-      return res.send([...allSystems, ...selectedSystems]);
+      const uniqueSystems = [
+        ...new Map(
+          [...fetchedSystems, ...selectedSystems].map((s) => [s.name, s])
+        ).values(),
+      ];
+
+      return res.send(uniqueSystems);
     } catch (error) {
-      console.log(error);
+      console.error("Ошибка при получении систем:", error);
       return res.status(500).send("Server Error: cant get Boilers Systems");
     }
   }
@@ -587,14 +574,16 @@ class DataController {
         .query(
           `SELECT 
                 ur.*, 
-                u.username 
-            FROM 
+                u.username,
+                rc.user_confirmed,
+                rc.worker_confirmed
+             FROM 
                 user_requests ur
-            LEFT JOIN 
-                users u 
-             ON 
-                ur.assigned_to = u.id
-            WHERE 
+             LEFT JOIN 
+                 users u ON ur.assigned_to = u.id
+             LEFT JOIN
+                 request_confirmations rc ON ur.id = rc.request_id
+             WHERE 
                  ur.system_name = $1`,
           [name]
         )

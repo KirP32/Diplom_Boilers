@@ -5,6 +5,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const router = require("./routes/index");
 const pool = require("./dataBase/pool");
+const { handleStage } = require("./controller/socket_io_controller");
 
 const app = express();
 const port = 8080;
@@ -43,27 +44,29 @@ pool.connect((err) => {
     console.log("Connected to PostgreSQL");
   }
 });
+
 io.on("connection", (socket) => {
   socket.on("joinRequest", (requestId, callback) => {
     try {
       socket.join(requestId);
-
-      const requestData = { message: "Всё работает" };
-
-      socket.emit("requestData", requestData);
-      socket.to(requestId).emit("userJoined", {
-        userId: socket.id,
-        message: "Новый участник присоединился",
-      });
-
       callback({ status: "success" });
     } catch (error) {
       callback({ status: "error", message: error.message });
     }
   });
 
-  socket.on("updateRequest", (requestId, updateData) => {
-    io.to(requestId).emit("requestUpdated", updateData);
+  socket.on("nextStage", async (data, callback) => {
+    //console.log(data);
+    const result = await handleStage(
+      data.id,
+      data.access_level,
+      data.max_stage,
+      data.action
+    );
+    io.to(data.id).emit("requestUpdated", result);
+    callback({
+      ...result,
+    });
   });
 
   socket.on("leaveRequest", (requestId) => {

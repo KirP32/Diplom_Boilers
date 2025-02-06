@@ -77,7 +77,7 @@ export default function PersonalAccount() {
 
     const intervalId = setInterval(() => {
       getAllDevices(deviceObjectRef.current);
-    }, 15000);
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, []);

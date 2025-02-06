@@ -1,14 +1,4 @@
 export default function formatResponseData(data) {
-  const boilers = [];
-  // for (let key in data) {
-  //     if (key.startsWith('module_')) {
-  //         boilers.push({
-  //             name: key,
-  //             t: data[key],
-  //             online: 'N/A'
-  //         });
-  //     }
-  // }
   let foo_array = [];
   try {
     data.map((item) =>

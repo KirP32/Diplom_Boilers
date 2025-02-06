@@ -146,7 +146,11 @@ export default function ViewRequests({ deviceObject }) {
         )}
       </div>
       {item && showDialog.flag === false && (
-        <RequestDetails item={item} setItem={(e) => setItem(e)} />
+        <RequestDetails
+          item={item}
+          setItem={(e) => setItem(e)}
+          getSystems={() => getSystems()}
+        />
       )}
       {showDialog.flag && (
         <DeleteDialog
