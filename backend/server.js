@@ -1,5 +1,6 @@
 const express = require("express");
 const http = require("http");
+
 const { Server } = require("socket.io");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -57,7 +58,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("nextStage", async (data, callback) => {
-    //console.log(data);
     const result = await handleStage(
       data.id,
       data.access_level,
