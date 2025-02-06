@@ -23,6 +23,10 @@ const data_type_1 = [
 export default function RequestDetails({ item, setItem, getSystems }) {
   const { access_level } = useContext(ThemeContext);
 
+  const [currentActive, setCurrentActive] = useState({
+    next: true,
+    prev: true,
+  });
   const [itemStage, setItemStage] = useState(item.stage); // ДЛЯ ЗАВЕРШЁННЫХ ЗАЯВОК
   const handleStep = (step) => () => {
     setItemStage(step);
@@ -153,7 +157,6 @@ export default function RequestDetails({ item, setItem, getSystems }) {
     "Проводятся работы": <></>,
     Завершенно: <></>,
   };
-
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -243,27 +246,51 @@ export default function RequestDetails({ item, setItem, getSystems }) {
           ][access_level]
         }
 
-        {item.status !== 1 && (
+        {item.status != 1 && (
           <section className={styles.request_buttons}>
             <Button
               variant="contained"
-              disabled={item.stage === 0}
-              color={isConfirmed && isPrevAction ? "success" : "primary"}
-              onClick={handlePrevStage}
+              disabled={item.stage === 0 || currentActive.next === false}
+              color={
+                (item.user_confirmed || item.worker_confirmed) &&
+                item.action === "prev"
+                  ? "success"
+                  : "primary"
+              }
+              onClick={() => {
+                handlePrevStage();
+                setCurrentActive({
+                  ...currentActive,
+                  prev: !currentActive.prev,
+                });
+              }}
             >
-              {isPrevAction && isConfirmed ? "Назад 1/2" : "Назад"}
+              {(item.user_confirmed || item.worker_confirmed) &&
+              item.action === "prev"
+                ? "Назад 1/2"
+                : "Назад"}
             </Button>
-
             <Button
               variant="contained"
-              color={isConfirmed && isNextAction ? "success" : "primary"}
-              onClick={handleNextStage}
+              disabled={currentActive.prev === false}
+              color={
+                (item.user_confirmed || item.worker_confirmed) &&
+                item.action === "next"
+                  ? "success"
+                  : "primary"
+              }
+              onClick={() => {
+                handleNextStage();
+                setCurrentActive({
+                  ...currentActive,
+                  next: !currentActive.next,
+                });
+              }}
             >
-              {isLastStage
-                ? isConfirmed && isNextAction
-                  ? "Завершить 1/2"
-                  : "Завершить"
-                : isConfirmed && isNextAction
+              {data_type_1.length - 1 === item.stage
+                ? "Завершить"
+                : (item.user_confirmed || item.worker_confirmed) &&
+                  item.action === "next"
                 ? "Вперёд 1/2"
                 : "Вперёд"}
             </Button>
