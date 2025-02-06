@@ -12,8 +12,10 @@ const port = 8080;
 
 const server = http.createServer(app);
 const io = new Server(server, {
+  path: "/api/socket.io",
   cors: {
     origin: [
+      "https://ads-line.pro",
       "http://localhost:5173",
       "http://185.46.10.111",
       "http://frontend:3000",
