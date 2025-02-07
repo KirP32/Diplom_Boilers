@@ -24,12 +24,10 @@ export default function RequestDetails({ item, setItem, getSystems }) {
   const { access_level } = useContext(ThemeContext);
 
   const [itemStage, setItemStage] = useState(() => {
-    console.log("Инициализация itemStage:", item.stage);
     return item.stage;
   });
 
   const handleStep = (step) => () => {
-    console.log("Переход на шаг:", step);
     setItemStage(step);
   };
 
@@ -154,17 +152,17 @@ export default function RequestDetails({ item, setItem, getSystems }) {
     Завершенно: <></>,
   };
 
-  useEffect(() => {
-    console.log("Обновлён itemStage:", itemStage);
-  }, [itemStage]);
+  useEffect(() => {}, [itemStage]);
 
   const isConfirmed = item.user_confirmed || item.worker_confirmed;
   const isNextAction = item.action === "next";
   const isPrevAction = item.action === "prev";
   const isLastStage = data_type_1.length - 1 === item.stage;
 
+  const isUserBlocked = access_level === 0 && !item.worker_confirmed;
+  const isBackDisabled = item.stage === 0 || (isConfirmed && isNextAction);
+  const isForwardDisabled = isLastStage || (isConfirmed && isPrevAction);
   const stepKey = data_type_1[item.status === 0 ? item.stage : itemStage];
-  console.log("Шаг:", itemStage, "Ключ:", stepKey);
 
   const component =
     react_functional_components[stepKey]?.[access_level] || null;
@@ -262,15 +260,16 @@ export default function RequestDetails({ item, setItem, getSystems }) {
           <section className={styles.request_buttons}>
             <Button
               variant="contained"
-              disabled={item.stage === 0 || (isConfirmed && isNextAction)}
+              disabled={isBackDisabled || isUserBlocked}
               color={isConfirmed && isPrevAction ? "success" : "primary"}
               onClick={handlePrevStage}
             >
               {isConfirmed && isPrevAction ? "Назад 1/2" : "Назад"}
             </Button>
+
             <Button
               variant="contained"
-              disabled={isConfirmed && isPrevAction}
+              disabled={isForwardDisabled || isUserBlocked}
               color={isConfirmed && isNextAction ? "success" : "primary"}
               onClick={handleNextStage}
             >
