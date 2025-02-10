@@ -2,7 +2,6 @@ const pool = require("../dataBase/pool");
 
 async function handleStage(request_id, access_level, max_stage, action) {
   try {
-    console.log(action);
     let status = 0;
 
     const result = await pool.query(

@@ -75,7 +75,7 @@ export default function WorkerRequests({
     const intervalId = setInterval(getData, 5000);
 
     return () => clearInterval(intervalId);
-  }, [getData]);
+  }, []);
 
   useEffect(() => {
     const token =

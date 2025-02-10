@@ -250,11 +250,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
           </Stepper>
         )}
 
-        {
-          react_functional_components[
-            data_type_1[item.status === 0 ? item.stage : itemStage]
-          ][access_level]
-        }
+        {component}
 
         {item.status != 1 && (
           <section className={styles.request_buttons}>
