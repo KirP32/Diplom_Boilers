@@ -43,7 +43,11 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
     if (data && item) {
       const updatedItem = data.find((i) => i.id === item.id);
       if (updatedItem) {
-        setItem(updatedItem);
+        if (!updatedItem.system_name) {
+          setItem(null);
+        } else {
+          setItem(updatedItem);
+        }
       }
     }
   }, [data, item]);
@@ -144,7 +148,7 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
           <></>
         )}
       </div>
-      {item && showDialog.flag === false && (
+      {item && !showDialog.flag && item.system_name && (
         <RequestDetails
           item={item}
           setItem={(e) => setItem(e)}
@@ -152,6 +156,7 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
           getAllDevices={getAllDevices}
         />
       )}
+
       {showDialog.flag && (
         <DeleteDialog
           showDialog={showDialog}
