@@ -550,22 +550,22 @@ class DataController {
     }
   }
 
-  async removeRequest(req, res, next) {
-    try {
-      const { id } = req.params;
-      const result = await pool.query(
-        `UPDATE user_requests SET assigned_to = null WHERE id = $1;`,
-        [id]
-      );
-      if (result.rowCount > 0) {
-        res.sendStatus(200);
-      } else {
-        res.status(500).json({ message: "removeRequest failed" });
-      }
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  }
+  // async removeRequest(req, res, next) {
+  //   try {
+  //     const { id } = req.params;
+  //     const result = await pool.query(
+  //       `UPDATE user_requests SET assigned_to = null WHERE id = $1;`,
+  //       [id]
+  //     );
+  //     if (result.rowCount > 0) {
+  //       res.sendStatus(200);
+  //     } else {
+  //       res.status(500).json({ message: "removeRequest failed" });
+  //     }
+  //   } catch (error) {
+  //     res.status(500).send(error);
+  //   }
+  // }
 
   async getSystemRequests(req, res) {
     try {
@@ -576,7 +576,8 @@ class DataController {
                 ur.*, 
                 u.username,
                 rc.user_confirmed,
-                rc.worker_confirmed
+                rc.worker_confirmed,
+                rc.action
              FROM 
                 user_requests ur
              LEFT JOIN 

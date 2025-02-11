@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
+import { useCallback, useEffect, useState } from "react";
 import styles from "./ViewRequests.module.scss";
 import $api from "../../../../http";
 import RequestDetails from "./RequestDetails/RequestDetails";
 import { jwtDecode } from "jwt-decode";
 import DeleteDialog from "./DeleteDialog/DeleteDialog";
 
-export default function ViewRequests({ deviceObject }) {
+export default function ViewRequests({ deviceObject, getAllDevices }) {
   const [data, setData] = useState(null);
   const [showDialog, setShowDialog] = useState({
     flag: false,
@@ -21,6 +23,7 @@ export default function ViewRequests({ deviceObject }) {
     localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken")
   );
   const [item, setItem] = useState(null);
+
   const getSystems = useCallback(async () => {
     try {
       const result = await $api.get("/getSystemRequests", {
@@ -36,34 +39,30 @@ export default function ViewRequests({ deviceObject }) {
     getSystems();
   }, [getSystems]);
 
+  useEffect(() => {
+    if (data && item) {
+      const updatedItem = data.find((i) => i.id === item.id);
+      if (updatedItem) {
+        setItem(updatedItem);
+      }
+    }
+  }, [data, item]);
+
   function handleCheckboxChange(param) {
-    setFilters((prevFilter) => {
-      return {
-        ...filters,
-        [param]: !prevFilter[param],
-      };
-    });
+    setFilters((prev) => ({ ...prev, [param]: !prev[param] }));
   }
 
   function getFilteredData() {
-    const filtered = [];
-    if (data !== null) {
+    let filtered = [];
+    if (data && data.length > 0) {
       if (filters.inProgress) {
-        data.forEach((item) => {
-          if (item.status === 0) {
-            filtered.push(item);
-          }
-        });
+        filtered = filtered.concat(data.filter((item) => item.status === 0));
       }
       if (filters.completed) {
-        data.forEach((item) => {
-          if (item.status === 1) {
-            filtered.push(item);
-          }
-        });
+        filtered = filtered.concat(data.filter((item) => item.status === 1));
       }
-      return filtered;
     }
+    return filtered;
   }
 
   function doNothing() {}
@@ -150,6 +149,7 @@ export default function ViewRequests({ deviceObject }) {
           item={item}
           setItem={(e) => setItem(e)}
           getSystems={() => getSystems()}
+          getAllDevices={getAllDevices}
         />
       )}
       {showDialog.flag && (

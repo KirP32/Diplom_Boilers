@@ -45,6 +45,7 @@ async function handleStage(request_id, access_level, max_stage, action) {
       let newStage = currentStage;
 
       if (action === "next") {
+        // проверить sql запросы при завершении заявки чтобы у работника удалялась система с которой он работал если нет других систем
         newStage = currentStage + 1;
         if (newStage >= max_stage) {
           newStage = max_stage - 1;
@@ -53,6 +54,28 @@ async function handleStage(request_id, access_level, max_stage, action) {
             [newStage, request_id]
           );
           status = 1;
+
+          const { rows } = await pool.query(
+            `SELECT assigned_to, system_name FROM user_requests WHERE id = $1`,
+            [request_id]
+          );
+
+          if (rows.length > 0) {
+            const { assigned_to, system_name } = rows[0];
+
+            const countResult = await pool.query(
+              `SELECT COUNT(*) FROM user_requests 
+               WHERE assigned_to = $1 AND system_name = $2 AND status != 1`,
+              [assigned_to, system_name]
+            );
+
+            if (Number(countResult.rows[0].count) === 0) {
+              await pool.query(
+                `DELETE FROM user_systems WHERE user_id = $1 AND name = $2`,
+                [assigned_to, system_name]
+              );
+            }
+          }
         } else {
           await pool.query(
             `UPDATE user_requests SET stage = $1 WHERE id = $2`,

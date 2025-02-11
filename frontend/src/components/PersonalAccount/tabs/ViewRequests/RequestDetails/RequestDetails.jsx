@@ -1,4 +1,8 @@
-import React, { useContext, useEffect, useState } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+
+/* eslint-disable react/jsx-key */
+/* eslint-disable react/prop-types */
+import { useContext, useEffect, useState } from "react";
 import styles from "./RequestDetails.module.scss";
 import { ThemeContext } from "../../../../../Theme";
 import A_SearchWorker from "./additionalComponents/Admin/A_SearchWorker/A_SearchWorker";
@@ -20,16 +24,27 @@ const data_type_1 = [
   "Завершенно",
 ];
 
-export default function RequestDetails({ item, setItem, getSystems }) {
+export default function RequestDetails({
+  item,
+  setItem,
+  getSystems,
+  getAllDevices,
+}) {
   const { access_level } = useContext(ThemeContext);
 
-  const [itemStage, setItemStage] = useState(() => {
-    return item.stage;
-  });
+  const [itemStage, setItemStage] = useState(item.stage);
+
+  useEffect(() => {
+    setItemStage(item.stage);
+  }, [item.stage]);
 
   const handleStep = (step) => () => {
     setItemStage(step);
   };
+
+  useEffect(() => {
+    getSystems();
+  }, []);
 
   useEffect(() => {
     const requestId = item.id;
@@ -85,6 +100,9 @@ export default function RequestDetails({ item, setItem, getSystems }) {
         status: 1,
         action: data.action,
       }));
+      if (access_level === 1) {
+        getAllDevices();
+      }
     } else {
       setItem((prev) => ({
         ...prev,
@@ -152,8 +170,6 @@ export default function RequestDetails({ item, setItem, getSystems }) {
     Завершенно: <></>,
   };
 
-  useEffect(() => {}, [itemStage]);
-
   const isConfirmed = item.user_confirmed || item.worker_confirmed;
   const isNextAction = item.action === "next";
   const isPrevAction = item.action === "prev";
@@ -161,7 +177,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
 
   const isUserBlocked = access_level === 0 && !item.worker_confirmed;
   const isBackDisabled = item.stage === 0 || (isConfirmed && isNextAction);
-  const isForwardDisabled = isLastStage || (isConfirmed && isPrevAction);
+  const isForwardDisabled = isConfirmed && isPrevAction;
   const stepKey = data_type_1[item.status === 0 ? item.stage : itemStage];
 
   const component =
@@ -252,7 +268,7 @@ export default function RequestDetails({ item, setItem, getSystems }) {
 
         {component}
 
-        {item.status != 1 && (
+        {item.status !== 1 && (
           <section className={styles.request_buttons}>
             <Button
               variant="contained"

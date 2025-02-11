@@ -1,4 +1,5 @@
-import React, { useCallback, useContext, useEffect } from "react";
+/* eslint-disable react/prop-types */
+import { useCallback, useEffect } from "react";
 import $api from "../../../http";
 import { useState } from "react";
 import styles from "./WorkerRequests.module.scss";
@@ -60,6 +61,7 @@ export default function WorkerRequests({
         });
         await getData();
         await getAllDevices();
+        // eslint-disable-next-line no-unused-vars
       } catch (error) {
         setAdd_Failure(true);
         setTimeout(() => setAdd_Failure(false), 5000);
@@ -75,7 +77,7 @@ export default function WorkerRequests({
     const intervalId = setInterval(getData, 5000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [getData]);
 
   useEffect(() => {
     const token =

@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef, useCallback } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import styles from "./PersonalAccount.module.scss";
 import Input from "../Input/Input";
 import Button from "../Button/Button";
@@ -36,7 +36,12 @@ export default function PersonalAccount() {
   const tabObject = {
     sensors: <NewSensors deviceObject={deviceObject} />,
     mnemoscheme: <Mnemoscheme />,
-    viewRequests: <ViewRequests deviceObject={deviceObject} />,
+    viewRequests: (
+      <ViewRequests
+        deviceObject={deviceObject}
+        getAllDevices={() => getAllDevices(deviceObjectRef.current)}
+      />
+    ),
     createRequests: (
       <CreateRequests
         deviceObject={deviceObject}
@@ -80,6 +85,7 @@ export default function PersonalAccount() {
     }, 60000);
 
     return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -150,16 +156,19 @@ export default function PersonalAccount() {
             </Button>
           )}
           {access_level === 0 && (
-            <Button onClick={() => setAddSystemFlag(!addSystemFlag)}>
-              <h4>Добавить систему</h4>
-            </Button>
+            <>
+              <Button onClick={() => setAddSystemFlag(!addSystemFlag)}>
+                <h4>Добавить систему</h4>
+              </Button>
+              <Button
+                className={styles.lk__wrapper__sidebar__options__btn_delete}
+                onClick={() => setDeleteFlag(!deleteFlag)}
+              >
+                <h4>Удаление</h4>
+              </Button>
+            </>
           )}
-          <Button
-            className={styles.lk__wrapper__sidebar__options__btn_delete}
-            onClick={() => setDeleteFlag(!deleteFlag)}
-          >
-            <h4>Удаление</h4>
-          </Button>
+
           <Button
             className={styles.lk__wrapper__sidebar__options__btn_settings}
             onClick={() => setSettingsDialog(!settingsDialog)}

@@ -1,5 +1,6 @@
+/* eslint-disable react/prop-types */
 import { jwtDecode } from "jwt-decode";
-import React, { useEffect, createContext, useState } from "react";
+import { useEffect, createContext, useState } from "react";
 
 const ThemeContext = createContext();
 
