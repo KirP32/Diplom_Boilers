@@ -182,13 +182,20 @@ class DataController {
     const hash = bcrypt.hashSync(password);
     const authcookie = req.headers["accesstoken"];
     const { access_level } = req.body;
+
     try {
+      await pool.query("BEGIN");
+
       const userResult = await pool.query(
-        "INSERT INTO users (username, phone_number, password_hash, access_level, email) VALUES ($1, $2, $3, $4, $5)",
+        "INSERT INTO users (username, phone_number, password_hash, access_level, email) VALUES ($1, $2, $3, $4, $5) RETURNING *",
         [login, "123456789", hash, access_level, email]
       );
-      //console.log(decodeJWT(authcookie).login);
+
       if (userResult.rowCount > 0) {
+        await pool.query("INSERT INTO user_details (username) VALUES ($1)", [
+          login,
+        ]);
+
         const data = {
           user_id: await getID(decodeJWT(authcookie).login),
           action: "Добавлен пользователь",
@@ -196,13 +203,17 @@ class DataController {
           subject_id: await getID(login),
         };
         await log_history(data);
+
+        await pool.query("COMMIT");
         res.send("OK");
       } else {
+        await pool.query("ROLLBACK");
         res.sendStatus(500);
       }
     } catch (error) {
+      await pool.query("ROLLBACK");
+      console.error("Ошибка при регистрации:", error);
       res.sendStatus(500);
-      //console.error("Ошибка запроса:", error);
     }
   }
 
@@ -419,15 +430,20 @@ class DataController {
     try {
       const authtoken = req.headers["accesstoken"];
       const login = decodeJWT(authtoken).login;
+
       pool.query(
-        "SELECT email FROM users WHERE username = $1",
+        `SELECT u.email, ud.*
+         FROM users u
+         JOIN user_details ud
+           ON u.username = $1
+         WHERE u.username = $1`,
         [login],
         (err, result) => {
           if (err) {
             console.error("Error executing query:", err);
             res.status(500).json({ error: "Internal Server Error" });
           } else {
-            res.send(result.rows[0]);
+            res.send(result.rows);
           }
         }
       );
@@ -923,6 +939,59 @@ class DataController {
         return res.send({ user_confirmed, worker_confirmed, action });
       }
     } catch (error) {}
+  }
+  async getDatabaseColumns(req, res) {
+    try {
+      const result = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'user_details';`
+      );
+      if (result.rowCount > 0) {
+        return res.send(result.rows);
+      }
+      return res.sendStatus(400);
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+  async updateDatabaseColumn(req, res) {
+    try {
+      const { oldName, newName } = req.body;
+
+      if (!oldName || !newName) {
+        return res.sendStatus(400);
+      }
+
+      const query = `ALTER TABLE user_details RENAME COLUMN "${oldName}" TO "${newName}"`;
+
+      await pool.query(query);
+      return res.sendStatus(200);
+    } catch (error) {
+      console.log("ошибка:", error);
+      return res.status(400).send(error);
+    }
+  }
+  async deleteDatabaseColumn(req, res) {
+    try {
+      const { column } = req.params;
+      if (!column) {
+        return res.sendStatus(400);
+      }
+      const query = `ALTER TABLE user_details DROP COLUMN "${column}"`;
+      await pool.query(query);
+      return res.sendStatus(200);
+    } catch (error) {
+      return res.status(400).send(error);
+    }
+  }
+  async addDatabaseColumn(req, res) {
+    try {
+      const { column_name, column_type } = req.body;
+      const query = `ALTER TABLE user_details ADD "${column_name}" ${column_type}`;
+      await pool.query(query);
+      return res.sendStatus(200);
+    } catch (error) {
+      return res.status(400).send(error);
+    }
   }
 }
 async function updateToken(login, refreshToken, UUID4) {

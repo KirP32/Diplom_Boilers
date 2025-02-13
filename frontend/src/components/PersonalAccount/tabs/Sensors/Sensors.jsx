@@ -1,7 +1,6 @@
-import React from "react";
+/* eslint-disable react/prop-types */
 import DeviceInfo from "../../additionalComponents/DeviceInfo/DeviceInfo";
 import MainObjectWrapper from "../../additionalComponents/Main_object_wrapper/MainObjectWrapper";
-import Button from "../../../Button/Button";
 
 export default function Sensors({
   deviceObject,

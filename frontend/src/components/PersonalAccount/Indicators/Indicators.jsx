@@ -1,9 +1,9 @@
+/* eslint-disable react/prop-types */
 import { jwtDecode } from "jwt-decode";
 import Button from "../../Button/Button";
 import OptionsDialog from "./../Dialogs/OptionsDialog/OptionsDialog";
 import { useState, useEffect } from "react";
 import styles from "./Indicators.module.scss";
-import $api from "../../../http";
 import { Menu, MenuItem } from "@mui/material";
 import logout from "../../Logout/logout";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +11,6 @@ import { useNavigate } from "react-router-dom";
 export default function Indicators({ setSelectedTab, tab }) {
   const [user_name, setUser_name] = useState("");
   const [options_flag, setOptions_flag] = useState(false);
-  const [user_email, setUserEmail] = useState(null);
   const [monitoringAnchorEl, setMonitoringAnchorEl] = useState(null);
   const [systemAnchorEl, setSystemAnchorEl] = useState(null);
   const [requestsAnchorEl, setRequestsAnchorEl] = useState(null);
@@ -38,17 +37,6 @@ export default function Indicators({ setSelectedTab, tab }) {
     setSystemAnchorEl(null);
     setRequestsAnchorEl(null);
   };
-
-  useEffect(() => {
-    $api
-      .post("/getUser_email")
-      .then((result) => {
-        setUserEmail(result?.data?.email);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, [user_email]);
 
   useEffect(() => {
     const token =
@@ -208,7 +196,7 @@ export default function Indicators({ setSelectedTab, tab }) {
       </div>
       <OptionsDialog
         open={options_flag}
-        user={{ user_name, user_email }}
+        user={{ user_name }}
         setOptions={(e) => setOptions_flag(e)}
       ></OptionsDialog>
     </div>

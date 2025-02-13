@@ -1,5 +1,5 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
-
 /* eslint-disable react/jsx-key */
 /* eslint-disable react/prop-types */
 import { useContext, useEffect, useState } from "react";
@@ -15,6 +15,7 @@ import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
 import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
+import { GetSystemContext } from "../../../Functions/ContextGetSystems";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -33,7 +34,9 @@ export default function RequestDetails({
   const { access_level } = useContext(ThemeContext);
 
   const [itemStage, setItemStage] = useState(item.stage);
+  // const { result } = useContext(GetSystemContext); тестировал context
 
+  // console.log(result);
   useEffect(() => {
     setItemStage(item.stage);
   }, [item.stage]);

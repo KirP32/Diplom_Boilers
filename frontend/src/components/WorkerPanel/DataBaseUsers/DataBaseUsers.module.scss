@@ -1,0 +1,14 @@
+.data_table {
+    &__wrapper {
+        height: 100%;
+        width: 100%;
+        padding: 20px;
+    }
+    &__header {
+        text-align: center;
+    }
+    &__columns {
+        display: flex;
+        flex-direction: column;
+    }
+}

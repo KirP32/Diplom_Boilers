@@ -19,6 +19,11 @@ router.get(
   checkCookie,
   DataController.getRequestButtonsStatus
 );
+router.get(
+  "/getDatabaseColumns",
+  checkCookie,
+  DataController.getDatabaseColumns
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
@@ -31,6 +36,16 @@ router.post("/getActions", checkCookie, DataController.getActions);
 router.post("/addRequest", checkCookie, DataController.addRequest);
 router.post("/createRequest", checkCookie, DataController.createRequest);
 router.post("/addSystem", checkCookie, DataController.addSystem);
+router.post(
+  "/updateDatabaseColumn",
+  checkCookie,
+  DataController.updateDatabaseColumn
+);
+router.post(
+  "/addDatabaseColumn",
+  checkCookie,
+  DataController.addDatabaseColumn
+);
 
 router.delete(
   "/delete_device/:device_uid",
@@ -48,6 +63,11 @@ router.delete(
   DataController.deleteRequest
 );
 router.delete(`/deleteSystem/:name`, checkCookie, DataController.deleteSystem);
+router.delete(
+  `/deleteDatabaseColumn/:column`,
+  checkCookie,
+  DataController.deleteDatabaseColumn
+);
 
 router.put("/off_esp", checkCookie, DataController.off_esp);
 

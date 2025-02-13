@@ -6,6 +6,7 @@ import $api from "../../../../http";
 import RequestDetails from "./RequestDetails/RequestDetails";
 import { jwtDecode } from "jwt-decode";
 import DeleteDialog from "./DeleteDialog/DeleteDialog";
+import { SystemProvider } from "../../Functions/ContextGetSystems";
 
 export default function ViewRequests({ deviceObject, getAllDevices }) {
   const [data, setData] = useState(null);
@@ -13,7 +14,6 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
     flag: false,
     item: {},
   });
-
   const [filters, setFilters] = useState({
     available: false,
     inProgress: true,
@@ -78,6 +78,7 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
   };
 
   return (
+    // <SystemProvider> // проверял контекст
     <div className={styles.view_requests_wrapper}>
       <div className={styles.requests__filter}>
         <section
@@ -165,5 +166,6 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
         />
       )}
     </div>
+    // </SystemProvider>
   );
 }

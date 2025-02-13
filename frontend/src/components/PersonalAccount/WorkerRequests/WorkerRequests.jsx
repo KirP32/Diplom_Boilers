@@ -74,7 +74,7 @@ export default function WorkerRequests({
 
   useEffect(() => {
     getData();
-    const intervalId = setInterval(getData, 5000);
+    const intervalId = setInterval(getData, 15000);
 
     return () => clearInterval(intervalId);
   }, [getData]);
