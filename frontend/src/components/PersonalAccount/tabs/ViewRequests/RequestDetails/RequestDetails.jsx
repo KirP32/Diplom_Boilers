@@ -103,7 +103,7 @@ export default function RequestDetails({
         status: 1,
         action: data.action,
       }));
-      if (access_level === 1) {
+      if (access_level >= 1) {
         getAllDevices();
       }
     } else {

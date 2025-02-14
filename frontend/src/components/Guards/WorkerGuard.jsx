@@ -6,7 +6,7 @@ const WorkerGuard = ({ children }) => {
   const token =
     sessionStorage.getItem("accessToken") ||
     localStorage.getItem("accessToken");
-  if (token && jwtDecode(token).access_level === 1) {
+  if (token && jwtDecode(token).access_level === 2) {
     return children;
   }
   return <Navigate to={"/"} />;

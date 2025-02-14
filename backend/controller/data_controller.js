@@ -1010,6 +1010,16 @@ class DataController {
       return res.status(400).send(error);
     }
   }
+  async setAccessLevel(req, res) {
+    try {
+      const { username, access_level } = req.body;
+      const query = "UPDATE users SET access_level = $1 WHERE username = $2";
+      await pool.query(query, [access_level, username]);
+      return res.send("OK");
+    } catch (error) {
+      return res.status(400).send({ error: error });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

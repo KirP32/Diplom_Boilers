@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import $api from "../../../http";
+import logout from "../../Logout/logout";
+
 import {
   IconButton,
   Paper,
@@ -15,29 +17,31 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Button,
 } from "@mui/material";
 import { Edit, Delete, Add, Check } from "@mui/icons-material";
 import styles from "./DataBaseUsers.module.scss";
+import { useNavigate } from "react-router-dom";
 
 export default function DataBaseUsers() {
+  const navigate = useNavigate();
+
   const [columns, setColumns] = useState([]);
   const [editingColumn, setEditingColumn] = useState(null);
   const [editedValue, setEditedValue] = useState("");
 
   const [isAdding, setIsAdding] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
-  const [newColumnType, setNewColumnType] = useState("");
+  const [newColumnType, setNewColumnType] = useState("character varying");
+
+  const [userName, setUserName] = useState("");
+  const [userLevel, setUserLevel] = useState(0);
 
   useEffect(() => {
     $api
       .get("/getDatabaseColumns")
-      .then((result) => {
-        setColumns(result.data);
-      })
-      .catch((error) => {
-        console.log(error);
-        setColumns([]);
-      });
+      .then((result) => setColumns(result.data))
+      .catch(() => setColumns([]));
   }, []);
 
   const handleEdit = (col) => {
@@ -46,39 +50,52 @@ export default function DataBaseUsers() {
   };
 
   const handleSave = () => {
-    if (editingColumn && editedValue !== editingColumn.column_name) {
-      $api
-        .post("/updateDatabaseColumn", {
-          oldName: editingColumn.column_name,
-          newName: editedValue,
-        })
-        .then(() => {
-          setColumns(
-            columns.map((col) =>
-              col.column_name === editingColumn.column_name
-                ? { column_name: editedValue, data_type: col.data_type }
-                : col
-            )
-          );
-          setEditingColumn(null);
-          setEditedValue("");
-        })
-        .catch((error) => {
-          console.log("Ошибка обновления:", error);
-        });
-    } else {
+    if (!editingColumn || editedValue === editingColumn.column_name) {
       setEditingColumn(null);
+      return;
     }
+
+    $api
+      .post("/updateDatabaseColumn", {
+        oldName: editingColumn.column_name,
+        newName: editedValue,
+      })
+      .then(() => {
+        setColumns((prev) =>
+          prev.map((col) =>
+            col.column_name === editingColumn.column_name
+              ? { column_name: editedValue, data_type: col.data_type }
+              : col
+          )
+        );
+        setEditingColumn(null);
+        setEditedValue("");
+      })
+      .catch((error) => {
+        console.error("Ошибка обновления:", error);
+        if (
+          error.status === 401 &&
+          localStorage.getItem("stay_logged") == false
+        ) {
+          logout(navigate);
+        }
+      });
   };
 
   const handleDelete = async (columnName) => {
     try {
       await $api.delete(`/deleteDatabaseColumn/${columnName}`);
-      setColumns((prevColumns) =>
-        prevColumns.filter((col) => col.column_name !== columnName)
+      setColumns((prev) =>
+        prev.filter((col) => col.column_name !== columnName)
       );
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      if (
+        error.status === 401 &&
+        localStorage.getItem("stay_logged") == false
+      ) {
+        logout(navigate);
+      }
     }
   };
 
@@ -89,29 +106,54 @@ export default function DataBaseUsers() {
   };
 
   const handleAddSave = () => {
-    if (newColumnName.trim() !== "" && newColumnType !== "") {
-      $api
-        .post("/addDatabaseColumn", {
-          column_name: newColumnName,
-          column_type: newColumnType,
-        })
-        .then(() => {
-          setColumns([
-            ...columns,
-            { column_name: newColumnName, data_type: newColumnType },
-          ]);
-          setNewColumnName("");
-          setNewColumnType("");
-          setIsAdding(false);
-        })
-        .catch((error) => {
-          console.error("Ошибка добавления:", error);
-        });
-    } else {
+    if (!newColumnName.trim() || !newColumnType) {
       setIsAdding(false);
-      setNewColumnName("");
-      setNewColumnType("");
+      return;
     }
+
+    $api
+      .post("/addDatabaseColumn", {
+        column_name: newColumnName,
+        column_type: newColumnType,
+      })
+      .then(() => {
+        setColumns((prev) => [
+          ...prev,
+          { column_name: newColumnName, data_type: newColumnType },
+        ]);
+        setNewColumnName("");
+        setNewColumnType("");
+        setIsAdding(false);
+      })
+      .catch((error) => {
+        console.error("Ошибка добавления:", error);
+        if (
+          error.status === 401 &&
+          localStorage.getItem("stay_logged") == false
+        ) {
+          logout(navigate);
+        }
+      });
+  };
+
+  const handleSetAccessLevel = () => {
+    if (!userName.trim()) {
+      alert("Введите имя пользователя");
+      return;
+    }
+
+    $api
+      .put("/setAccessLevel", { username: userName, access_level: userLevel })
+      .then(() => alert("Уровень доступа обновлён"))
+      .catch((error) => {
+        alert("Ошибка обновления уровня доступа");
+        if (
+          error.status === 401 &&
+          localStorage.getItem("stay_logged") == false
+        ) {
+          logout(navigate);
+        }
+      });
   };
 
   return (
@@ -131,6 +173,7 @@ export default function DataBaseUsers() {
           <Add />
         </IconButton>
       </div>
+
       {columns.length > 0 ? (
         <TableContainer
           component={Paper}
@@ -247,6 +290,40 @@ export default function DataBaseUsers() {
       ) : (
         <Typography variant="body1">Идёт загрузка таблицы...</Typography>
       )}
+
+      <div
+        className="access_level__container"
+        style={{
+          marginTop: "10px",
+          display: "flex",
+          gap: "10px",
+          alignItems: "center",
+        }}
+      >
+        <TextField
+          sx={{ width: "300px" }}
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+          size="small"
+          placeholder="Введите имя пользователя"
+        />
+        <Select
+          sx={{ width: "300px" }}
+          value={userLevel}
+          size="small"
+          onChange={(e) => setUserLevel(e.target.value)}
+        >
+          <MenuItem value={0}>Покупатель</MenuItem>
+          <MenuItem value={1}>Ремонтник</MenuItem>
+        </Select>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSetAccessLevel}
+        >
+          Установить
+        </Button>
+      </div>
     </div>
   );
 }

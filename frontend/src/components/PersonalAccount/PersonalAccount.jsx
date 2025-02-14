@@ -147,7 +147,7 @@ export default function PersonalAccount() {
         </div>
 
         <div className={styles.lk__wrapper__sidebar__options}>
-          {access_level === 1 && (
+          {access_level >= 1 && (
             <Button
               className={styles.requests}
               onClick={() => setSeeWorkerRequests(!seeWorkerRequests)}
@@ -208,7 +208,7 @@ export default function PersonalAccount() {
                 </div>
               </>
             )}
-          {access_level === 1 && seeWorkerRequests && (
+          {access_level >= 1 && seeWorkerRequests && (
             <WorkerRequests
               systems_names={systems_names}
               getAllDevices={getAllDevices}

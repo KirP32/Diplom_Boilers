@@ -71,5 +71,6 @@ router.delete(
 
 router.put("/off_esp", checkCookie, DataController.off_esp);
 router.put("/updateUser", checkCookie, DataController.updateUser);
+router.put("/setAccessLevel", checkCookie, DataController.setAccessLevel);
 
 module.exports = router;
