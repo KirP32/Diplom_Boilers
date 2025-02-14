@@ -83,7 +83,7 @@ export default function DataBaseUsers() {
   };
 
   const handleAdd = () => {
-    setIsAdding(true);
+    setIsAdding(!isAdding);
     setNewColumnName("");
     setNewColumnType("character varying");
   };
@@ -198,7 +198,8 @@ export default function DataBaseUsers() {
 
               {columns.map(
                 (col) =>
-                  col.column_name !== "id" && (
+                  col.column_name !== "id" &&
+                  col.column_name !== "username" && (
                     <TableRow key={col.column_name}>
                       <TableCell>
                         {editingColumn &&

@@ -22,14 +22,19 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [editedValue, setEditedValue] = useState(null);
 
   const handleSaveChanges = (key, newValue) => {
-    console.log(`Sending updated ${key} with value: ${newValue}`);
-    // $api.put("/updateUser", { key, newValue }).then(response => {
-    //   console.log(response);
-    //   // Тут можно обработать успешный ответ
-    // }).catch(error => {
-    //   console.log(error);
-    //   // Тут можно обработать ошибку
-    // });
+    //console.log(`Sending updated ${key} with value: ${newValue}`);
+    $api
+      .put("/updateUser", { key, newValue })
+      .then(() => {
+        setUserData((prev) => ({
+          ...prev,
+          [key]: newValue,
+        }));
+        setEditingField(null);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   const handleBlurOrEnter = (key) => {
@@ -43,7 +48,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
     $api
       .post("/getUser_email")
       .then((result) => {
-        setUserData(result?.data[0]);
+        setUserData(result?.data);
       })
       .catch((error) => {
         console.log(error);
@@ -55,7 +60,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
   }
 
   return (
-    <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="xs">
       <DialogTitle style={{ textAlign: "center" }}>
         {user.user_name}
       </DialogTitle>
@@ -66,12 +71,16 @@ export default function OptionsDialog({ open, user, setOptions }) {
               <Typography variant="body2" color="textSecondary" component="div">
                 <strong>{key}:</strong>
               </Typography>
-              {editingField === key ? (
+              {key === "id" || key === "username" ? (
+                <Typography variant="body1">{userData[key]}</Typography>
+              ) : editingField === key ? (
                 <TextField
                   autoFocus
                   fullWidth
                   variant="outlined"
-                  value={editedValue || userData[key]}
+                  value={
+                    editedValue !== null ? editedValue : userData[key] || ""
+                  }
                   onChange={(e) => setEditedValue(e.target.value)}
                   onBlur={() => handleBlurOrEnter(key)}
                   onKeyDown={(e) => {
@@ -93,7 +102,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   }}
                 />
               ) : (
-                <>
+                <div style={{ display: "flex" }}>
                   <Typography variant="body1">{userData[key]}</Typography>
                   <IconButton
                     onClick={() => {
@@ -104,7 +113,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   >
                     <EditIcon />
                   </IconButton>
-                </>
+                </div>
               )}
               <Divider sx={{ my: 1 }} />
             </Box>

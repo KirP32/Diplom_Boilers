@@ -3,6 +3,7 @@ const pool = require("../dataBase/pool");
 const { getTokens } = require("../getTokens");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
+const e = require("express");
 require("dotenv").config();
 
 class DataController {
@@ -431,25 +432,17 @@ class DataController {
       const authtoken = req.headers["accesstoken"];
       const login = decodeJWT(authtoken).login;
 
-      pool.query(
+      const result = await pool.query(
         `SELECT u.email, ud.*
          FROM users u
-         JOIN user_details ud
-           ON u.username = $1
+         JOIN user_details ud ON u.username = ud.username
          WHERE u.username = $1`,
-        [login],
-        (err, result) => {
-          if (err) {
-            console.error("Error executing query:", err);
-            res.status(500).json({ error: "Internal Server Error" });
-          } else {
-            res.send(result.rows);
-          }
-        }
+        [login]
       );
+
+      res.send(result.rows.length > 0 ? result.rows[0] : {});
     } catch (error) {
-      console.log("catched error");
-      console.log(error);
+      console.log("catched error", error);
       res.sendStatus(500);
     }
   }
@@ -990,6 +983,30 @@ class DataController {
       await pool.query(query);
       return res.sendStatus(200);
     } catch (error) {
+      return res.status(400).send(error);
+    }
+  }
+  async updateUser(req, res) {
+    try {
+      const { key, newValue } = req.body;
+      if (!key || key === "id" || key === "username") {
+        return res.status(400).send("Это поле изменять нельзя");
+      }
+
+      const userName = decodeJWT(req.cookies.refreshToken).login;
+
+      if (key === "email") {
+        const userID = await getID(userName);
+        const query = "UPDATE users SET email = $1 WHERE id = $2";
+        await pool.query(query, [newValue, userID]);
+      } else {
+        const query = `UPDATE user_details SET ${key} = $1 WHERE username = $2`;
+        await pool.query(query, [newValue, userName]);
+      }
+
+      return res.sendStatus(200);
+    } catch (error) {
+      console.log(error);
       return res.status(400).send(error);
     }
   }
