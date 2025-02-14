@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import styles from "./ViewRequests.module.scss";
 import $api from "../../../../http";
 import RequestDetails from "./RequestDetails/RequestDetails";
@@ -19,9 +19,20 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
     inProgress: true,
     completed: false,
   });
-  const decoded_token = jwtDecode(
-    localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken")
-  );
+  const [decodedToken, setDecodedToken] = useState(null);
+
+  useEffect(() => {
+    try {
+      const token =
+        localStorage.getItem("accessToken") ||
+        sessionStorage.getItem("accessToken");
+      setDecodedToken(token ? jwtDecode(token) : null);
+    } catch (error) {
+      console.error("Ошибка декодирования токена:", error);
+      setDecodedToken(null);
+    }
+  }, []);
+
   const [item, setItem] = useState(null);
 
   const getSystems = useCallback(async () => {
@@ -37,7 +48,7 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
 
   useEffect(() => {
     getSystems();
-  }, [getSystems]);
+  }, [getSystems, deviceObject.name]);
 
   useEffect(() => {
     if (data && item) {
@@ -56,7 +67,9 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
     setFilters((prev) => ({ ...prev, [param]: !prev[param] }));
   }
 
-  function getFilteredData() {
+  function doNothing() {}
+
+  const filteredData = useMemo(() => {
     let filtered = [];
     if (data && data.length > 0) {
       if (filters.inProgress) {
@@ -67,10 +80,7 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
       }
     }
     return filtered;
-  }
-
-  function doNothing() {}
-  const filteredData = getFilteredData();
+  }, [data, filters.inProgress, filters.completed]);
 
   const handleCardClick = (item) => {
     // navigate(`/personalaccount/request/${id}`);
@@ -115,8 +125,8 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
               className={styles.request_card}
               key={item.id}
               onClick={
-                decoded_token.access_level === 0 ||
-                item.assigned_to == decoded_token.userID
+                decodedToken?.access_level === 0 ||
+                item.assigned_to == decodedToken?.userID
                   ? () => handleCardClick(item)
                   : null
               }

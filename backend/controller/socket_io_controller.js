@@ -13,7 +13,12 @@ async function handleStage(request_id, access_level, max_stage, action) {
       await pool.query(
         `INSERT INTO request_confirmations (request_id, user_confirmed, worker_confirmed, action)
          VALUES ($1, $2, $3, $4)`,
-        [request_id, access_level === 0, access_level === 1, action]
+        [
+          request_id,
+          access_level === 0,
+          access_level === 1 || access_level === 2,
+          action,
+        ]
       );
     } else {
       if (access_level === 0) {
@@ -21,7 +26,7 @@ async function handleStage(request_id, access_level, max_stage, action) {
           `UPDATE request_confirmations SET user_confirmed = NOT user_confirmed, action = $2 WHERE request_id = $1`,
           [request_id, action]
         );
-      } else if (access_level === 1) {
+      } else if (access_level === 1 || access_level === 2) {
         await pool.query(
           `UPDATE request_confirmations SET worker_confirmed = NOT worker_confirmed, action = $2 WHERE request_id = $1`,
           [request_id, action]

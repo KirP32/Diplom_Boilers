@@ -83,10 +83,16 @@ export default function WorkerRequests({
     const token =
       sessionStorage.getItem("accessToken") ||
       localStorage.getItem("accessToken");
+
     if (token) {
-      setUser_name(jwtDecode(token).login);
+      try {
+        const decodedToken = jwtDecode(token);
+        setUser_name(decodedToken.login);
+      } catch (error) {
+        console.error("Ошибка при декодировании токена:", error);
+      }
     } else {
-      console.log(token, "Токен не найден");
+      console.log("Токен не найден");
     }
   }, []);
 

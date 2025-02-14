@@ -983,6 +983,7 @@ class DataController {
       await pool.query(query);
       return res.sendStatus(200);
     } catch (error) {
+      console.log(error);
       return res.status(400).send(error);
     }
   }
