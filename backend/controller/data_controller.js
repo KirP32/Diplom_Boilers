@@ -193,7 +193,7 @@ class DataController {
       );
 
       if (userResult.rowCount > 0) {
-        await pool.query("INSERT INTO user_details (username) VALUES ($1)", [
+        await pool.query("INSERT INTO worker_details (username) VALUES ($1)", [
           login,
         ]);
 
@@ -435,7 +435,7 @@ class DataController {
       const result = await pool.query(
         `SELECT u.email, ud.*
          FROM users u
-         JOIN user_details ud ON u.username = ud.username
+         JOIN worker_details ud ON u.username = ud.username
          WHERE u.username = $1`,
         [login]
       );
@@ -935,11 +935,36 @@ class DataController {
   }
   async getDatabaseColumns(req, res) {
     try {
-      const result = await pool.query(
+      const result_workers = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'worker_details';`
+      );
+      const result_users = await pool.query(
         `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'user_details';`
       );
-      if (result.rowCount > 0) {
-        return res.send(result.rows);
+      const result_cgs = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'cgs_details';`
+      );
+      const result_gef = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'gef_details';`
+      );
+      if (
+        result_workers.rowCount > 0 &&
+        result_users.rowCount > 0 &&
+        result_cgs.rowCount > 0 &&
+        result_gef.rowCount > 0
+      ) {
+        const tables = [
+          result_workers.rows,
+          result_users.rows,
+          result_cgs.rows,
+          result_gef.rows,
+        ];
+        return res.send({
+          worker_details: result_workers.rows,
+          user_details: result_users.rows,
+          cgs_details: result_cgs.rows,
+          result_gef: result_gef.rows,
+        });
       }
       return res.sendStatus(400);
     } catch (error) {
@@ -954,7 +979,7 @@ class DataController {
         return res.sendStatus(400);
       }
 
-      const query = `ALTER TABLE user_details RENAME COLUMN "${oldName}" TO "${newName}"`;
+      const query = `ALTER TABLE worker_details RENAME COLUMN "${oldName}" TO "${newName}"`;
 
       await pool.query(query);
       return res.sendStatus(200);
@@ -969,7 +994,7 @@ class DataController {
       if (!column) {
         return res.sendStatus(400);
       }
-      const query = `ALTER TABLE user_details DROP COLUMN "${column}"`;
+      const query = `ALTER TABLE worker_details DROP COLUMN "${column}"`;
       await pool.query(query);
       return res.sendStatus(200);
     } catch (error) {
@@ -979,7 +1004,7 @@ class DataController {
   async addDatabaseColumn(req, res) {
     try {
       const { column_name, column_type } = req.body;
-      const query = `ALTER TABLE user_details ADD "${column_name}" ${column_type}`;
+      const query = `ALTER TABLE worker_details ADD "${column_name}" ${column_type}`;
       await pool.query(query);
       return res.sendStatus(200);
     } catch (error) {
@@ -1001,7 +1026,7 @@ class DataController {
         const query = "UPDATE users SET email = $1 WHERE id = $2";
         await pool.query(query, [newValue, userID]);
       } else {
-        const query = `UPDATE user_details SET ${key} = $1 WHERE username = $2`;
+        const query = `UPDATE worker_details SET ${key} = $1 WHERE username = $2`;
         await pool.query(query, [newValue, userName]);
       }
 

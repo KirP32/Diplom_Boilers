@@ -37,6 +37,7 @@ export default function DataBaseUsers() {
   const [userName, setUserName] = useState("");
   const [userLevel, setUserLevel] = useState(0);
 
+  const [tableName, setTableName] = useState("");
   useEffect(() => {
     $api
       .get("/getDatabaseColumns")
@@ -166,9 +167,27 @@ export default function DataBaseUsers() {
           justifyContent: "space-between",
         }}
       >
-        <Typography variant="h5" className={styles.data_table__header}>
-          Таблица user_details
-        </Typography>
+        <section style={{ display: "flex", gap: "25px" }}>
+          <Typography variant="h5" className={styles.data_table__header}>
+            Таблица
+            <InputLabel id="table_label">Таблица</InputLabel>
+          </Typography>
+          <Select
+            sx={{ width: 250 }}
+            label="Таблицы"
+            value={tableName}
+            labelId="table_label"
+            onChange={(e) => setTableName(e.target.value)}
+          >
+            <MenuItem value="user_details">Клиенты</MenuItem>
+            <MenuItem value="worker_details">Сервисные специалисты</MenuItem>
+            <MenuItem value="cgs_details">
+              Региональные представители ЦГС
+            </MenuItem>
+            <MenuItem value="gef_details">Сервисные инженеры GEFFEN</MenuItem>
+          </Select>
+        </section>
+
         <IconButton color="success" onClick={handleAdd}>
           <Add />
         </IconButton>
