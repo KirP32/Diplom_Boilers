@@ -126,6 +126,7 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
               key={item.id}
               onClick={
                 decodedToken?.access_level === 0 ||
+                decodedToken?.access_level === 2 ||
                 item.assigned_to == decodedToken?.userID
                   ? () => handleCardClick(item)
                   : null
