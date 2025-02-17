@@ -64,7 +64,7 @@ router.delete(
 );
 router.delete(`/deleteSystem/:name`, checkCookie, DataController.deleteSystem);
 router.delete(
-  `/deleteDatabaseColumn/:column`,
+  `/deleteDatabaseColumn/:column/:tableName`,
   checkCookie,
   DataController.deleteDatabaseColumn
 );

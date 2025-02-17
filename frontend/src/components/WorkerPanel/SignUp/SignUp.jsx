@@ -109,8 +109,10 @@ export default function SignUp({ updateRegFlag, ...props }) {
           />
           <select value={value} onChange={handleChange}>
             <option value="">Выберите значение</option>
-            <option value={1}>Сотрудник</option>
-            <option value={0}>Пользователь</option>
+            <option value={0}>Клиент</option>
+            <option value={1}>Сервисный специалист</option>
+            <option value={2}>Региональный представитель ЦГС</option>
+            <option value={3}>Сервисные инженеры GEFFEN</option>
           </select>
           {errors.email && (
             <h5 className={styles.error}>Неправильный формат почты</h5>

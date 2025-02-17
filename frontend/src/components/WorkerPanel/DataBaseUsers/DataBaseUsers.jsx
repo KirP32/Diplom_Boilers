@@ -26,6 +26,8 @@ import { useNavigate } from "react-router-dom";
 export default function DataBaseUsers() {
   const navigate = useNavigate();
 
+  const [allColumns, setAllColumns] = useState({});
+
   const [columns, setColumns] = useState([]);
   const [editingColumn, setEditingColumn] = useState(null);
   const [editedValue, setEditedValue] = useState("");
@@ -37,13 +39,34 @@ export default function DataBaseUsers() {
   const [userName, setUserName] = useState("");
   const [userLevel, setUserLevel] = useState(0);
 
-  const [tableName, setTableName] = useState("");
+  const [tableName, setTableName] = useState("user_details");
+
+  const tableMapping = {
+    user_details: "user_details",
+    worker_details: "worker_details",
+    cgs_details: "cgs_details",
+    gef_details: "gef_details",
+  };
+
   useEffect(() => {
     $api
       .get("/getDatabaseColumns")
-      .then((result) => setColumns(result.data))
-      .catch(() => setColumns([]));
+      .then((result) => {
+        setAllColumns(result.data);
+        if (tableName && result.data[tableMapping[tableName]]) {
+          setColumns(result.data[tableMapping[tableName]]);
+        }
+      })
+      .catch(() => setAllColumns({}));
   }, []);
+
+  useEffect(() => {
+    if (tableName && allColumns[tableMapping[tableName]]) {
+      setColumns(allColumns[tableMapping[tableName]]);
+    } else {
+      setColumns([]);
+    }
+  }, [tableName, allColumns]);
 
   const handleEdit = (col) => {
     setEditingColumn(col);
@@ -60,6 +83,7 @@ export default function DataBaseUsers() {
       .post("/updateDatabaseColumn", {
         oldName: editingColumn.column_name,
         newName: editedValue,
+        tableName,
       })
       .then(() => {
         setColumns((prev) =>
@@ -76,7 +100,7 @@ export default function DataBaseUsers() {
         console.error("Ошибка обновления:", error);
         if (
           error.status === 401 &&
-          localStorage.getItem("stay_logged") == false
+          localStorage.getItem("stay_logged") === "false"
         ) {
           logout(navigate);
         }
@@ -85,7 +109,7 @@ export default function DataBaseUsers() {
 
   const handleDelete = async (columnName) => {
     try {
-      await $api.delete(`/deleteDatabaseColumn/${columnName}`);
+      await $api.delete(`/deleteDatabaseColumn/${columnName}/${tableName}`);
       setColumns((prev) =>
         prev.filter((col) => col.column_name !== columnName)
       );
@@ -93,7 +117,7 @@ export default function DataBaseUsers() {
       console.error(error);
       if (
         error.status === 401 &&
-        localStorage.getItem("stay_logged") == false
+        localStorage.getItem("stay_logged") === "false"
       ) {
         logout(navigate);
       }
@@ -116,6 +140,7 @@ export default function DataBaseUsers() {
       .post("/addDatabaseColumn", {
         column_name: newColumnName,
         column_type: newColumnType,
+        tableName,
       })
       .then(() => {
         setColumns((prev) => [
@@ -123,14 +148,14 @@ export default function DataBaseUsers() {
           { column_name: newColumnName, data_type: newColumnType },
         ]);
         setNewColumnName("");
-        setNewColumnType("");
+        setNewColumnType("character varying");
         setIsAdding(false);
       })
       .catch((error) => {
         console.error("Ошибка добавления:", error);
         if (
           error.status === 401 &&
-          localStorage.getItem("stay_logged") == false
+          localStorage.getItem("stay_logged") === "false"
         ) {
           logout(navigate);
         }
@@ -150,7 +175,7 @@ export default function DataBaseUsers() {
         alert("Ошибка обновления уровня доступа");
         if (
           error.status === 401 &&
-          localStorage.getItem("stay_logged") == false
+          localStorage.getItem("stay_logged") === "false"
         ) {
           logout(navigate);
         }
@@ -170,22 +195,23 @@ export default function DataBaseUsers() {
         <section style={{ display: "flex", gap: "25px" }}>
           <Typography variant="h5" className={styles.data_table__header}>
             Таблица
-            <InputLabel id="table_label">Таблица</InputLabel>
           </Typography>
-          <Select
-            sx={{ width: 250 }}
-            label="Таблицы"
-            value={tableName}
-            labelId="table_label"
-            onChange={(e) => setTableName(e.target.value)}
-          >
-            <MenuItem value="user_details">Клиенты</MenuItem>
-            <MenuItem value="worker_details">Сервисные специалисты</MenuItem>
-            <MenuItem value="cgs_details">
-              Региональные представители ЦГС
-            </MenuItem>
-            <MenuItem value="gef_details">Сервисные инженеры GEFFEN</MenuItem>
-          </Select>
+          <FormControl sx={{ width: 250 }}>
+            <InputLabel id="table_label">Таблица</InputLabel>
+            <Select
+              label="Таблица"
+              value={tableName}
+              labelId="table_label"
+              onChange={(e) => setTableName(e.target.value)}
+            >
+              <MenuItem value="user_details">Клиенты</MenuItem>
+              <MenuItem value="worker_details">Сервисные специалисты</MenuItem>
+              <MenuItem value="cgs_details">
+                Региональные представители ЦГС
+              </MenuItem>
+              <MenuItem value="gef_details">Сервисные инженеры GEFFEN</MenuItem>
+            </Select>
+          </FormControl>
         </section>
 
         <IconButton color="success" onClick={handleAdd}>
@@ -326,15 +352,18 @@ export default function DataBaseUsers() {
           size="small"
           placeholder="Введите имя пользователя"
         />
-        <Select
-          sx={{ width: "300px" }}
-          value={userLevel}
-          size="small"
-          onChange={(e) => setUserLevel(e.target.value)}
-        >
-          <MenuItem value={0}>Покупатель</MenuItem>
-          <MenuItem value={1}>Ремонтник</MenuItem>
-        </Select>
+        <FormControl sx={{ width: "300px" }} size="small">
+          <InputLabel id="access-level-label">Уровень</InputLabel>
+          <Select
+            value={userLevel}
+            labelId="access-level-label"
+            label="Уровень"
+            onChange={(e) => setUserLevel(e.target.value)}
+          >
+            <MenuItem value={0}>Покупатель</MenuItem>
+            <MenuItem value={1}>Ремонтник</MenuItem>
+          </Select>
+        </FormControl>
         <Button
           variant="contained"
           color="primary"

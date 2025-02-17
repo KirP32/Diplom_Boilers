@@ -179,10 +179,9 @@ class DataController {
   }
 
   async sign_up(req, res, next) {
-    const { login, password, email } = req.body;
+    const { login, password, email, access_level } = req.body;
     const hash = bcrypt.hashSync(password);
     const authcookie = req.headers["accesstoken"];
-    const { access_level } = req.body;
 
     try {
       await pool.query("BEGIN");
@@ -193,7 +192,26 @@ class DataController {
       );
 
       if (userResult.rowCount > 0) {
-        await pool.query("INSERT INTO worker_details (username) VALUES ($1)", [
+        let tableName = "";
+        switch (parseInt(access_level)) {
+          case 0:
+            tableName = "user_details";
+            break;
+          case 1:
+            tableName = "worker_details";
+            break;
+          case 2:
+            tableName = "cgs_details";
+            break;
+          case 3:
+            tableName = "gef_details";
+            break;
+          default:
+            await pool.query("ROLLBACK");
+            return res.status(400).send("Некорректный уровень доступа");
+        }
+
+        await pool.query(`INSERT INTO ${tableName} (username) VALUES ($1)`, [
           login,
         ]);
 
@@ -963,7 +981,7 @@ class DataController {
           worker_details: result_workers.rows,
           user_details: result_users.rows,
           cgs_details: result_cgs.rows,
-          result_gef: result_gef.rows,
+          gef_details: result_gef.rows,
         });
       }
       return res.sendStatus(400);
@@ -973,13 +991,13 @@ class DataController {
   }
   async updateDatabaseColumn(req, res) {
     try {
-      const { oldName, newName } = req.body;
+      const { oldName, newName, tableName } = req.body;
 
       if (!oldName || !newName) {
         return res.sendStatus(400);
       }
 
-      const query = `ALTER TABLE worker_details RENAME COLUMN "${oldName}" TO "${newName}"`;
+      const query = `ALTER TABLE "${tableName}" RENAME COLUMN "${oldName}" TO "${newName}"`;
 
       await pool.query(query);
       return res.sendStatus(200);
@@ -990,11 +1008,11 @@ class DataController {
   }
   async deleteDatabaseColumn(req, res) {
     try {
-      const { column } = req.params;
+      const { column, tableName } = req.params;
       if (!column) {
         return res.sendStatus(400);
       }
-      const query = `ALTER TABLE worker_details DROP COLUMN "${column}"`;
+      const query = `ALTER TABLE "${tableName}" DROP COLUMN "${column}"`;
       await pool.query(query);
       return res.sendStatus(200);
     } catch (error) {
@@ -1003,8 +1021,8 @@ class DataController {
   }
   async addDatabaseColumn(req, res) {
     try {
-      const { column_name, column_type } = req.body;
-      const query = `ALTER TABLE worker_details ADD "${column_name}" ${column_type}`;
+      const { column_name, column_type, tableName } = req.body;
+      const query = `ALTER TABLE "${tableName}" ADD "${column_name}" ${column_type}`;
       await pool.query(query);
       return res.sendStatus(200);
     } catch (error) {
