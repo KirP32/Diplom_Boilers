@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/jsx-key */
 /* eslint-disable react/prop-types */
@@ -15,7 +14,6 @@ import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
 import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
-import { GetSystemContext } from "../../../Functions/ContextGetSystems";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -166,7 +164,11 @@ export default function RequestDetails({
   };
 
   const react_functional_components = {
-    "Поиск специалиста": [<U_SearchWorker item={item} />, <A_SearchWorker />],
+    "Поиск специалиста": [
+      <U_SearchWorker item={item} />,
+      <A_SearchWorker />,
+      <U_SearchWorker item={item} />,
+    ],
     Материалы: [<U_Materials />, <A_Materials />],
     "В пути": <></>,
     "Проводятся работы": <></>,

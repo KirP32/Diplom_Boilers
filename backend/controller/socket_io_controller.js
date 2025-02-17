@@ -50,7 +50,6 @@ async function handleStage(request_id, access_level, max_stage, action) {
       let newStage = currentStage;
 
       if (action === "next") {
-        // проверить sql запросы при завершении заявки чтобы у работника удалялась система с которой он работал если нет других систем
         newStage = currentStage + 1;
         if (newStage >= max_stage) {
           newStage = max_stage - 1;
