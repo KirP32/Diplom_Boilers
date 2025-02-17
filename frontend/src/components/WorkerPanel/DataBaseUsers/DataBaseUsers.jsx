@@ -18,6 +18,7 @@ import {
   FormControl,
   InputLabel,
   Button,
+  Autocomplete,
 } from "@mui/material";
 import { Edit, Delete, Add, Check } from "@mui/icons-material";
 import styles from "./DataBaseUsers.module.scss";
@@ -40,6 +41,7 @@ export default function DataBaseUsers() {
   const [userLevel, setUserLevel] = useState(0);
 
   const [tableName, setTableName] = useState("user_details");
+  const [workerNameArr, setWorkerNameArr] = useState("");
 
   const tableMapping = {
     user_details: "user_details",
@@ -58,6 +60,19 @@ export default function DataBaseUsers() {
         }
       })
       .catch(() => setAllColumns({}));
+  }, []);
+
+  useEffect(() => {
+    $api
+      .get("/getAllUsers")
+      .then((result) => {
+        const names = result.data.map((user) => user.username);
+        setWorkerNameArr(names);
+      })
+      .catch((error) => {
+        console.log(error);
+        setWorkerNameArr([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -345,13 +360,21 @@ export default function DataBaseUsers() {
           alignItems: "center",
         }}
       >
-        <TextField
+        <Autocomplete
           sx={{ width: "300px" }}
+          options={workerNameArr}
           value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          size="small"
-          placeholder="Введите имя пользователя"
+          onChange={(event, newValue) => setUserName(newValue || "")}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Введите имя пользователя"
+              size="small"
+            />
+          )}
+          freeSolo
         />
+
         <FormControl sx={{ width: "300px" }} size="small">
           <InputLabel id="access-level-label">Уровень</InputLabel>
           <Select
@@ -360,10 +383,13 @@ export default function DataBaseUsers() {
             label="Уровень"
             onChange={(e) => setUserLevel(e.target.value)}
           >
-            <MenuItem value={0}>Покупатель</MenuItem>
-            <MenuItem value={1}>Ремонтник</MenuItem>
+            <MenuItem value={0}>Клиент</MenuItem>
+            <MenuItem value={1}>Сервисный специалист</MenuItem>
+            <MenuItem value={2}>Региональный представитель ЦГС</MenuItem>
+            <MenuItem value={3}>Сервисные инженеры GEFFEN</MenuItem>
           </Select>
         </FormControl>
+
         <Button
           variant="contained"
           color="primary"

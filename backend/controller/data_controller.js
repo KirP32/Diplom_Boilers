@@ -1064,6 +1064,21 @@ class DataController {
       return res.status(400).send({ error: error });
     }
   }
+  async getAllUsers(req, res) {
+    try {
+      const query = "select username from users";
+      const result = await pool.query(query);
+      if (result.rowCount > 0) {
+        return res.send(result.rows);
+      } else {
+        return res
+          .status(400)
+          .send({ error: "Проблема с получнием пользователей" });
+      }
+    } catch (error) {
+      return res.status(400).send({ error: error });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

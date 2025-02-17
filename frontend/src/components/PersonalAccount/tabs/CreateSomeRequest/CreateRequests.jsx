@@ -7,6 +7,7 @@ import Select from "@mui/material/Select";
 import Button from "../../../Button/Button";
 import { jwtDecode } from "jwt-decode";
 import $api from "../../../../http";
+
 export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const [phone, setPhone] = useState("");
   const [problem, setProblem] = useState("");
@@ -14,6 +15,8 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const deviceObjectTemp = [
     ...deviceObject.boilers,
     { s_number: "Другое", type: 0 },
+    { s_number: "Котёл МВ 3", type: 0 },
+    { s_number: "Котёл МВ 4", type: 0 },
   ];
   const [errors, setErrors] = useState({ problem: false, phone: false });
   const [description, setDescription] = useState("");
