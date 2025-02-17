@@ -621,7 +621,7 @@ class DataController {
         })
         .then((result) => {
           const decoded = decodeJWT(req.cookies.refreshToken);
-          if (decoded.access_level === 0) {
+          if (decoded.access_level === 0 || decoded.access_level === 2) {
             res.send(result.rows);
           } else {
             res.send(
