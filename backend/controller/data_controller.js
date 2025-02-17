@@ -965,23 +965,23 @@ class DataController {
       const result_gef = await pool.query(
         `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'gef_details';`
       );
+      const result_requests = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'user_requests_info';`
+      );
+
       if (
         result_workers.rowCount > 0 &&
         result_users.rowCount > 0 &&
         result_cgs.rowCount > 0 &&
-        result_gef.rowCount > 0
+        result_gef.rowCount > 0 &&
+        result_requests.rowCount > 0
       ) {
-        const tables = [
-          result_workers.rows,
-          result_users.rows,
-          result_cgs.rows,
-          result_gef.rows,
-        ];
         return res.send({
           worker_details: result_workers.rows,
           user_details: result_users.rows,
           cgs_details: result_cgs.rows,
           gef_details: result_gef.rows,
+          user_requests_info: result_requests.rows,
         });
       }
       return res.sendStatus(400);

@@ -41,13 +41,14 @@ export default function DataBaseUsers() {
   const [userLevel, setUserLevel] = useState(0);
 
   const [tableName, setTableName] = useState("user_details");
-  const [workerNameArr, setWorkerNameArr] = useState("");
+  const [workerNameArr, setWorkerNameArr] = useState([]);
 
   const tableMapping = {
     user_details: "user_details",
     worker_details: "worker_details",
     cgs_details: "cgs_details",
     gef_details: "gef_details",
+    user_requests_info: "user_requests_info",
   };
 
   useEffect(() => {
@@ -225,6 +226,9 @@ export default function DataBaseUsers() {
                 Региональные представители ЦГС
               </MenuItem>
               <MenuItem value="gef_details">Сервисные инженеры GEFFEN</MenuItem>
+              <MenuItem value="user_requests_info">
+                <strong>ЗАЯВКИ</strong>
+              </MenuItem>
             </Select>
           </FormControl>
         </section>
@@ -302,7 +306,11 @@ export default function DataBaseUsers() {
               {columns.map(
                 (col) =>
                   col.column_name !== "id" &&
-                  col.column_name !== "username" && (
+                  col.column_name !== "username" &&
+                  !(
+                    col.column_name === "request_id" &&
+                    tableName === "user_requests_info"
+                  ) && (
                     <TableRow key={col.column_name}>
                       <TableCell>
                         {editingColumn &&
