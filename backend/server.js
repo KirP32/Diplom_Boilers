@@ -14,6 +14,7 @@ const port = 8080;
 const server = http.createServer(app);
 const io = new Server(server, {
   path: "/api/socket.io",
+  transports: ["websocket"],
   cors: {
     origin: [
       "https://ads-line.pro",
@@ -22,7 +23,6 @@ const io = new Server(server, {
       "http://frontend:3000",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   },
 });

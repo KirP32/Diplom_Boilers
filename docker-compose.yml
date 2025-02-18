@@ -3,6 +3,7 @@ version: '3'
 networks:
   dev:
 
+
 services:
   nginx:
     image: nginx:stable-alpine
@@ -22,10 +23,12 @@ services:
     build: ./backend
     networks:
       - dev
+    expose:
+      - "8080"
 
   frontend:
     build: ./frontend
     environment:
-    - NODE_OPTIONS=--max-old-space-size=4096
+      - NODE_OPTIONS=--max-old-space-size=4096
     networks:
       - dev

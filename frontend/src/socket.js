@@ -4,6 +4,6 @@ const URL = "https://ads-line.pro";
 
 export const socket = io(URL, {
   path: "/api/socket.io",
-  transports: ["websocket", "polling"],
+  transports: ["websocket"],
   autoConnect: false,
 });
