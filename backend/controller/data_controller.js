@@ -604,6 +604,8 @@ class DataController {
                 u.username,
                 rc.user_confirmed,
                 rc.worker_confirmed,
+                rc.regional_confirmed,
+                rc.service_engineer_confirmed,
                 rc.action
              FROM 
                 user_requests ur
@@ -621,7 +623,11 @@ class DataController {
         })
         .then((result) => {
           const decoded = decodeJWT(req.cookies.refreshToken);
-          if (decoded.access_level === 0 || decoded.access_level === 2) {
+          if (
+            decoded.access_level === 0 ||
+            decoded.access_level === 2 ||
+            decoded.access_level === 3
+          ) {
             res.send(result.rows);
           } else {
             res.send(
@@ -658,14 +664,15 @@ class DataController {
         description,
         system_name,
         phone,
+        created_by_worker,
       } = req.body;
       let { type } = req.body;
       if (!type) {
         type = 0;
       }
       const result = await pool.query(
-        `INSERT INTO user_requests (problem_name, type, status, assigned_to, created_at, module, created_by, description, system_name, phone_number)
-        VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6)`,
+        `INSERT INTO user_requests (problem_name, type, status, assigned_to, created_at, module, created_by, description, system_name, phone_number, created_by_worker)
+        VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6, $8)`,
         [
           problem_name,
           module, // module
@@ -674,6 +681,7 @@ class DataController {
           system_name,
           phone,
           type,
+          created_by_worker,
         ]
       );
       if (result.rowCount === 1) {
@@ -942,11 +950,17 @@ class DataController {
     try {
       const { id } = req.query;
       const result = await pool.query(
-        "select user_confirmed, worker_confirmed, action from request_confirmations where request_id = $1",
+        "select user_confirmed, worker_confirmed, regional_confirmed, service_engineer_confirmed, action from request_confirmations where request_id = $1",
         [id]
       );
       if (result.rows.length > 0) {
-        const { user_confirmed, worker_confirmed, action } = result.rows[0];
+        const {
+          user_confirmed,
+          worker_confirmed,
+          regional_confirmed,
+          service_engineer_confirmed,
+          action,
+        } = result.rows[0];
         return res.send({ user_confirmed, worker_confirmed, action });
       }
     } catch (error) {}

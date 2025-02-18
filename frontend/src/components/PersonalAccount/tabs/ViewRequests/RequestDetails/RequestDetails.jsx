@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/jsx-key */
 /* eslint-disable react/prop-types */
@@ -12,6 +13,7 @@ import StepButton from "@mui/material/StepButton";
 import U_Materials from "./additionalComponents/User/U_Materials/U_Materials";
 import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
+import { Typography, Box } from "@mui/material";
 import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
 
@@ -30,11 +32,8 @@ export default function RequestDetails({
   getAllDevices,
 }) {
   const { access_level } = useContext(ThemeContext);
-
   const [itemStage, setItemStage] = useState(item.stage);
-  // const { result } = useContext(GetSystemContext); тестировал context
 
-  // console.log(result);
   useEffect(() => {
     setItemStage(item.stage);
   }, [item.stage]);
@@ -50,19 +49,15 @@ export default function RequestDetails({
   useEffect(() => {
     const requestId = item.id;
     socket.connect();
-
     socket.emit("joinRequest", requestId, (response) => {
       if (response.status === "error") {
         console.error("Не удалось подключиться к комнате");
       }
     });
-
     const handleRequestUpdate = (data) => {
       addToItem(data);
     };
-
     socket.on("requestUpdated", handleRequestUpdate);
-
     return () => {
       socket.emit("leaveRequest", requestId);
       socket.off("requestUpdated", handleRequestUpdate);
@@ -76,11 +71,19 @@ export default function RequestDetails({
           params: { id: item.id },
         });
         if (response.data) {
-          const { user_confirmed, worker_confirmed, action } = response.data;
+          const {
+            user_confirmed,
+            worker_confirmed,
+            regional_confirmed,
+            service_engineer_confirmed,
+            action,
+          } = response.data;
           setItem((prev) => ({
             ...prev,
             user_confirmed,
             worker_confirmed,
+            regional_confirmed,
+            service_engineer_confirmed,
             action,
           }));
         }
@@ -97,6 +100,8 @@ export default function RequestDetails({
         ...prev,
         user_confirmed: data.user_confirmed,
         worker_confirmed: data.worker_confirmed,
+        regional_confirmed: data.regional_confirmed,
+        service_engineer_confirmed: data.service_engineer_confirmed,
         stage: data.stage,
         status: 1,
         action: data.action,
@@ -109,6 +114,8 @@ export default function RequestDetails({
         ...prev,
         user_confirmed: data.user_confirmed,
         worker_confirmed: data.worker_confirmed,
+        regional_confirmed: data.regional_confirmed,
+        service_engineer_confirmed: data.service_engineer_confirmed,
         stage: data.stage,
         action: data.action,
       }));
@@ -116,8 +123,20 @@ export default function RequestDetails({
     getSystems();
   }
 
+  const [lockedAction, setLockedAction] = useState(null);
+  const [lastActionUser, setLastActionUser] = useState(null);
+
   async function handleNextStage() {
     try {
+      if (access_level > 0) {
+        if (lockedAction === "next" && lastActionUser === access_level) {
+          setLockedAction(null);
+          setLastActionUser(null);
+        } else {
+          setLockedAction("next");
+          setLastActionUser(access_level);
+        }
+      }
       const response = await socket.timeout(5000).emitWithAck("nextStage", {
         id: item.id,
         access_level,
@@ -139,6 +158,15 @@ export default function RequestDetails({
 
   async function handlePrevStage() {
     try {
+      if (access_level > 0) {
+        if (lockedAction === "prev" && lastActionUser === access_level) {
+          setLockedAction(null);
+          setLastActionUser(null);
+        } else {
+          setLockedAction("prev");
+          setLastActionUser(access_level);
+        }
+      }
       const response = await socket.timeout(5000).emitWithAck("nextStage", {
         id: item.id,
         access_level,
@@ -168,6 +196,8 @@ export default function RequestDetails({
       <U_SearchWorker item={item} />,
       <A_SearchWorker />,
       <U_SearchWorker item={item} />,
+      <U_SearchWorker item={item} />,
+      <U_SearchWorker item={item} />,
     ],
     Материалы: [<U_Materials />, <A_Materials />],
     "В пути": <></>,
@@ -175,18 +205,32 @@ export default function RequestDetails({
     Завершенно: <></>,
   };
 
-  const isConfirmed = item.user_confirmed || item.worker_confirmed;
-  const isNextAction = item.action === "next";
+  const confirmations = [
+    { name: "Пользователь", confirmed: item.user_confirmed },
+    { name: "Работник", confirmed: item.worker_confirmed },
+    { name: "Региональный ЦГС", confirmed: item.regional_confirmed },
+    { name: "Сервисный инженер", confirmed: item.service_engineer_confirmed },
+  ];
+
+  const anyConfirmed = confirmations.some((c) => c.confirmed === true);
   const isPrevAction = item.action === "prev";
+  const isNextAction = item.action === "next";
+
+  const isBackDisabled =
+    item.stage === 0 || (anyConfirmed && item.action !== "prev");
+
+  const isForwardDisabled = anyConfirmed && item.action !== "next";
+
   const isLastStage = data_type_1.length - 1 === item.stage;
-
-  const isUserBlocked = access_level === 0 && !item.worker_confirmed;
-  const isBackDisabled = item.stage === 0 || (isConfirmed && isNextAction);
-  const isForwardDisabled = isConfirmed && isPrevAction;
   const stepKey = data_type_1[item.status === 0 ? item.stage : itemStage];
-
   const component =
     react_functional_components[stepKey]?.[access_level] || null;
+
+  const userConfirmed =
+    (access_level === 0 && item.user_confirmed) ||
+    (access_level === 1 && item.worker_confirmed) ||
+    (access_level === 2 && item.regional_confirmed) ||
+    (access_level === 3 && item.service_engineer_confirmed);
 
   return (
     <div className={styles.backdrop} onClick={closePanel}>
@@ -224,6 +268,7 @@ export default function RequestDetails({
         <h3 style={{ textAlign: "center", marginBottom: 15 }}>
           {item.problem_name}
         </h3>
+
         {item.status === 0 ? (
           <Stepper
             activeStep={item.stage}
@@ -271,29 +316,59 @@ export default function RequestDetails({
           </Stepper>
         )}
 
+        <Box
+          sx={{
+            mt: 2,
+            mb: 2,
+            p: 1,
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+          }}
+        >
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            Подтверждения:
+          </Typography>
+          {confirmations.map((conf) => (
+            <Box
+              key={conf.name}
+              sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
+            >
+              <Typography variant="body2" sx={{ mr: 1 }}>
+                {conf.name}:
+              </Typography>
+              <Typography
+                variant="body2"
+                color={conf.confirmed ? "green" : "error"}
+              >
+                {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+
         {component}
 
         {item.status !== 1 && (
           <section className={styles.request_buttons}>
             <Button
               variant="contained"
-              disabled={isBackDisabled || isUserBlocked}
-              color={isConfirmed && isPrevAction ? "success" : "primary"}
+              disabled={isBackDisabled}
+              color={userConfirmed && isPrevAction ? "success" : "primary"}
               onClick={handlePrevStage}
             >
-              {isConfirmed && isPrevAction ? "Назад 1/2" : "Назад"}
+              {userConfirmed && isPrevAction ? "Назад +" : "Назад"}
             </Button>
 
             <Button
               variant="contained"
-              disabled={isForwardDisabled || isUserBlocked}
-              color={isConfirmed && isNextAction ? "success" : "primary"}
+              disabled={isForwardDisabled}
+              color={userConfirmed && isNextAction ? "success" : "primary"}
               onClick={handleNextStage}
             >
               {isLastStage
                 ? "Завершить"
-                : isConfirmed && isNextAction
-                ? "Вперёд 1/2"
+                : userConfirmed && isNextAction
+                ? "Вперёд +"
                 : "Вперёд"}
             </Button>
           </section>

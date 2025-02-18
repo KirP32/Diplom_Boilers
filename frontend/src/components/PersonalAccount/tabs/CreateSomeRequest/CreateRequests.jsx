@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
+import React, { useContext, useState } from "react";
 import styles from "./CreateRequests.module.scss";
 import PhoneInput from "../../additionalComponents/PhoneInput/PhoneInput";
 import MenuItem from "@mui/material/MenuItem";
@@ -7,6 +9,7 @@ import Select from "@mui/material/Select";
 import Button from "../../../Button/Button";
 import { jwtDecode } from "jwt-decode";
 import $api from "../../../../http";
+import { ThemeContext } from "../../../../Theme";
 
 export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const [phone, setPhone] = useState("");
@@ -18,6 +21,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     { s_number: "Котёл МВ 3", type: 0 },
     { s_number: "Котёл МВ 4", type: 0 },
   ];
+  const { access_level } = useContext(ThemeContext);
   const [errors, setErrors] = useState({ problem: false, phone: false });
   const [description, setDescription] = useState("");
   const [successFlag, setSuccessFlag] = useState(false);
@@ -49,6 +53,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         system_name: deviceObject.name,
         phone: phone,
         type: object.type,
+        created_by_worker: !(access_level === 0),
       };
       $api.post("/createRequest", data).then((result) => {
         setSuccessFlag(true);
