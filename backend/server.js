@@ -6,7 +6,6 @@ const cookieParser = require("cookie-parser");
 const router = require("./routes/index");
 const pool = require("./dataBase/pool");
 const { handleStage } = require("./controller/socket_io_controller");
-const { disconnect } = require("process");
 
 const app = express();
 const port = 8080;
