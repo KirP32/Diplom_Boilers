@@ -6,6 +6,7 @@ import styles from "./WorkerRequests.module.scss";
 import { jwtDecode } from "jwt-decode";
 import Button from "../../Button/Button";
 import OptionsDialog from "../Dialogs/OptionsDialog/OptionsDialog";
+import CreateSystemDialog from "../Dialogs/CreateSystemDialog/CreateSystemDialog";
 
 export default function WorkerRequests({
   systems_names,
@@ -18,6 +19,7 @@ export default function WorkerRequests({
   const [user_name, setUser_name] = useState("");
   const [user_email, setUserEmail] = useState(null);
   const [options_flag, setOptions_flag] = useState(false);
+  const [isDialogOpen, setDialogOpen] = useState(false);
 
   const getData = useCallback(async () => {
     const response = await $api.get("/getRequests");
@@ -113,6 +115,13 @@ export default function WorkerRequests({
       <div className={styles.indicators__wrapper}>
         <Button
           className={styles.indicators__button}
+          style={{ marginLeft: "inherit" }}
+          onClick={() => setDialogOpen(true)}
+        >
+          <h4>Создать систему</h4>
+        </Button>
+        <Button
+          className={styles.indicators__button}
           onClick={() => setOptions_flag(!options_flag)}
         >
           <h4>{user_name}</h4>
@@ -178,6 +187,11 @@ export default function WorkerRequests({
         user={{ user_name, user_email }}
         setOptions={(e) => setOptions_flag(e)}
       ></OptionsDialog>
+
+      <CreateSystemDialog
+        open={isDialogOpen}
+        onClose={() => setDialogOpen(false)}
+      />
     </div>
   );
 }

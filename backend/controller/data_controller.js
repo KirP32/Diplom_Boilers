@@ -469,6 +469,7 @@ class DataController {
     try {
       const api = req.headers["authorization"];
       const login = decodeJWT(req.cookies.refreshToken).login;
+
       const request = await pool.query(
         `SELECT * FROM user_systems WHERE user_id = (
           SELECT id FROM users WHERE username = $1
@@ -481,10 +482,9 @@ class DataController {
         return res.send([]);
       }
 
-      const apiRequests = systems
-        .filter((system) => system.name === "ADS-Line")
-        .map((system) =>
-          axios
+      const apiRequests = systems.map((system) => {
+        if (system.name === "ADS-Line") {
+          return axios
             .get(`http://185.113.139.204:8000/module/get/${system.name}`, {
               headers: {
                 Authorization: api,
@@ -492,12 +492,27 @@ class DataController {
               },
             })
             .then((response) => response.data)
-            .catch(() => ({
-              user_id: system.user_id,
-              name: system.name,
-              system_id: system.system_id,
-            }))
-        );
+            .catch((error) => {
+              console.error(
+                `Ошибка при получении ${system.name}:`,
+                error.message
+              );
+              return {
+                user_id: system.user_id,
+                name: system.name,
+                system_id: system.system_id,
+              };
+            });
+        } else {
+          // Заглушка для систем, не являющихся "ADS-Line"
+          return Promise.resolve({
+            user_id: system.user_id,
+            name: system.name,
+            system_id: system.system_id,
+            module_list: [],
+          });
+        }
+      });
 
       const fetchedSystems = await Promise.all(apiRequests);
 
@@ -1092,6 +1107,14 @@ class DataController {
     } catch (error) {
       return res.status(400).send({ error: error });
     }
+  }
+  async createSystem(req, res) {
+    try {
+      const { system_name } = req.body;
+      const result = await pool.query("INSRET INTO systems values($1)", [
+        system_name,
+      ]);
+    } catch (error) {}
   }
 }
 async function updateToken(login, refreshToken, UUID4) {
