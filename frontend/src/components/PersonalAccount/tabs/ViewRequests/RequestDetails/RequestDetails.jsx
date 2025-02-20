@@ -207,9 +207,9 @@ export default function RequestDetails({
 
   const confirmations = [
     { name: "Пользователь", confirmed: item.user_confirmed },
-    { name: "Работник", confirmed: item.worker_confirmed },
-    { name: "Региональный ЦГС", confirmed: item.regional_confirmed },
-    { name: "Сервисный инженер", confirmed: item.service_engineer_confirmed },
+    { name: "АСЦ", confirmed: item.worker_confirmed },
+    { name: "WATTSON", confirmed: item.regional_confirmed },
+    { name: "GEFFEN", confirmed: item.service_engineer_confirmed },
   ];
 
   const anyConfirmed = confirmations.some((c) => c.confirmed === true);

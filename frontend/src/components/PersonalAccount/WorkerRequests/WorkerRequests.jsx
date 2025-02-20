@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useCallback, useEffect } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import $api from "../../../http";
 import { useState } from "react";
 import styles from "./WorkerRequests.module.scss";
@@ -7,6 +7,7 @@ import { jwtDecode } from "jwt-decode";
 import Button from "../../Button/Button";
 import OptionsDialog from "../Dialogs/OptionsDialog/OptionsDialog";
 import CreateSystemDialog from "../Dialogs/CreateSystemDialog/CreateSystemDialog";
+import { ThemeContext } from "../../../Theme";
 
 export default function WorkerRequests({
   systems_names,
@@ -17,9 +18,9 @@ export default function WorkerRequests({
   const [isProcessing, setIsProcessing] = useState(false);
   const [add_failure, setAdd_Failure] = useState(false);
   const [user_name, setUser_name] = useState("");
-  const [user_email, setUserEmail] = useState(null);
   const [options_flag, setOptions_flag] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const { access_level } = useContext(ThemeContext);
 
   const getData = useCallback(async () => {
     const response = await $api.get("/getRequests");
@@ -98,18 +99,6 @@ export default function WorkerRequests({
     }
   }, []);
 
-  useEffect(() => {
-    $api
-      .post("/getUser_email")
-      .then((result) => {
-        setUserEmail(result?.data?.email);
-      })
-      .catch((error) => {
-        setUserEmail("");
-        console.log(error);
-      });
-  }, []);
-
   return (
     <div className={styles.worker_requests__wrapper}>
       <div className={styles.indicators__wrapper}>
@@ -121,6 +110,14 @@ export default function WorkerRequests({
           <h4>Создать систему</h4>
         </Button>
         <Button
+          style={{
+            backgroundColor:
+              access_level === 3
+                ? "hsl(356, 65%, 38%)"
+                : access_level === 2
+                ? "hsl(140, 50%, 45%)"
+                : undefined,
+          }}
           className={styles.indicators__button}
           onClick={() => setOptions_flag(!options_flag)}
         >
@@ -184,7 +181,7 @@ export default function WorkerRequests({
       )}
       <OptionsDialog
         open={options_flag}
-        user={{ user_name, user_email }}
+        user={{ user_name }}
         setOptions={(e) => setOptions_flag(e)}
       ></OptionsDialog>
 

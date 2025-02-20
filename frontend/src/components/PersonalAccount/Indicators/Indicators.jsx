@@ -2,11 +2,12 @@
 import { jwtDecode } from "jwt-decode";
 import Button from "../../Button/Button";
 import OptionsDialog from "./../Dialogs/OptionsDialog/OptionsDialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import styles from "./Indicators.module.scss";
 import { Menu, MenuItem } from "@mui/material";
 import logout from "../../Logout/logout";
 import { useNavigate } from "react-router-dom";
+import { ThemeContext } from "../../../Theme";
 
 export default function Indicators({ setSelectedTab, tab }) {
   const [user_name, setUser_name] = useState("");
@@ -14,6 +15,8 @@ export default function Indicators({ setSelectedTab, tab }) {
   const [monitoringAnchorEl, setMonitoringAnchorEl] = useState(null);
   const [systemAnchorEl, setSystemAnchorEl] = useState(null);
   const [requestsAnchorEl, setRequestsAnchorEl] = useState(null);
+  const { access_level } = useContext(ThemeContext);
+
   const navigate = useNavigate();
   //console.log("Indicators render");
 
@@ -188,6 +191,14 @@ export default function Indicators({ setSelectedTab, tab }) {
           logout
         </span>
         <Button
+          style={{
+            backgroundColor:
+              access_level === 3
+                ? "hsl(356, 65%, 38%)"
+                : access_level === 2
+                ? "hsl(140, 50%, 45%)"
+                : undefined,
+          }}
           className={styles.indicators__btn}
           onClick={() => setOptions_flag(!options_flag)}
         >

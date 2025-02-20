@@ -208,7 +208,9 @@ export default function DataBaseUsers() {
           justifyContent: "space-between",
         }}
       >
-        <section style={{ display: "flex", gap: "25px" }}>
+        <section
+          style={{ display: "flex", gap: "25px", paddingBottom: "15px" }}
+        >
           <Typography variant="h5" className={styles.data_table__header}>
             Таблица
           </Typography>
@@ -221,11 +223,9 @@ export default function DataBaseUsers() {
               onChange={(e) => setTableName(e.target.value)}
             >
               <MenuItem value="user_details">Клиенты</MenuItem>
-              <MenuItem value="worker_details">Сервисные специалисты</MenuItem>
-              <MenuItem value="cgs_details">
-                Региональные представители ЦГС
-              </MenuItem>
-              <MenuItem value="gef_details">Сервисные инженеры GEFFEN</MenuItem>
+              <MenuItem value="worker_details">АСЦ</MenuItem>
+              <MenuItem value="cgs_details">WATTSON</MenuItem>
+              <MenuItem value="gef_details">GEFFEN</MenuItem>
               <MenuItem value="user_requests_info">
                 <strong>ЗАЯВКИ</strong>
               </MenuItem>
@@ -392,9 +392,9 @@ export default function DataBaseUsers() {
             onChange={(e) => setUserLevel(e.target.value)}
           >
             <MenuItem value={0}>Клиент</MenuItem>
-            <MenuItem value={1}>Сервисный специалист</MenuItem>
-            <MenuItem value={2}>Региональный представитель ЦГС</MenuItem>
-            <MenuItem value={3}>Сервисные инженеры GEFFEN</MenuItem>
+            <MenuItem value={1}>АСЦ</MenuItem>
+            <MenuItem value={2}>WATTSON</MenuItem>
+            <MenuItem value={3}>GEFFEN</MenuItem>
           </Select>
         </FormControl>
 

@@ -12,17 +12,18 @@ import {
   IconButton,
   TextField,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import $api from "../../../../http";
 import EditIcon from "@mui/icons-material/Edit";
+import { ThemeContext } from "../../../../Theme";
 
 export default function OptionsDialog({ open, user, setOptions }) {
   const [userData, setUserData] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [editedValue, setEditedValue] = useState(null);
+  const { access_level } = useContext(ThemeContext);
 
   const handleSaveChanges = (key, newValue) => {
-    //console.log(`Sending updated ${key} with value: ${newValue}`);
     $api
       .put("/updateUser", { key, newValue })
       .then(() => {
@@ -46,7 +47,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
 
   useEffect(() => {
     $api
-      .post("/getUser_email")
+      .post("/getUser_email", { access_level })
       .then((result) => {
         setUserData(result?.data);
       })

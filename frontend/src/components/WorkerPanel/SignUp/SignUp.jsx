@@ -6,6 +6,7 @@ import $api from "../../../http";
 import { sha256 } from "js-sha256";
 import logout from "../../Logout/logout";
 import { useNavigate } from "react-router-dom";
+import { MenuItem, Select } from "@mui/material";
 
 export default function SignUp({ updateRegFlag, ...props }) {
   const [login, setLogin] = useState("");
@@ -22,7 +23,7 @@ export default function SignUp({ updateRegFlag, ...props }) {
   const [sign_failure, setSign_failure] = useState(false);
   const navigate = useNavigate();
 
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(0);
 
   const handleChange = (event) => {
     setValue(event.target.value);
@@ -107,13 +108,12 @@ export default function SignUp({ updateRegFlag, ...props }) {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
-          <select value={value} onChange={handleChange}>
-            <option value="">Выберите значение</option>
-            <option value={0}>Клиент</option>
-            <option value={1}>Сервисный специалист</option>
-            <option value={2}>Региональный представитель ЦГС</option>
-            <option value={3}>Сервисные инженеры GEFFEN</option>
-          </select>
+          <Select value={value} labelId="table_label" onChange={handleChange}>
+            <MenuItem value={0}>Клиенты</MenuItem>
+            <MenuItem value={1}>АСЦ</MenuItem>
+            <MenuItem value={2}>WATTSON</MenuItem>
+            <MenuItem value={3}>GEFFEN</MenuItem>
+          </Select>
           {errors.email && (
             <h5 className={styles.error}>Неправильный формат почты</h5>
           )}

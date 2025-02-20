@@ -449,11 +449,25 @@ class DataController {
     try {
       const authtoken = req.headers["accesstoken"];
       const login = decodeJWT(authtoken).login;
+      const { access_level } = req.body;
+
+      const tables = {
+        0: "user_details",
+        1: "worker_details",
+        2: "cgs_details",
+        3: "gef_details",
+      };
+
+      const detailsTable = tables[access_level];
+
+      if (!detailsTable) {
+        return res.status(400).send({ error: "Некорректный уровень доступа" });
+      }
 
       const result = await pool.query(
         `SELECT u.email, ud.*
          FROM users u
-         JOIN worker_details ud ON u.username = ud.username
+         JOIN ${detailsTable} ud ON u.username = ud.username
          WHERE u.username = $1`,
         [login]
       );
