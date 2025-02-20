@@ -179,6 +179,7 @@ export default function WorkerRequests({
           <h4>Заявка уже взята в работу</h4>
         </div>
       )}
+
       <OptionsDialog
         open={options_flag}
         user={{ user_name }}

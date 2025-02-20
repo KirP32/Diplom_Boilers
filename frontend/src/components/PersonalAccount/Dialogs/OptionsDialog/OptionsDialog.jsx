@@ -46,15 +46,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
   };
 
   useEffect(() => {
-    $api
-      .post("/getUser_email", { access_level })
-      .then((result) => {
-        setUserData(result?.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, []);
+    if (open) {
+      $api
+        .post("/getUser_email", { access_level })
+        .then((result) => {
+          setUserData(result?.data);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  }, [open]);
 
   function onFinish() {
     setOptions(false);
