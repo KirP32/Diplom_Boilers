@@ -54,6 +54,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         phone: phone,
         type: object.type,
         created_by_worker: !(access_level === 0),
+        access_level: access_level,
       };
       $api.post("/createRequest", data).then((result) => {
         setSuccessFlag(true);

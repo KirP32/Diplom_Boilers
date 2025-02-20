@@ -670,6 +670,7 @@ class DataController {
       console.log(error);
     }
   }
+
   async createRequest(req, res) {
     try {
       const {
@@ -680,35 +681,75 @@ class DataController {
         system_name,
         phone,
         created_by_worker,
+        access_level,
       } = req.body;
       let { type } = req.body;
       if (!type) {
         type = 0;
       }
+
+      const createdById = await getID(created_by);
+
+      let assignedWorkerId = null;
+      let assignedRegionalWorkerId = null;
+
+      const regionalWorker = await pool.query(
+        "SELECT id FROM users WHERE access_level = 2 LIMIT 1"
+      );
+
+      if (regionalWorker.rowCount > 0) {
+        assignedRegionalWorkerId = regionalWorker.rows[0].id;
+      }
+
+      if (access_level === 1) {
+        assignedWorkerId = createdById;
+      } else if (access_level === 2) {
+        assignedWorkerId = createdById;
+        assignedRegionalWorkerId = createdById;
+      }
+
       const result = await pool.query(
-        `INSERT INTO user_requests (problem_name, type, status, assigned_to, created_at, module, created_by, description, system_name, phone_number, created_by_worker)
-        VALUES ($1, $7, 0, null, current_timestamp, $2, $3, $4, $5, $6, $8)`,
+        `INSERT INTO user_requests (problem_name, type, status, assigned_to, region_assigned_to, created_at, module, created_by, description, system_name, phone_number, created_by_worker)
+            VALUES ($1, $8, 0, $9, $10, current_timestamp, $2, $3, $4, $5, $6, $7)`,
         [
           problem_name,
-          module, // module
-          await getID(created_by),
+          module,
+          createdById,
           description,
           system_name,
           phone,
-          type,
           created_by_worker,
+          type,
+          assignedWorkerId,
+          assignedRegionalWorkerId,
         ]
       );
-      if (result.rowCount === 1) {
-        res.sendStatus(200);
-      } else {
-        res.sendStatus(500);
+
+      if (result.rowCount !== 1) {
+        return res.status(500).send({ error: "Ошибка при создании заявки" });
       }
+
+      if (assignedRegionalWorkerId) {
+        const systemCheck = await pool.query(
+          "SELECT * FROM user_systems WHERE user_id = $1 AND name = $2",
+          [assignedRegionalWorkerId, system_name]
+        );
+
+        if (systemCheck.rowCount === 0) {
+          await pool.query(
+            "INSERT INTO user_systems (user_id, name) VALUES ($1, $2)",
+            [assignedRegionalWorkerId, system_name]
+          );
+        }
+      }
+
+      res.sendStatus(200);
     } catch (error) {
       console.error("Ошибка при выполнении запроса:", error);
-      res.sendStatus(500);
+      res.status(500).send({ error: "Ошибка при создании заявки" });
     }
   }
+
   async getRequests(req, res, next) {
     try {
       const login = decodeJWT(req.cookies.refreshToken).login;
