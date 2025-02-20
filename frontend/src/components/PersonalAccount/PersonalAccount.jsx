@@ -25,7 +25,7 @@ export default function PersonalAccount() {
   const navigate = useNavigate();
   const [settingsDialog, setSettingsDialog] = useState(false);
   const { theme } = useContext(ThemeContext);
-  const [selectedTab, setSelectedTab] = useState("sensors");
+  const [selectedTab, setSelectedTab] = useState("viewRequests");
   const { access_level } = useContext(ThemeContext);
   const [seeWorkerRequests, setSeeWorkerRequests] = useState(true);
   const [addSystemFlag, setAddSystemFlag] = useState(false);
