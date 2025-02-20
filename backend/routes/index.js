@@ -47,6 +47,7 @@ router.post(
   checkCookie,
   DataController.addDatabaseColumn
 );
+router.post("/createSystem", checkCookie, DataController.createSystem);
 
 router.delete(
   "/delete_device/:device_uid",

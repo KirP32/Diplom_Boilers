@@ -1111,10 +1111,35 @@ class DataController {
   async createSystem(req, res) {
     try {
       const { system_name } = req.body;
-      const result = await pool.query("INSRET INTO systems values($1)", [
+
+      const existingSystem = await pool.query(
+        "SELECT * FROM systems WHERE name = $1",
+        [system_name]
+      );
+
+      if (existingSystem.rowCount > 0) {
+        return res.status(400).send({ error: "Такая система уже существует" });
+      }
+
+      const result = await pool.query("INSERT INTO systems (name) values($1)", [
         system_name,
       ]);
-    } catch (error) {}
+
+      const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
+      const insertResult = await pool.query(
+        "INSERT INTO user_systems (user_id, name) VALUES ($1, $2)",
+        [user_id, system_name]
+      );
+
+      if (result.rowCount > 0 && insertResult.rowCount > 0) {
+        return res.send("OK");
+      } else {
+        return res.sendStatus(400);
+      }
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send({ error: error.message });
+    }
   }
 }
 async function updateToken(login, refreshToken, UUID4) {

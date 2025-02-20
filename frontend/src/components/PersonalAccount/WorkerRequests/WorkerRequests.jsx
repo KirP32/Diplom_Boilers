@@ -189,6 +189,7 @@ export default function WorkerRequests({
       ></OptionsDialog>
 
       <CreateSystemDialog
+        getAllDevices={getAllDevices}
         open={isDialogOpen}
         onClose={() => setDialogOpen(false)}
       />

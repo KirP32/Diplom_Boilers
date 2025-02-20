@@ -211,7 +211,7 @@ export default function PersonalAccount() {
           {access_level >= 1 && seeWorkerRequests && (
             <WorkerRequests
               systems_names={systems_names}
-              getAllDevices={getAllDevices}
+              getAllDevices={() => getAllDevices(deviceObjectRef.current)}
               setDeviceFirst={(name) => {
                 const firstDevice = devicesArray.find(
                   (item) => item.name !== name
