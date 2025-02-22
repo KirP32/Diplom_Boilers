@@ -8,6 +8,7 @@ import Button from "../../Button/Button";
 import OptionsDialog from "../Dialogs/OptionsDialog/OptionsDialog";
 import CreateSystemDialog from "../Dialogs/CreateSystemDialog/CreateSystemDialog";
 import { ThemeContext } from "../../../Theme";
+import RequestDetails from "../tabs/ViewRequests/RequestDetails/RequestDetails";
 
 export default function WorkerRequests({
   systems_names,
@@ -191,6 +192,14 @@ export default function WorkerRequests({
         open={isDialogOpen}
         onClose={() => setDialogOpen(false)}
       />
+      {/* {item !== null && (
+        <RequestDetails
+          item={item}
+          setItem={(e) => setItem(e)}
+          getSystems={() => getSystems()}
+          getAllDevices={getAllDevices}
+        />
+      )} */}
     </div>
   );
 }

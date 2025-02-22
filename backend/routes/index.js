@@ -25,6 +25,7 @@ router.get(
   DataController.getDatabaseColumns
 );
 router.get("/getAllUsers", checkCookie, DataController.getAllUsers);
+router.get("/getRequestColumns", checkCookie, DataController.getRequestColumns);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

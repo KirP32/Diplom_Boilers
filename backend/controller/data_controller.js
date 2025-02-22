@@ -1196,6 +1196,20 @@ class DataController {
       return res.status(400).send({ error: error.message });
     }
   }
+  async getRequestColumns(req, res) {
+    try {
+      const result = await pool.query(
+        "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'user_requests_info'; "
+      );
+      if (result.rowCount > 0) {
+        return res.send(result.rows);
+      } else {
+        return res.sendStatus(400);
+      }
+    } catch (error) {
+      return res.send({ message: error });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

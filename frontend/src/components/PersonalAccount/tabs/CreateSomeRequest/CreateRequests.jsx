@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styles from "./CreateRequests.module.scss";
 import PhoneInput from "../../additionalComponents/PhoneInput/PhoneInput";
 import MenuItem from "@mui/material/MenuItem";
@@ -33,6 +33,8 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     return !(problemError || phoneError);
   }
 
+  const [dataColumn, setdataColumn] = useState([]);
+
   function clearForm() {
     setPhone("");
     setProblem("");
@@ -55,7 +57,9 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         type: object.type,
         created_by_worker: !(access_level === 0),
         access_level: access_level,
+        additional_data: columnInputs,
       };
+
       $api.post("/createRequest", data).then((result) => {
         setSuccessFlag(true);
         setTimeout(() => setSuccessFlag(false), 5000);
@@ -63,6 +67,26 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       });
     }
   }
+
+  useEffect(() => {
+    $api
+      .get("/getRequestColumns")
+      .then((result) => {
+        setdataColumn(result.data);
+      })
+      .catch((error) => {
+        setdataColumn(null);
+      });
+  }, []);
+
+  const [columnInputs, setColumnInputs] = useState({});
+
+  const handleColumnInputChange = (columnName, value) => {
+    setColumnInputs((prev) => ({
+      ...prev,
+      [columnName]: value,
+    }));
+  };
 
   return (
     <div className={styles.create_wrapper}>
@@ -114,6 +138,26 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               ))}
             </Select>
           </FormControl>
+        </section>
+        <section>
+          {dataColumn &&
+            dataColumn
+              .filter(
+                (item) =>
+                  item.column_name !== "id" && item.column_name !== "request_id"
+              )
+              .map((item) => (
+                <div key={item.column_name}>
+                  <h4>{item.column_name}</h4>
+                  <input
+                    type="text"
+                    value={columnInputs[item.column_name] || ""}
+                    onChange={(e) =>
+                      handleColumnInputChange(item.column_name, e.target.value)
+                    }
+                  />
+                </div>
+              ))}
         </section>
         <section>
           <h4>Подробности</h4>
