@@ -43,6 +43,8 @@ export default function DataBaseUsers() {
   const [tableName, setTableName] = useState("user_details");
   const [workerNameArr, setWorkerNameArr] = useState([]);
 
+  const [columnsData, setColumnsData] = useState([]);
+
   const tableMapping = {
     user_details: "user_details",
     worker_details: "worker_details",
@@ -83,6 +85,17 @@ export default function DataBaseUsers() {
       setColumns([]);
     }
   }, [tableName, allColumns]);
+
+  useEffect(() => {
+    $api
+      .get("/getColumnsData")
+      .then((result) => {
+        setColumnsData(result.data);
+      })
+      .catch((error) => {
+        setColumnsData(null);
+      });
+  });
 
   const handleEdit = (col) => {
     setEditingColumn(col);
@@ -199,7 +212,7 @@ export default function DataBaseUsers() {
   };
 
   return (
-    <div className={styles.data_table__wrapper}>
+    <div className={styles.data_table__wrapper} style={{ overflowY: "auto" }}>
       <div
         className={styles.headerContainer}
         style={{
@@ -406,6 +419,44 @@ export default function DataBaseUsers() {
           Установить
         </Button>
       </div>
+      {columnsData &&
+        columnsData[tableName] &&
+        columnsData[tableName].length > 0 && (
+          <>
+            <Typography
+              variant="h5"
+              className={styles.data_table__header}
+              style={{ paddingTop: "15px" }}
+            >
+              Данные таблицы {tableName}
+            </Typography>
+            <TableContainer
+              component={Paper}
+              className={styles.data_table__container}
+            >
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    {Object.keys(columnsData[tableName][0]).map((colKey) => (
+                      <TableCell key={colKey}>
+                        <strong>{colKey}</strong>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {columnsData[tableName].map((row, rowIndex) => (
+                    <TableRow key={rowIndex}>
+                      {Object.keys(row).map((colKey) => (
+                        <TableCell key={colKey}>{row[colKey]}</TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </>
+        )}
     </div>
   );
 }

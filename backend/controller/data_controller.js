@@ -378,11 +378,11 @@ class DataController {
         if (err) {
           console.log(`Ошибка в getUser_info с юзером ${login}`);
         } else {
-          res.send({ devices: result.rows });
+          return res.send({ devices: result.rows });
         }
       });
     } else {
-      res.send({ error: "User not found" });
+      return res.send({ error: "User not found" });
     }
   }
 
@@ -696,6 +696,8 @@ class DataController {
         phone,
         created_by_worker,
         access_level,
+        additional_data,
+        assigned_to_wattson,
       } = req.body;
       let { type } = req.body;
       if (!type) {
@@ -707,19 +709,12 @@ class DataController {
       let assignedWorkerId = null;
       let assignedRegionalWorkerId = null;
 
-      const regionalWorker = await pool.query(
-        "SELECT id FROM users WHERE access_level = 2 LIMIT 1"
-      );
-
-      if (regionalWorker.rowCount > 0) {
-        assignedRegionalWorkerId = regionalWorker.rows[0].id;
-      }
+      assignedRegionalWorkerId = await getID(assigned_to_wattson);
 
       if (access_level === 1) {
         assignedWorkerId = createdById;
       } else if (access_level === 2) {
         assignedWorkerId = createdById;
-        assignedRegionalWorkerId = createdById;
       }
 
       const result = await pool.query(
@@ -1208,6 +1203,47 @@ class DataController {
       }
     } catch (error) {
       return res.send({ message: error });
+    }
+  }
+  async getWattsonEmployee(req, res) {
+    try {
+      const result = await pool.query("SELECT * FROM cgs_details");
+      if (result.rowCount > 0) {
+        return res.send(result.rows);
+      } else {
+        return res.sendStatus(400);
+      }
+    } catch (error) {
+      return res.send({ message: error });
+    }
+  }
+  async getColumnsData(req, res) {
+    try {
+      const result_workers = await pool.query(`SELECT * FROM worker_details;`);
+      const result_users = await pool.query(`SELECT * FROM user_details;`);
+      const result_cgs = await pool.query(`SELECT * FROM cgs_details;`);
+      const result_gef = await pool.query(`SELECT * FROM gef_details;`);
+      const result_requests = await pool.query(
+        `SELECT * FROM user_requests_info;`
+      );
+      if (
+        result_workers.rowCount > 0 &&
+        result_users.rowCount > 0 &&
+        result_cgs.rowCount > 0 &&
+        result_gef.rowCount > 0 &&
+        result_requests.rowCount > 0
+      ) {
+        return res.send({
+          worker_details: result_workers.rows,
+          user_details: result_users.rows,
+          cgs_details: result_cgs.rows,
+          gef_details: result_gef.rows,
+          user_requests_info: result_requests.rows,
+        });
+      }
+      return res.sendStatus(400);
+    } catch (error) {
+      res.status(400).send(error);
     }
   }
 }
