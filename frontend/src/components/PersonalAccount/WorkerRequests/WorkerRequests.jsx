@@ -220,7 +220,7 @@ export default function WorkerRequests({
                     variant="contained"
                     disabled={isProcessing}
                     onClick={() => {
-                      console.log(item);
+                      setDetailsObject(item);
                     }}
                   >
                     Подробнее
@@ -273,13 +273,13 @@ export default function WorkerRequests({
         />
       )}
 
-      {/* {detailsObject !== null && (
+      {detailsObject !== null && (
         <RequestDetails
           item={detailsObject}
           setItem={(e) => setDetailsObject(e)}
-          getAllDevices={getAllDevices}
+          getAllDevices={() => getAllDevices()}
         />
-      )} */}
+      )}
     </div>
   );
 }
