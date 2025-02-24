@@ -740,12 +740,12 @@ class DataController {
     try {
       const login = decodeJWT(req.cookies.refreshToken).login;
       const allDevices = await pool.query(
-        "SELECT id, description, phone_number, module, problem_name, status, assigned_to, system_name FROM user_requests WHERE assigned_to IS NULL AND status != 1 AND type = (SELECT type from users where username = $1)",
+        "SELECT id, description, phone_number, module, problem_name, status, assigned_to, system_name, created_at FROM user_requests WHERE assigned_to IS NULL AND status != 1 AND type = (SELECT type from users where username = $1)",
         [login]
       );
       const id = await getID(login);
       const workerDevices = await pool.query(
-        "SELECT id, description, phone_number, module, problem_name, status, assigned_to, system_name FROM user_requests WHERE assigned_to = $1 AND status = 0",
+        "SELECT id, description, phone_number, module, problem_name, status, assigned_to, system_name, created_at FROM user_requests WHERE assigned_to = $1 AND status = 0",
         [id]
       );
       // const completedDevices = await pool.query(
