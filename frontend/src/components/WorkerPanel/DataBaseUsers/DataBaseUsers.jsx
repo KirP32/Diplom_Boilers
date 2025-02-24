@@ -95,7 +95,7 @@ export default function DataBaseUsers() {
       .catch((error) => {
         setColumnsData(null);
       });
-  });
+  }, []);
 
   const handleEdit = (col) => {
     setEditingColumn(col);
