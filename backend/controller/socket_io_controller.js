@@ -160,6 +160,7 @@ async function handleStage(request_id, access_level, max_stage, action) {
         regional_confirmed,
         service_engineer_confirmed,
         stage: currentStage,
+        status: 0,
         action,
       };
     }

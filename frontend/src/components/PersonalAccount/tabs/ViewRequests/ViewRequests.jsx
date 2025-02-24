@@ -34,7 +34,6 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
   }, []);
 
   const [item, setItem] = useState(null);
-
   const getSystems = useCallback(async () => {
     try {
       const result = await $api.get("/getSystemRequests", {

@@ -33,7 +33,6 @@ export default function RequestDetails({
 }) {
   const { access_level } = useContext(ThemeContext);
   const [itemStage, setItemStage] = useState(item.stage);
-
   useEffect(() => {
     setItemStage(item.stage);
   }, [item.stage]);
