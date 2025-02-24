@@ -9,6 +9,9 @@ import OptionsDialog from "../Dialogs/OptionsDialog/OptionsDialog";
 import CreateSystemDialog from "../Dialogs/CreateSystemDialog/CreateSystemDialog";
 import { ThemeContext } from "../../../Theme";
 import RequestDetails from "../tabs/ViewRequests/RequestDetails/RequestDetails";
+import InfoIcon from "@mui/icons-material/Info";
+import MuiButton from "@mui/material/Button";
+import AdditionalInfoDialog from "./AdditionalInfoDialog/AdditionalInfoDialog";
 
 export default function WorkerRequests({
   systems_names,
@@ -23,10 +26,15 @@ export default function WorkerRequests({
   const [isDialogOpen, setDialogOpen] = useState(false);
   const { access_level } = useContext(ThemeContext);
 
+  const [additionalOpen, setAdditionalOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState(null);
+
   const getData = useCallback(async () => {
     const response = await $api.get("/getRequests");
     setAvailData(response.data);
   }, []);
+
+  const [detailsObject, setDetailsObject] = useState(null);
 
   const removeRequest = useCallback(
     async (item) => {
@@ -139,12 +147,42 @@ export default function WorkerRequests({
                   <p>Датчик: {item.module}</p>
                   <h3>Система: {item.system_name}</h3>
                 </div>
-                <button
-                  onClick={() => addRequest(item.system_name, item.id)}
-                  disabled={isProcessing}
+                <section
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    position: "relative",
+                    width: "100%",
+                  }}
                 >
-                  Принять
-                </button>
+                  <div
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <MuiButton
+                      variant="contained"
+                      onClick={() => addRequest(item.system_name, item.id)}
+                      disabled={isProcessing}
+                    >
+                      Принять
+                    </MuiButton>
+                  </div>
+
+                  <InfoIcon
+                    onClick={() => {
+                      setAdditionalOpen(!additionalOpen);
+                      setCurrentItem(item);
+                    }}
+                    style={{
+                      position: "absolute",
+                      right: 0,
+                      cursor: "pointer",
+                    }}
+                  />
+                </section>
               </div>
             ))}
           </div>
@@ -163,14 +201,45 @@ export default function WorkerRequests({
                 <p>Датчик: {item.module}</p>
                 <h3>Система: {item.system_name}</h3>
               </div>
-              <div className={styles.span__wrapper}>
+              <section
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  position: "relative",
+                  width: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <MuiButton
+                    variant="contained"
+                    disabled={isProcessing}
+                    onClick={() => {
+                      console.log(item);
+                    }}
+                  >
+                    Подробнее
+                  </MuiButton>
+                </div>
+
                 <span
                   className={`material-icons ${styles.no_select}`}
+                  style={{
+                    color: "red",
+                    cursor: "pointer",
+                    position: "absolute",
+                    right: 0,
+                  }}
                   onClick={() => removeRequest(item)}
                 >
                   cancel
                 </span>
-              </div>
+              </section>
             </div>
           ))}
         </div>
@@ -180,23 +249,34 @@ export default function WorkerRequests({
           <h4>Заявка уже взята в работу</h4>
         </div>
       )}
+      {options_flag && (
+        <OptionsDialog
+          open={options_flag}
+          user={{ user_name }}
+          setOptions={(e) => setOptions_flag(e)}
+        ></OptionsDialog>
+      )}
 
-      <OptionsDialog
-        open={options_flag}
-        user={{ user_name }}
-        setOptions={(e) => setOptions_flag(e)}
-      ></OptionsDialog>
+      {isDialogOpen && (
+        <CreateSystemDialog
+          getAllDevices={getAllDevices}
+          open={isDialogOpen}
+          onClose={() => setDialogOpen(false)}
+        />
+      )}
 
-      <CreateSystemDialog
-        getAllDevices={getAllDevices}
-        open={isDialogOpen}
-        onClose={() => setDialogOpen(false)}
-      />
-      {/* {item !== null && (
+      {currentItem !== null && (
+        <AdditionalInfoDialog
+          open={additionalOpen}
+          item={currentItem}
+          setAdditionalOpen={() => setAdditionalOpen(false)}
+        />
+      )}
+
+      {/* {detailsObject !== null && (
         <RequestDetails
-          item={item}
-          setItem={(e) => setItem(e)}
-          getSystems={() => getSystems()}
+          item={detailsObject}
+          setItem={(e) => setDetailsObject(e)}
           getAllDevices={getAllDevices}
         />
       )} */}

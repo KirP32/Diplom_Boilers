@@ -606,44 +606,21 @@ class DataController {
     }
   }
 
-  // async removeRequest(req, res, next) {
-  //   try {
-  //     const { id } = req.params;
-  //     const result = await pool.query(
-  //       `UPDATE user_requests SET assigned_to = null WHERE id = $1;`,
-  //       [id]
-  //     );
-  //     if (result.rowCount > 0) {
-  //       res.sendStatus(200);
-  //     } else {
-  //       res.status(500).json({ message: "removeRequest failed" });
-  //     }
-  //   } catch (error) {
-  //     res.status(500).send(error);
-  //   }
-  // }
-
   async getSystemRequests(req, res) {
     try {
       const { name } = req.query;
       await pool
         .query(
           `SELECT 
-                ur.*, 
-                u.username,
-                rc.user_confirmed,
-                rc.worker_confirmed,
-                rc.regional_confirmed,
-                rc.service_engineer_confirmed,
-                rc.action
+                id, 
+                problem_name,
+                status,
+                assigned_to,
+                system_name
              FROM 
-                user_requests ur
-             LEFT JOIN 
-                 users u ON ur.assigned_to = u.id
-             LEFT JOIN
-                 request_confirmations rc ON ur.id = rc.request_id
+                user_requests
              WHERE 
-                 ur.system_name = $1`,
+                 system_name = $1`,
           [name]
         )
         .catch((error) => {
@@ -774,7 +751,7 @@ class DataController {
       // const completedDevices = await pool.query(
       //   `SELECT * FROM user_requests WHERE assigned_to = $1 AND status = 1`,
       //   [id]
-      // );
+      // ); // это - завершённые заявки
       const resultData = {
         allDevices: allDevices.rowCount > 0 ? allDevices.rows : [],
         workerDevices: workerDevices.rowCount > 0 ? workerDevices.rows : [],
@@ -1244,6 +1221,39 @@ class DataController {
       return res.sendStatus(400);
     } catch (error) {
       res.status(400).send(error);
+    }
+  }
+  async getFullRequest(req, res) {
+    try {
+      const { id } = req.params;
+      const response = await pool.query(
+        `SELECT 
+                ur.*, 
+                u.username,
+                rc.user_confirmed,
+                rc.worker_confirmed,
+                rc.regional_confirmed,
+                rc.service_engineer_confirmed,
+                rc.action
+            FROM 
+                user_requests ur
+            LEFT JOIN 
+                users u ON ur.assigned_to = u.id
+            LEFT JOIN
+                request_confirmations rc ON ur.id = rc.request_id
+            WHERE 
+                ur.id = $1;`,
+        [id]
+      );
+
+      if (response.rows.length === 0) {
+        return res.status(404).json({ message: "Запрос не найден" });
+      }
+
+      return res.json(response.rows[0]);
+    } catch (error) {
+      console.error("Ошибка при получении запроса:", error);
+      res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 }

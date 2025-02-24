@@ -32,6 +32,7 @@ router.get(
   DataController.getWattsonEmployee
 );
 router.get("/getColumnsData", checkCookie, DataController.getColumnsData);
+router.get("/getFullRequest/:id", checkCookie, DataController.getFullRequest);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

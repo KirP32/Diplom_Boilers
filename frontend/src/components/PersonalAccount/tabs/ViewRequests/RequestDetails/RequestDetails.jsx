@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/jsx-key */
 /* eslint-disable react/prop-types */
@@ -26,24 +26,35 @@ const data_type_1 = [
 ];
 
 export default function RequestDetails({
-  item,
-  setItem,
-  getSystems,
-  getAllDevices,
+  item, // минимальная информация {assigned_to (это даже не надо), id, problem_name, status, system_name}
+  setItem, // чтобы закрыть окно заявки
+  getAllDevices, // если завершена, чтобы убрать доступ к системе у работника
 }) {
-  const { access_level } = useContext(ThemeContext);
-  const [itemStage, setItemStage] = useState(item.stage);
+  const [fullItem, setFullItem] = useState(null);
   useEffect(() => {
-    setItemStage(item.stage);
-  }, [item.stage]);
+    async function fetchFullItem() {
+      try {
+        const response = await $api.get(`/getFullRequest/${item.id}`);
+        setFullItem(response.data);
+      } catch (error) {
+        console.error("Ошибка загрузки полной информации", error);
+      }
+    }
+    if (item?.id) {
+      fetchFullItem();
+    }
+  }, [item.id]);
+
+  const { access_level } = useContext(ThemeContext);
+  const [itemStage, setItemStage] = useState(fullItem?.stage);
+
+  useEffect(() => {
+    setItemStage(fullItem?.stage);
+  }, [fullItem?.stage]);
 
   const handleStep = (step) => () => {
     setItemStage(step);
   };
-
-  useEffect(() => {
-    getSystems();
-  }, []);
 
   useEffect(() => {
     const requestId = item.id;
@@ -63,39 +74,9 @@ export default function RequestDetails({
     };
   }, [item.id, setItem]);
 
-  useEffect(() => {
-    async function getStatus() {
-      try {
-        const response = await $api.get("/getRequestButtonsStatus", {
-          params: { id: item.id },
-        });
-        if (response.data) {
-          const {
-            user_confirmed,
-            worker_confirmed,
-            regional_confirmed,
-            service_engineer_confirmed,
-            action,
-          } = response.data;
-          setItem((prev) => ({
-            ...prev,
-            user_confirmed,
-            worker_confirmed,
-            regional_confirmed,
-            service_engineer_confirmed,
-            action,
-          }));
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    getStatus();
-  }, []);
-
   function addToItem(data) {
     if (data.status === 1) {
-      setItem((prev) => ({
+      setFullItem((prev) => ({
         ...prev,
         user_confirmed: data.user_confirmed,
         worker_confirmed: data.worker_confirmed,
@@ -105,11 +86,12 @@ export default function RequestDetails({
         status: 1,
         action: data.action,
       }));
+
       if (access_level >= 1) {
         getAllDevices();
       }
     } else {
-      setItem((prev) => ({
+      setFullItem((prev) => ({
         ...prev,
         user_confirmed: data.user_confirmed,
         worker_confirmed: data.worker_confirmed,
@@ -119,7 +101,6 @@ export default function RequestDetails({
         action: data.action,
       }));
     }
-    getSystems();
   }
 
   const [lockedAction, setLockedAction] = useState(null);
@@ -187,16 +168,17 @@ export default function RequestDetails({
 
   const closePanel = () => {
     socket.disconnect();
+    setFullItem(null);
     setItem(null);
   };
 
   const react_functional_components = {
     "Поиск специалиста": [
-      <U_SearchWorker item={item} />,
+      <U_SearchWorker item={fullItem} />,
       <A_SearchWorker />,
-      <U_SearchWorker item={item} />,
-      <U_SearchWorker item={item} />,
-      <U_SearchWorker item={item} />,
+      <U_SearchWorker item={fullItem} />,
+      <U_SearchWorker item={fullItem} />,
+      <U_SearchWorker item={fullItem} />,
     ],
     Материалы: [<U_Materials />, <A_Materials />],
     "В пути": <></>,
@@ -205,31 +187,32 @@ export default function RequestDetails({
   };
 
   const confirmations = [
-    { name: "Пользователь", confirmed: item.user_confirmed },
-    { name: "АСЦ", confirmed: item.worker_confirmed },
-    { name: "WATTSON", confirmed: item.regional_confirmed },
-    { name: "GEFFEN", confirmed: item.service_engineer_confirmed },
+    { name: "Пользователь", confirmed: fullItem?.user_confirmed },
+    { name: "АСЦ", confirmed: fullItem?.worker_confirmed },
+    { name: "WATTSON", confirmed: fullItem?.regional_confirmed },
+    { name: "GEFFEN", confirmed: fullItem?.service_engineer_confirmed },
   ];
 
   const anyConfirmed = confirmations.some((c) => c.confirmed === true);
-  const isPrevAction = item.action === "prev";
-  const isNextAction = item.action === "next";
+  const isPrevAction = fullItem?.action === "prev";
+  const isNextAction = fullItem?.action === "next";
 
   const isBackDisabled =
-    item.stage === 0 || (anyConfirmed && item.action !== "prev");
+    fullItem?.stage === 0 || (anyConfirmed && fullItem?.action !== "prev");
 
-  const isForwardDisabled = anyConfirmed && item.action !== "next";
+  const isForwardDisabled = anyConfirmed && fullItem?.action !== "next";
 
-  const isLastStage = data_type_1.length - 1 === item.stage;
-  const stepKey = data_type_1[item.status === 0 ? item.stage : itemStage];
+  const isLastStage = data_type_1.length - 1 === fullItem?.stage;
+  const stepKey =
+    data_type_1[fullItem?.status === 0 ? fullItem?.stage : itemStage];
   const component =
     react_functional_components[stepKey]?.[access_level] || null;
 
   const userConfirmed =
-    (access_level === 0 && item.user_confirmed) ||
-    (access_level === 1 && item.worker_confirmed) ||
-    (access_level === 2 && item.regional_confirmed) ||
-    (access_level === 3 && item.service_engineer_confirmed);
+    (access_level === 0 && fullItem?.user_confirmed) ||
+    (access_level === 1 && fullItem?.worker_confirmed) ||
+    (access_level === 2 && fullItem?.regional_confirmed) ||
+    (access_level === 3 && fullItem?.service_engineer_confirmed);
 
   return (
     <div className={styles.backdrop} onClick={closePanel}>
@@ -265,12 +248,12 @@ export default function RequestDetails({
         </div>
 
         <h3 style={{ textAlign: "center", marginBottom: 15 }}>
-          {item.problem_name}
+          {fullItem?.problem_name}
         </h3>
 
-        {item.status === 0 ? (
+        {fullItem?.status === 0 ? (
           <Stepper
-            activeStep={item.stage}
+            activeStep={fullItem?.stage}
             sx={{
               "& .MuiStepLabel-iconContainer .Mui-active": {
                 animation: "pulse 2s infinite",
@@ -347,7 +330,7 @@ export default function RequestDetails({
 
         {component}
 
-        {item.status !== 1 && (
+        {fullItem?.status !== 1 && (
           <section className={styles.request_buttons}>
             <Button
               variant="contained"

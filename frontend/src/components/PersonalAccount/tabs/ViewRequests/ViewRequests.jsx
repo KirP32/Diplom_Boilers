@@ -82,7 +82,6 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
   }, [data, filters.inProgress, filters.completed]);
 
   const handleCardClick = (item) => {
-    // navigate(`/personalaccount/request/${id}`);
     setItem(item);
   };
 
@@ -162,9 +161,8 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
       </div>
       {item && !showDialog.flag && item.system_name && (
         <RequestDetails
-          item={item}
+          item={item} // передаём минимум информации для работы компонента
           setItem={(e) => setItem(e)}
-          getSystems={() => getSystems()}
           getAllDevices={getAllDevices}
         />
       )}
