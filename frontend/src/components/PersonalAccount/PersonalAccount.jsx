@@ -31,7 +31,7 @@ export default function PersonalAccount() {
   const [addSystemFlag, setAddSystemFlag] = useState(false);
   const [deleteFlag, setDeleteFlag] = useState(false);
   const [deleteFlagDialog, setDeleteFlagDialog] = useState(false);
-
+  console.log(deviceObject?.name);
   let systems_names = devicesArray.map((item) => item.name);
   const tabObject = {
     sensors: <NewSensors deviceObject={deviceObject} />,
@@ -45,7 +45,7 @@ export default function PersonalAccount() {
     createRequests: (
       <CreateRequests
         deviceObject={deviceObject}
-        key={deviceObject.name}
+        key={deviceObject?.name}
         setSelectedTab={() => setSelectedTab("viewRequests")}
       />
     ),
