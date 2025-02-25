@@ -23,15 +23,23 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     { s_number: "Котёл МВ 4", type: 0 },
   ];
   const { access_level } = useContext(ThemeContext);
-  const [errors, setErrors] = useState({ problem: false, phone: false });
+  const [errors, setErrors] = useState({
+    problem: false,
+    phone: false,
+    worker: false,
+  });
   const [description, setDescription] = useState("");
   const [successFlag, setSuccessFlag] = useState(false);
   function validate() {
     const problemError = problem.length < 1;
     const phoneError = phone.length !== 12;
-    setErrors({ problem: problemError, phone: phoneError });
+    setErrors({
+      problem: problemError,
+      phone: phoneError,
+      worker: wattsonWorker == "",
+    });
 
-    return !(problemError || phoneError);
+    return !(problemError || phoneError) && wattsonWorker !== "";
   }
 
   const [dataColumn, setdataColumn] = useState([]);
@@ -221,6 +229,9 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                   ))}
               </Select>
             </FormControl>
+            {errors.worker && (
+              <h5 className={styles.error}>Выберите работника</h5>
+            )}
           </section>
           <section className={styles.phone_section}>
             <h4>Номер для связи</h4>
