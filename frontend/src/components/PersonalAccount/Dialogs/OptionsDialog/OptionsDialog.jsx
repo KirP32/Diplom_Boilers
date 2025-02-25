@@ -25,7 +25,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
 
   const handleSaveChanges = (key, newValue) => {
     $api
-      .put("/updateUser", { key, newValue })
+      .put("/updateUser", { key, newValue, access_level })
       .then(() => {
         setUserData((prev) => ({
           ...prev,

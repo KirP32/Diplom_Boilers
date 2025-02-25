@@ -1088,8 +1088,14 @@ class DataController {
   }
   async updateUser(req, res) {
     try {
-      const { key, newValue } = req.body;
-      if (!key || key === "id" || key === "username") {
+      const { key, newValue, access_level } = req.body;
+
+      if (
+        !key ||
+        key === "id" ||
+        key === "username" ||
+        key === "password_hash"
+      ) {
         return res.status(400).send("Это поле изменять нельзя");
       }
 
@@ -1100,16 +1106,35 @@ class DataController {
         const query = "UPDATE users SET email = $1 WHERE id = $2";
         await pool.query(query, [newValue, userID]);
       } else {
-        const query = `UPDATE worker_details SET ${key} = $1 WHERE username = $2`;
+        let tableName = "";
+        switch (parseInt(access_level)) {
+          case 0:
+            tableName = "user_details";
+            break;
+          case 1:
+            tableName = "worker_details";
+            break;
+          case 2:
+            tableName = "cgs_details";
+            break;
+          case 3:
+            tableName = "gef_details";
+            break;
+          default:
+            return res.status(400).send("Некорректный уровень доступа");
+        }
+
+        const query = `UPDATE ${tableName} SET ${key} = $1 WHERE username = $2`;
         await pool.query(query, [newValue, userName]);
       }
 
       return res.sendStatus(200);
     } catch (error) {
-      console.log(error);
+      console.error("Ошибка при обновлении пользователя:", error);
       return res.status(400).send(error);
     }
   }
+
   async setAccessLevel(req, res) {
     try {
       const { username, access_level } = req.body;
