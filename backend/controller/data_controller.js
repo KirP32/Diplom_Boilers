@@ -690,13 +690,13 @@ class DataController {
 
       if (access_level === 1) {
         assignedWorkerId = createdById;
-      } else if (access_level === 2) {
-        assignedWorkerId = createdById;
       }
 
       const result = await pool.query(
-        `INSERT INTO user_requests (problem_name, type, status, assigned_to, region_assigned_to, created_at, module, created_by, description, system_name, phone_number, created_by_worker)
-            VALUES ($1, $8, 0, $9, $10, current_timestamp, $2, $3, $4, $5, $6, $7)`,
+        `INSERT INTO user_requests 
+          (problem_name, type, status, assigned_to, region_assigned_to, created_at, module, created_by, description, system_name, phone_number, created_by_worker)
+        VALUES 
+          ($1, $8, 0, $9, $10, current_timestamp, $2, $3, $4, $5, $6, $7)`,
         [
           problem_name,
           module,

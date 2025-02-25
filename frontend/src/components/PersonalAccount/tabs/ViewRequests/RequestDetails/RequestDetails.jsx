@@ -187,7 +187,9 @@ export default function RequestDetails({
   };
 
   const confirmations = [
-    { name: "Пользователь", confirmed: fullItem?.user_confirmed },
+    ...(!fullItem?.created_by_worker
+      ? [{ name: "Пользователь", confirmed: fullItem?.user_confirmed }]
+      : []),
     { name: "АСЦ", confirmed: fullItem?.worker_confirmed },
     { name: "WATTSON", confirmed: fullItem?.regional_confirmed },
     { name: "GEFFEN", confirmed: fullItem?.service_engineer_confirmed },
