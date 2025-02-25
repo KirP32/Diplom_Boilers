@@ -1123,8 +1123,7 @@ class DataController {
           default:
             return res.status(400).send("Некорректный уровень доступа");
         }
-
-        const query = `UPDATE ${tableName} SET ${key} = $1 WHERE username = $2`;
+        const query = `UPDATE ${tableName} SET ${key} = $1 WHERE username = $2`; // ТУТ МОЖЕТ БЫТЬ SQL Инъекция
         await pool.query(query, [newValue, userName]);
       }
 

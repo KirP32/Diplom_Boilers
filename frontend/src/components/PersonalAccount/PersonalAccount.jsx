@@ -45,6 +45,7 @@ export default function PersonalAccount() {
     createRequests: (
       <CreateRequests
         deviceObject={deviceObject}
+        key={deviceObject.name}
         setSelectedTab={() => setSelectedTab("viewRequests")}
       />
     ),
