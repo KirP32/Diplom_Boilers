@@ -616,7 +616,8 @@ class DataController {
                 problem_name,
                 status,
                 assigned_to,
-                system_name
+                system_name,
+                module
              FROM 
                 user_requests
              WHERE 
