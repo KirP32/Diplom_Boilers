@@ -91,18 +91,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       handleBlurOrEnter(key);
                     }
                   }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleBlurOrEnter(key)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
                 />
               ) : (
                 <div style={{ display: "flex" }}>
