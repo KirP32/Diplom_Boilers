@@ -704,9 +704,9 @@ class DataController {
 
       const result = await pool.query(
         `INSERT INTO user_requests 
-          (problem_name, type, status, assigned_to, region_assigned_to, created_at, module, created_by, description, system_name, phone_number, created_by_worker)
+          (problem_name, type, status, assigned_to, region_assigned_to, created_at, module, created_by, description, system_name, phone_number, created_by_worker, gef_assigned_to)
         VALUES 
-          ($1, $8, 0, $9, $10, current_timestamp, $2, $3, $4, $5, $6, $7)
+          ($1, $8, 0, $9, $10, current_timestamp, $2, $3, $4, $5, $6, $7, $11)
         RETURNING id`,
         [
           problem_name,
@@ -719,6 +719,7 @@ class DataController {
           type,
           assignedWorkerId,
           assignedRegionalWorkerId,
+          access_level === 3 ? createdById : null,
         ]
       );
 
@@ -771,25 +772,53 @@ class DataController {
         return res.status(403).json({ error: "Недостаточно прав" });
       }
 
-      // Доступные заявки (назначены, но не подтверждены)
+      let allDevicesQuery = "";
+      let workerDevicesQuery = "";
+      let queryParams = [];
+
+      if (access_level === 3) {
+        // Для GEFFEN: allDevices – заявки, где gef_assigned_to IS NULL,
+        // workerDevices – заявки, где gef_assigned_to равен ID пользователя
+        allDevicesQuery = `
+          SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
+                 ur.${assignedField}, ur.system_name, ur.created_at
+          FROM user_requests ur
+          JOIN user_requests_info uri ON ur.id = uri.request_id
+          WHERE ur.${assignedField} IS NULL AND uri.${confirmedField} = FALSE AND ur.status != 1
+        `;
+        workerDevicesQuery = `
+          SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
+                 ur.${assignedField}, ur.system_name, ur.created_at
+          FROM user_requests ur
+          JOIN user_requests_info uri ON ur.id = uri.request_id
+          WHERE ur.${assignedField} = $1 AND ur.status = 0
+        `;
+        queryParams = [id];
+      } else {
+        // Для других уровней: обычное условие по равенству поля
+        allDevicesQuery = `
+          SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
+                 ur.${assignedField}, ur.system_name, ur.created_at
+          FROM user_requests ur
+          JOIN user_requests_info uri ON ur.id = uri.request_id
+          WHERE ur.${assignedField} = $1 AND uri.${confirmedField} = FALSE AND ur.status != 1
+        `;
+        workerDevicesQuery = `
+          SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
+                 ur.${assignedField}, ur.system_name, ur.created_at
+          FROM user_requests ur
+          JOIN user_requests_info uri ON ur.id = uri.request_id
+          WHERE ur.${assignedField} = $1 AND uri.${confirmedField} = TRUE AND ur.status = 0
+        `;
+        queryParams = [id];
+      }
+
       const allDevices = await pool.query(
-        `SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
-                ur.${assignedField}, ur.system_name, ur.created_at
-         FROM user_requests ur
-         JOIN user_requests_info uri ON ur.id = uri.request_id
-         WHERE ur.${assignedField} = $1 AND uri.${confirmedField} = FALSE AND ur.status != 1`,
-        [id]
+        allDevicesQuery,
+        access_level === 3 ? [] : queryParams
       );
 
-      // В работе (назначены и подтверждены)
-      const workerDevices = await pool.query(
-        `SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
-                ur.${assignedField}, ur.system_name, ur.created_at
-         FROM user_requests ur
-         JOIN user_requests_info uri ON ur.id = uri.request_id
-         WHERE ur.${assignedField} = $1 AND uri.${confirmedField} = TRUE AND ur.status = 0`,
-        [id]
-      );
+      const workerDevices = await pool.query(workerDevicesQuery, queryParams);
 
       const resultData = {
         allDevices: allDevices.rowCount > 0 ? allDevices.rows : [],
