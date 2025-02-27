@@ -23,29 +23,33 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     { s_number: "Котёл МВ 4", type: 0 },
   ];
   const { access_level } = useContext(ThemeContext);
+
   const [errors, setErrors] = useState({
     problem: false,
     phone: false,
     worker: false,
   });
+
   const [description, setDescription] = useState("");
   const [successFlag, setSuccessFlag] = useState(false);
+
   function validate() {
     const problemError = problem.length < 1;
     const phoneError = phone.length !== 12;
     setErrors({
       problem: problemError,
       phone: phoneError,
-      worker: wattsonWorker == "",
+      //worker: wattsonWorker == "",
     });
 
-    return !(problemError || phoneError) && wattsonWorker !== "";
+    return !(problemError || phoneError);
   }
 
   const [dataColumn, setdataColumn] = useState([]);
 
-  const [wattsonEmployees, setWattsonEmployees] = useState(null);
+  const [dataEmployees, setDataEmployees] = useState(null);
   const [wattsonWorker, setWattsonWorker] = useState("");
+  const [ascWorker, setAscWorker] = useState("");
 
   function clearForm() {
     setPhone("");
@@ -70,7 +74,8 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         created_by_worker: !(access_level === 0),
         access_level: access_level,
         additional_data: columnInputs, // не используется на сервере
-        assigned_to_wattson: wattsonWorker,
+        assigned_to_wattson: wattsonWorker === "" ? null : wattsonWorker,
+        assigned_to_worker: ascWorker === "" ? null : ascWorker,
       };
 
       $api.post("/createRequest", data).then((result) => {
@@ -96,10 +101,10 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     $api
       .get("/getWattsonEmployee")
       .then((result) => {
-        setWattsonEmployees(result.data);
+        setDataEmployees(result.data);
       })
       .catch((error) => {
-        setWattsonEmployees(null);
+        setDataEmployees(null);
       });
   }, []);
 
@@ -113,153 +118,189 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   };
 
   return (
-    <Box sx={{ maxHeight: "80vh", overflow: "auto", padding: "10px" }}>
-      <div className={styles.create_wrapper}>
-        <h2>Заполните вашу заявку</h2>
-        <div className={styles.form_wrapper}>
-          <section className={styles.problem_input}>
-            <h4>Ваша проблема</h4>
-            <input
-              type="text"
-              autoFocus
-              required
-              value={problem}
-              onChange={(e) => setProblem(e.target.value)}
-            />
-            {errors.problem && (
-              <h5 className={styles.error}>Укажите проблему</h5>
-            )}
-          </section>
-          <section>
-            <h4>Проблема с:</h4>
-            <FormControl
-              variant="standard"
+    <Box
+      sx={{
+        maxHeight: "80vh",
+        overflow: "auto",
+        padding: "10px",
+        alignItems: "center",
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+        color: "var(--text-color)",
+      }}
+    >
+      <h2>Заполните вашу заявку</h2>
+      <div className={styles.form_wrapper}>
+        <section className={styles.problem_input}>
+          <h4>Ваша проблема</h4>
+          <input
+            type="text"
+            autoFocus
+            required
+            value={problem}
+            onChange={(e) => setProblem(e.target.value)}
+          />
+          {errors.problem && <h5 className={styles.error}>Укажите проблему</h5>}
+        </section>
+        <section>
+          <h4>Проблема с:</h4>
+          <FormControl
+            variant="standard"
+            sx={{
+              m: 1,
+              color: "white",
+              backgroundColor: "white",
+              width: "100%",
+              margin: 0,
+            }}
+          >
+            <Select
+              value={object.s_number}
+              onChange={(e) => {
+                const selectedObject = deviceObjectTemp.find(
+                  (item) => item.s_number === e.target.value
+                );
+                setObject(selectedObject);
+              }}
               sx={{
-                m: 1,
-                color: "white",
-                backgroundColor: "white",
-                width: "100%",
-                margin: 0,
+                fontSize: 17,
               }}
             >
-              <Select
-                value={object.s_number}
-                onChange={(e) => {
-                  const selectedObject = deviceObjectTemp.find(
-                    (item) => item.s_number === e.target.value
-                  );
-                  setObject(selectedObject);
-                }}
-                sx={{
-                  fontSize: 17,
-                }}
-              >
-                {deviceObjectTemp.map((item) => (
+              {deviceObjectTemp.map((item) => (
+                <MenuItem
+                  key={item.s_number}
+                  value={item.s_number}
+                  sx={{ fontSize: 17 }}
+                >
+                  {item.s_number}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </section>
+        <section>
+          {dataColumn &&
+            dataColumn
+              .filter(
+                (item) =>
+                  item.column_name !== "id" && item.column_name !== "request_id"
+              )
+              .map((item) => (
+                <div key={item.column_name}>
+                  <h4>{item.column_name}</h4>
+                  <input
+                    type="text"
+                    value={columnInputs[item.column_name] || ""}
+                    onChange={(e) =>
+                      handleColumnInputChange(item.column_name, e.target.value)
+                    }
+                  />
+                </div>
+              ))}
+        </section>
+        <section>
+          <h4>Подробности</h4>
+          <textarea
+            name=""
+            id=""
+            className={styles.textarea_input}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </section>
+        <section>
+          <h4>Назначить WATTSON</h4>
+          <FormControl
+            variant="standard"
+            sx={{
+              m: 1,
+              color: "white",
+              backgroundColor: "white",
+              width: "100%",
+              margin: 0,
+            }}
+          >
+            <Select
+              value={wattsonWorker}
+              onChange={(e) => setWattsonWorker(e.target.value)}
+              sx={{ fontSize: 17 }}
+            >
+              <MenuItem value={""}>Нет</MenuItem>
+              {dataEmployees?.wattson &&
+                dataEmployees?.wattson.map((employee) => (
                   <MenuItem
-                    key={item.s_number}
-                    value={item.s_number}
+                    key={employee.id}
+                    value={employee.username}
                     sx={{ fontSize: 17 }}
                   >
-                    {item.s_number}
+                    {employee.username || "Без имени"}
                   </MenuItem>
                 ))}
-              </Select>
-            </FormControl>
-          </section>
-          <section>
-            {dataColumn &&
-              dataColumn
-                .filter(
-                  (item) =>
-                    item.column_name !== "id" &&
-                    item.column_name !== "request_id"
-                )
-                .map((item) => (
-                  <div key={item.column_name}>
-                    <h4>{item.column_name}</h4>
-                    <input
-                      type="text"
-                      value={columnInputs[item.column_name] || ""}
-                      onChange={(e) =>
-                        handleColumnInputChange(
-                          item.column_name,
-                          e.target.value
-                        )
-                      }
-                    />
-                  </div>
-                ))}
-          </section>
-          <section>
-            <h4>Подробности</h4>
-            <textarea
-              name=""
-              id=""
-              className={styles.textarea_input}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </section>
-          <section>
-            <h4>Назначить сотрудника</h4>
-            <FormControl
-              variant="standard"
-              sx={{
-                m: 1,
-                color: "white",
-                backgroundColor: "white",
-                width: "100%",
-                margin: 0,
-              }}
-            >
-              <Select
-                value={wattsonWorker}
-                onChange={(e) => setWattsonWorker(e.target.value)}
-                sx={{ fontSize: 17 }}
-              >
-                {wattsonEmployees &&
-                  wattsonEmployees.map((employee) => (
-                    <MenuItem
-                      key={employee.id}
-                      value={employee.username}
-                      sx={{ fontSize: 17 }}
-                    >
-                      {employee.username || "Без имени"}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            {errors.worker && (
+            </Select>
+          </FormControl>
+          {/* {errors.worker && (
               <h5 className={styles.error}>Выберите работника</h5>
-            )}
-          </section>
-          <section className={styles.phone_section}>
-            <h4>Номер для связи</h4>
-            <PhoneInput
-              phone={phone}
-              onPhoneChange={(newPhone) => {
-                setPhone(newPhone);
-              }}
-              style={{ fontSize: 17 }}
-            />
-            {errors.phone && (
-              <h5 className={styles.error}>Неправильный номер</h5>
-            )}
-          </section>
+            )} */}
+        </section>
+        <section>
+          <h4>Назначить АСЦ</h4>
+          <FormControl
+            variant="standard"
+            sx={{
+              m: 1,
+              color: "white",
+              backgroundColor: "white",
+              width: "100%",
+              margin: 0,
+            }}
+          >
+            <Select
+              value={ascWorker}
+              onChange={(e) => setAscWorker(e.target.value)}
+              sx={{ fontSize: 17 }}
+            >
+              <MenuItem value={""}>Нет</MenuItem>
+              {dataEmployees?.worker &&
+                dataEmployees.worker.map((employee) => (
+                  <MenuItem
+                    key={employee.id}
+                    value={employee.username}
+                    sx={{ fontSize: 17 }}
+                  >
+                    {employee.username || "Без имени"}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          {/* {errors.worker && (
+              <h5 className={styles.error}>Выберите работника</h5>
+            )} */}
+        </section>
+        <section className={styles.phone_section}>
+          <h4>Номер для связи</h4>
+          <PhoneInput
+            phone={phone}
+            onPhoneChange={(newPhone) => {
+              setPhone(newPhone);
+            }}
+            style={{ fontSize: 17 }}
+          />
+          {errors.phone && <h5 className={styles.error}>Неправильный номер</h5>}
+        </section>
 
-          <Button style={{ fontSize: 17 }} onClick={handleCreateRequest}>
-            Создать
-          </Button>
-        </div>
-        {successFlag && (
-          <>
-            <h4 className={styles.success}>
-              Завка успешно создана <br /> Проверь её в Заявки - Просмотр
-            </h4>
-            <Button onClick={setSelectedTab}>Просмотр</Button>
-          </>
-        )}
+        <Button style={{ fontSize: 17 }} onClick={handleCreateRequest}>
+          Создать
+        </Button>
       </div>
+      {successFlag && (
+        <>
+          <h4 className={styles.success}>
+            Завка успешно создана <br /> Проверь её в Заявки - Просмотр
+          </h4>
+          <Button onClick={setSelectedTab}>Просмотр</Button>
+        </>
+      )}
     </Box>
   );
 }
