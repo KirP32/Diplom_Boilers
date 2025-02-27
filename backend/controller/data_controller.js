@@ -674,7 +674,8 @@ class DataController {
         created_by_worker,
         access_level,
         additional_data,
-        assigned_to_wattson,
+        assigned_to_wattson, // региональный
+        assigned_to_worker, // работник от АСЦ
       } = req.body;
       let { type } = req.body;
       if (!type) {
@@ -686,17 +687,26 @@ class DataController {
       let assignedWorkerId = null;
       let assignedRegionalWorkerId = null;
 
-      assignedRegionalWorkerId = await getID(assigned_to_wattson);
+      assignedRegionalWorkerId = assigned_to_wattson
+        ? await getID(assigned_to_wattson)
+        : null;
+      assignedWorkerId = assigned_to_worker
+        ? await getID(assigned_to_worker)
+        : null;
+
+      let worker_confirmed = false;
 
       if (access_level === 1) {
         assignedWorkerId = createdById;
+        worker_confirmed = true;
       }
 
       const result = await pool.query(
         `INSERT INTO user_requests 
           (problem_name, type, status, assigned_to, region_assigned_to, created_at, module, created_by, description, system_name, phone_number, created_by_worker)
         VALUES 
-          ($1, $8, 0, $9, $10, current_timestamp, $2, $3, $4, $5, $6, $7)`,
+          ($1, $8, 0, $9, $10, current_timestamp, $2, $3, $4, $5, $6, $7)
+        RETURNING id`,
         [
           problem_name,
           module,
@@ -715,21 +725,15 @@ class DataController {
         return res.status(500).send({ error: "Ошибка при создании заявки" });
       }
 
-      if (assignedRegionalWorkerId) {
-        const systemCheck = await pool.query(
-          "SELECT * FROM user_systems WHERE user_id = $1 AND name = $2",
-          [assignedRegionalWorkerId, system_name]
-        );
+      const requestId = result.rows[0].id;
 
-        if (systemCheck.rowCount === 0) {
-          await pool.query(
-            "INSERT INTO user_systems (user_id, name) VALUES ($1, $2)",
-            [assignedRegionalWorkerId, system_name]
-          );
-        }
-      }
+      await pool.query(
+        `INSERT INTO user_requests_info (request_id, additional_info, created_at, worker_confirmed, wattson_confirmed)
+        VALUES ($1, $2, current_timestamp, $3, FALSE)`,
+        [requestId, problem_name, worker_confirmed]
+      );
 
-      res.sendStatus(200);
+      return res.sendStatus(200);
     } catch (error) {
       console.error("Ошибка при выполнении запроса:", error);
       res.status(500).send({ error: "Ошибка при создании заявки" });
@@ -1208,14 +1212,18 @@ class DataController {
   }
   async getWattsonEmployee(req, res) {
     try {
-      const result = await pool.query("SELECT * FROM cgs_details");
-      if (result.rowCount > 0) {
-        return res.send(result.rows);
+      const result_wattson = await pool.query("SELECT * FROM cgs_details");
+      const result_worker = await pool.query("SELECT * FROM worker_details");
+      if (result_wattson.rowCount > 0 && result_worker.rowCount > 0) {
+        return res.send({
+          wattson: result_wattson.rows,
+          worker: result_worker.rows,
+        });
       } else {
         return res.sendStatus(400);
       }
     } catch (error) {
-      return res.send({ message: error });
+      return res.send({ message: error }); // добавить АСЦ работинков
     }
   }
   async getColumnsData(req, res) {
