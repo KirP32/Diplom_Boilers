@@ -121,6 +121,7 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
           filteredData.map((item) => (
             <div
               className={styles.request_card}
+              style={{ overflow: "hidden" }}
               key={item.id}
               onClick={
                 decodedToken?.access_level === 0 ||

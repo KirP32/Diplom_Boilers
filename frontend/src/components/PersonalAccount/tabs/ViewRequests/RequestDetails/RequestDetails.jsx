@@ -49,8 +49,10 @@ export default function RequestDetails({
   const [itemStage, setItemStage] = useState(fullItem?.stage);
 
   useEffect(() => {
-    setItemStage(fullItem?.stage);
-  }, [fullItem?.stage]);
+    if (fullItem?.stage !== undefined) {
+      setItemStage(fullItem.stage);
+    }
+  }, [fullItem]);
 
   const handleStep = (step) => () => {
     setItemStage(step);
