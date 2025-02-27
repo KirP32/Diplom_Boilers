@@ -37,6 +37,7 @@ router.get(
 );
 router.get("/getColumnsData", checkCookie, DataController.getColumnsData);
 router.get("/getFullRequest/:id", checkCookie, DataController.getFullRequest);
+router.get("/workersNameList", checkCookie, DataController.workersNameList);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
@@ -60,6 +61,7 @@ router.post(
   DataController.addDatabaseColumn
 );
 router.post("/createSystem", checkCookie, DataController.createSystem);
+router.post("/setNewWorker", checkCookie, DataController.setNewWorker);
 
 router.delete(
   "/delete_device/:device_uid",

@@ -42,7 +42,6 @@ export default function DataBaseUsers() {
 
   const [tableName, setTableName] = useState("user_details");
   const [workerNameArr, setWorkerNameArr] = useState([]);
-
   const [columnsData, setColumnsData] = useState([]);
 
   const tableMapping = {

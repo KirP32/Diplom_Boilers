@@ -13,9 +13,11 @@ import StepButton from "@mui/material/StepButton";
 import U_Materials from "./additionalComponents/User/U_Materials/U_Materials";
 import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
-import { Typography, Box } from "@mui/material";
+import { Typography, Box, Autocomplete, TextField } from "@mui/material";
 import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
+import { IconButton } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -31,6 +33,26 @@ export default function RequestDetails({
   getAllDevices, // если завершена, чтобы убрать доступ к системе у работника
 }) {
   const [fullItem, setFullItem] = useState(null);
+
+  const [keyEditing, setKeyEditing] = useState("");
+  const [editingName, setEditingName] = useState("");
+
+  const [nameList, setNameList] = useState({
+    worker_name: [],
+    wattson_name: [],
+  });
+
+  useEffect(() => {
+    $api
+      .get("/workersNameList")
+      .then((result) => {
+        setNameList(result.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
+
   useEffect(() => {
     async function fetchFullItem() {
       try {
@@ -218,6 +240,29 @@ export default function RequestDetails({
     (access_level === 2 && fullItem?.regional_confirmed) ||
     (access_level === 3 && fullItem?.service_engineer_confirmed);
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      handleSubmit();
+    }
+  };
+
+  const handleFieldBlur = () => {
+    handleSubmit();
+  };
+
+  const handleSubmit = async () => {
+    const data = { requestID: fullItem.id, ...editingName };
+    await $api
+      .post("/setNewWorker", data)
+      .then((result) => {
+        console.log(result);
+        setKeyEditing(null);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -314,20 +359,65 @@ export default function RequestDetails({
           <Typography variant="subtitle1" sx={{ mb: 1 }}>
             Подтверждения:
           </Typography>
+
           {confirmations.map((conf) => (
             <Box
               key={conf.name}
               sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
             >
-              <Typography variant="body2" sx={{ mr: 1 }}>
-                {conf.name}:
-              </Typography>
-              <Typography
-                variant="body2"
-                color={conf.confirmed ? "green" : "error"}
-              >
-                {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
-              </Typography>
+              {conf.name === keyEditing ? (
+                <Autocomplete
+                  sx={{ width: "300px" }}
+                  options={
+                    conf.name === "АСЦ"
+                      ? nameList.worker_name
+                      : nameList.wattson_name
+                  }
+                  value={editingName}
+                  onChange={(event, newValue) => setEditingName(newValue || "")}
+                  getOptionLabel={(option) => option.username || ""}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      autoFocus
+                      label="Введите имя пользователя"
+                      size="small"
+                      onBlur={() => handleFieldBlur()}
+                      onKeyDown={(event) => handleKeyDown(event)}
+                    />
+                  )}
+                  freeSolo
+                />
+              ) : (
+                <>
+                  <Typography
+                    variant="body2"
+                    sx={{ mr: 1 }}
+                    style={{
+                      cursor: conf.name !== "GEFFEN" ? "pointer" : "default",
+                    }}
+                  >
+                    {conf.name}:
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color={conf.confirmed ? "green" : "error"}
+                  >
+                    {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
+                  </Typography>
+                  {conf.name !== "GEFFEN" && (
+                    <IconButton
+                      onClick={() => {
+                        setEditingName(null);
+                        setKeyEditing(conf.name);
+                      }}
+                      size="small"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  )}
+                </>
+              )}
             </Box>
           ))}
         </Box>

@@ -8,7 +8,6 @@ import {
   Box,
   Divider,
   Button,
-  InputAdornment,
   IconButton,
   TextField,
 } from "@mui/material";

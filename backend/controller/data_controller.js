@@ -1453,6 +1453,46 @@ class DataController {
       res.status(500).json({ message: "Ошибка сервера" });
     }
   }
+  async workersNameList(req, res) {
+    try {
+      const result_worker = await pool.query(
+        "SELECT id, username, access_level FROM users WHERE access_level = 1"
+      );
+      const result_wattson = await pool.query(
+        "SELECT id, username, access_level FROM users WHERE access_level = 2"
+      );
+      if (result_worker.rowCount > 0 || result_wattson.rowCount > 0) {
+        return res.send({
+          worker_name: result_worker.rows,
+          wattson_name: result_wattson.rows,
+        });
+      }
+      return res.status(400).send({ message: "Ошибка поиска сотрудников" });
+    } catch (error) {
+      return res.status(500).send({ message: error });
+    }
+  }
+  async setNewWorker(req, res) {
+    try {
+      const { id: userId, access_level, requestID } = req.body;
+      const updateField =
+        access_level === 1 ? "assigned_to" : "region_assigned_to";
+
+      const result = await pool.query(
+        `UPDATE user_requests SET ${updateField} = $1 WHERE id = $2`,
+        [userId, requestID]
+      );
+
+      if (result.rowCount > 0) {
+        return res.status(200).json({ message: "Заявка успешно обновлена." });
+      } else {
+        return res.status(404).json({ message: "Заявка не найдена." });
+      }
+    } catch (error) {
+      console.error("Ошибка при обновлении заявки:", error);
+      return res.status(500).json({ message: "Внутренняя ошибка сервера." });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {
