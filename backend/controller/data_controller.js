@@ -744,25 +744,58 @@ class DataController {
   async getRequests(req, res, next) {
     try {
       const login = decodeJWT(req.cookies.refreshToken).login;
-      const allDevices = await pool.query(
-        "SELECT id, description, phone_number, module, problem_name, status, assigned_to, system_name, created_at FROM user_requests WHERE assigned_to IS NULL AND status != 1 AND type = (SELECT type from users where username = $1)",
+      const user = await pool.query(
+        "SELECT id, access_level FROM users WHERE username = $1",
         [login]
       );
-      const id = await getID(login);
-      const workerDevices = await pool.query(
-        "SELECT id, description, phone_number, module, problem_name, status, assigned_to, system_name, created_at FROM user_requests WHERE assigned_to = $1 AND status = 0",
+
+      if (user.rowCount === 0) {
+        return res.status(404).json({ error: "Пользователь не найден" });
+      }
+
+      const { id, access_level } = user.rows[0];
+
+      let assignedField = "";
+      let confirmedField = "";
+
+      if (access_level === 1) {
+        assignedField = "assigned_to";
+        confirmedField = "worker_confirmed";
+      } else if (access_level === 2) {
+        assignedField = "region_assigned_to";
+        confirmedField = "wattson_confirmed";
+      } else if (access_level === 3) {
+        assignedField = "gef_assigned_to";
+        confirmedField = "gef_confirmed";
+      } else {
+        return res.status(403).json({ error: "Недостаточно прав" });
+      }
+
+      // Доступные заявки (назначены, но не подтверждены)
+      const allDevices = await pool.query(
+        `SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
+                ur.${assignedField}, ur.system_name, ur.created_at
+         FROM user_requests ur
+         JOIN user_requests_info uri ON ur.id = uri.request_id
+         WHERE ur.${assignedField} = $1 AND uri.${confirmedField} = FALSE AND ur.status != 1`,
         [id]
       );
-      // const completedDevices = await pool.query(
-      //   `SELECT * FROM user_requests WHERE assigned_to = $1 AND status = 1`,
-      //   [id]
-      // ); // это - завершённые заявки
+
+      // В работе (назначены и подтверждены)
+      const workerDevices = await pool.query(
+        `SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
+                ur.${assignedField}, ur.system_name, ur.created_at
+         FROM user_requests ur
+         JOIN user_requests_info uri ON ur.id = uri.request_id
+         WHERE ur.${assignedField} = $1 AND uri.${confirmedField} = TRUE AND ur.status = 0`,
+        [id]
+      );
+
       const resultData = {
         allDevices: allDevices.rowCount > 0 ? allDevices.rows : [],
         workerDevices: workerDevices.rowCount > 0 ? workerDevices.rows : [],
-        // completedDevices:
-        //   completedDevices.rowCount > 0 ? completedDevices.rows : [],
       };
+
       res.send(resultData);
     } catch (error) {
       console.log(error);

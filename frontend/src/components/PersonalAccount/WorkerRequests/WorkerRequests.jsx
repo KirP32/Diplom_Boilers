@@ -30,7 +30,7 @@ export default function WorkerRequests({
   const [currentItem, setCurrentItem] = useState(null);
 
   const getData = useCallback(async () => {
-    const response = await $api.get("/getRequests");
+    const response = await $api.get(`/getRequests/${access_level}`);
     setAvailData(response.data);
   }, []);
 

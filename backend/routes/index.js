@@ -12,7 +12,11 @@ router.get("/refresh", DataController.refresh);
 router.get("/test_esp", checkCookie, DataController.test_esp);
 router.get("/getSystems", checkCookie, DataController.getSystems);
 router.get("/getSystemRequests", checkCookie, DataController.getSystemRequests);
-router.get("/getRequests", checkCookie, DataController.getRequests);
+router.get(
+  "/getRequests/:access_level",
+  checkCookie,
+  DataController.getRequests
+);
 router.get("/getAllSystems", checkCookie, DataController.getAllSystems);
 router.get(
   "/getRequestButtonsStatus",
