@@ -835,23 +835,53 @@ class DataController {
   async addRequest(req, res, next) {
     try {
       const { system_name, user, request_id, systems_names } = req.body;
-      const userId = await getID(user);
 
-      const checkRequest = await pool.query(
-        "SELECT id FROM user_requests WHERE id = $1 AND assigned_to IS NULL",
-        [request_id]
+      const userQuery = await pool.query(
+        "SELECT id, access_level FROM users WHERE username = $1",
+        [user]
       );
-
-      if (checkRequest.rowCount === 0) {
-        return res
-          .status(400)
-          .json({ message: "Заявка уже назначена или не существует." });
+      if (userQuery.rowCount === 0) {
+        return res.status(404).json({ message: "Пользователь не найден." });
       }
+      const { id: userId, access_level } = userQuery.rows[0];
 
-      const resultRequest = await pool.query(
-        "UPDATE user_requests SET assigned_to = $1 WHERE id = $2",
-        [userId, request_id]
-      );
+      let updateResult;
+
+      if (access_level === 3) {
+        updateResult = await pool.query(
+          "UPDATE user_requests SET gef_assigned_to = $1 WHERE id = $2",
+          [userId, request_id]
+        );
+        if (updateResult.rowCount === 0) {
+          return res
+            .status(400)
+            .json({ message: "Заявка уже принята или не существует." });
+        }
+      } else if (access_level === 1) {
+        updateResult = await pool.query(
+          "UPDATE user_requests_info SET worker_confirmed = TRUE WHERE request_id = $1",
+          [request_id]
+        );
+        if (updateResult.rowCount === 0) {
+          return res
+            .status(400)
+            .json({ message: "Заявка не найдена или уже принята." });
+        }
+      } else if (access_level === 2) {
+        updateResult = await pool.query(
+          "UPDATE user_requests_info SET wattson_confirmed = TRUE WHERE request_id = $1",
+          [request_id]
+        );
+        if (updateResult.rowCount === 0) {
+          return res
+            .status(400)
+            .json({ message: "Заявка не найдена или уже принята." });
+        }
+      } else {
+        return res
+          .status(403)
+          .json({ message: "Недостаточно прав для принятия заявки." });
+      }
 
       let resultSystem = { rowCount: 1 };
       if (!systems_names.includes(system_name)) {
@@ -861,21 +891,19 @@ class DataController {
         );
       }
 
-      if (resultRequest.rowCount > 0 && resultSystem.rowCount > 0) {
-        res.sendStatus(200);
-      } else if (resultRequest.rowCount > 0) {
-        res
+      if (resultSystem.rowCount > 0) {
+        return res.sendStatus(200);
+      } else {
+        return res
           .status(200)
           .json({ message: "Система не была добавлена (уже существует)." });
-      } else {
-        res.status(500).json({ message: "Ошибка при назначении заявки." });
       }
     } catch (error) {
       console.error(error);
       if (error.code === "23505") {
-        res.status(409).json({ message: "Система уже существует." });
+        return res.status(409).json({ message: "Система уже существует." });
       } else {
-        res.status(500).json({ message: "Внутренняя ошибка сервера." });
+        return res.status(500).json({ message: "Внутренняя ошибка сервера." });
       }
     }
   }
@@ -883,42 +911,116 @@ class DataController {
   async removeRequestFrom(req, res, next) {
     try {
       const { id } = req.params;
-      const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
+      const user = decodeJWT(req.cookies.refreshToken).login;
 
-      const result = await pool.query(
-        `WITH updated AS (
-          UPDATE user_requests
-          SET assigned_to = NULL
-          WHERE id = $1
-          RETURNING system_name
-        )
-        SELECT COUNT(*), (SELECT system_name FROM updated) AS system_name
-        FROM user_requests
-        WHERE assigned_to = $2
-          AND system_name = (SELECT system_name FROM updated)
-          AND status != 1
-          AND id != $1`,
-        [id, user_id]
+      const userQuery = await pool.query(
+        "SELECT id, access_level FROM users WHERE username = $1",
+        [user]
       );
+      if (userQuery.rowCount === 0) {
+        return res.status(404).json({ message: "Пользователь не найден." });
+      }
+      const { id: user_id, access_level } = userQuery.rows[0];
 
-      if (result.rows[0].count > 0) {
-        return res.send("Removed");
-      } else if (Number(result.rows[0].count) == 0) {
-        const result_del = await pool.query(
-          "DELETE from user_systems where user_id = $1 AND name = $2;",
-          [user_id, result.rows[0].system_name]
+      let system_name;
+      let updateResult;
+
+      if (access_level === 3) {
+        updateResult = await pool.query(
+          "UPDATE user_requests SET gef_assigned_to = NULL WHERE id = $1 RETURNING system_name",
+          [id]
         );
-
-        if (result_del.rowCount > 0) {
-          return res.send("OK");
-        } else {
-          return res.status(400).send("Error removing request");
+        if (updateResult.rowCount === 0) {
+          return res
+            .status(400)
+            .json({ message: "Заявка уже удалена или не существует." });
+        }
+        system_name = updateResult.rows[0].system_name;
+      } else if (access_level === 1) {
+        updateResult = await pool.query(
+          "UPDATE user_requests_info SET worker_confirmed = FALSE WHERE request_id = $1 RETURNING request_id",
+          [id]
+        );
+        if (updateResult.rowCount === 0) {
+          return res
+            .status(400)
+            .json({ message: "Заявка не найдена или уже удалена." });
+        }
+        const sysRes = await pool.query(
+          "SELECT system_name FROM user_requests WHERE id = $1",
+          [id]
+        );
+        if (sysRes.rowCount > 0) {
+          system_name = sysRes.rows[0].system_name;
+        }
+      } else if (access_level === 2) {
+        updateResult = await pool.query(
+          "UPDATE user_requests_info SET wattson_confirmed = FALSE WHERE request_id = $1 RETURNING request_id",
+          [id]
+        );
+        if (updateResult.rowCount === 0) {
+          return res
+            .status(400)
+            .json({ message: "Заявка не найдена или уже удалена." });
+        }
+        const sysRes = await pool.query(
+          "SELECT system_name FROM user_requests WHERE id = $1",
+          [id]
+        );
+        if (sysRes.rowCount > 0) {
+          system_name = sysRes.rows[0].system_name;
         }
       } else {
-        return res.status(500).send("Error removing system: Server Error");
+        return res
+          .status(403)
+          .json({ message: "Недостаточно прав для удаления заявки." });
       }
+
+      let checkQuery = "";
+      let checkParams = [];
+      if (access_level === 3) {
+        checkQuery =
+          "SELECT COUNT(*) FROM user_requests WHERE gef_assigned_to = $1 AND system_name = $2";
+        checkParams = [user_id, system_name];
+      } else if (access_level === 1) {
+        checkQuery = `
+          SELECT COUNT(*) 
+          FROM user_requests ur
+          JOIN user_requests_info uri ON ur.id = uri.request_id
+          WHERE ur.assigned_to = $1 AND ur.system_name = $2 AND uri.worker_confirmed = TRUE
+        `;
+        checkParams = [user_id, system_name];
+      } else if (access_level === 2) {
+        checkQuery = `
+          SELECT COUNT(*) 
+          FROM user_requests ur
+          JOIN user_requests_info uri ON ur.id = uri.request_id
+          WHERE ur.region_assigned_to = $1 AND ur.system_name = $2 AND uri.wattson_confirmed = TRUE
+        `;
+        checkParams = [user_id, system_name];
+      }
+
+      const checkRequests = await pool.query(checkQuery, checkParams);
+      const remainingCount = Number(checkRequests.rows[0].count);
+
+      if (remainingCount === 0) {
+        const deleteSystem = await pool.query(
+          "DELETE FROM user_systems WHERE user_id = $1 AND name = $2",
+          [user_id, system_name]
+        );
+        if (deleteSystem.rowCount > 0) {
+          return res.send("OK");
+        } else {
+          return res
+            .status(400)
+            .json({ message: "Ошибка при удалении системы." });
+        }
+      }
+
+      return res.send("Removed");
     } catch (error) {
-      return res.status(500).json({ message: error });
+      console.error(error);
+      return res.status(500).json({ message: "Внутренняя ошибка сервера." });
     }
   }
 
