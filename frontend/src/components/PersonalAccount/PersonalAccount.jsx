@@ -155,7 +155,7 @@ export default function PersonalAccount() {
               <h4>Заявки</h4>
             </Button>
           )}
-          {(access_level === 0 || access_level === 3 || access_level === 2) && (
+          {(access_level === 0 || access_level === 3) && (
             <>
               <Button onClick={() => setAddSystemFlag(!addSystemFlag)}>
                 <h4>Добавить систему</h4>

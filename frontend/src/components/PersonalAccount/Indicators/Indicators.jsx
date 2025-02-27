@@ -175,9 +175,12 @@ export default function Indicators({ setSelectedTab, tab }) {
           <MenuItem onClick={() => handleClose("viewRequests")}>
             Просмотр
           </MenuItem>
-          <MenuItem onClick={() => handleClose("createRequests")}>
-            Создать
-          </MenuItem>
+          {access_level === 3 && (
+            <MenuItem onClick={() => handleClose("createRequests")}>
+              Создать
+            </MenuItem>
+          )}
+
           <MenuItem onClick={() => handleClose("additionalRequests")}>
             Дополнительно
           </MenuItem>
