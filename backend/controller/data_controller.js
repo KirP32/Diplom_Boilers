@@ -1425,21 +1425,21 @@ class DataController {
       const { id } = req.params;
       const response = await pool.query(
         `SELECT 
-                ur.*, 
-                u.username,
-                rc.user_confirmed,
-                rc.worker_confirmed,
-                rc.regional_confirmed,
-                rc.service_engineer_confirmed,
-                rc.action
-            FROM 
-                user_requests ur
-            LEFT JOIN 
-                users u ON ur.assigned_to = u.id
-            LEFT JOIN
-                request_confirmations rc ON ur.id = rc.request_id
-            WHERE 
-                ur.id = $1;`,
+           ur.*, 
+           u.username AS worker_username,
+           u.phone_number AS worker_phone,
+           w.username AS wattson_username,
+           w.phone_number AS wattson_phone,
+           rc.user_confirmed,
+           rc.worker_confirmed,
+           rc.regional_confirmed,
+           rc.service_engineer_confirmed,
+           rc.action
+         FROM user_requests ur
+         LEFT JOIN users u ON ur.assigned_to = u.id
+         LEFT JOIN users w ON ur.region_assigned_to = w.id
+         LEFT JOIN request_confirmations rc ON ur.id = rc.request_id
+         WHERE ur.id = $1;`,
         [id]
       );
 
@@ -1453,6 +1453,7 @@ class DataController {
       res.status(500).json({ message: "Ошибка сервера" });
     }
   }
+
   async workersNameList(req, res) {
     try {
       const result_worker = await pool.query(
@@ -1474,23 +1475,78 @@ class DataController {
   }
   async setNewWorker(req, res) {
     try {
-      const { id: userId, access_level, requestID } = req.body;
-      const updateField =
-        access_level === 1 ? "assigned_to" : "region_assigned_to";
+      const { username, access_level, requestID, id: userId } = req.body;
 
-      const result = await pool.query(
-        `UPDATE user_requests SET ${updateField} = $1 WHERE id = $2`,
-        [userId, requestID]
-      );
+      if (username === "Нет") {
+        if (access_level === 0) {
+          await pool.query(
+            `UPDATE user_requests 
+             SET assigned_to = NULL 
+             WHERE id = $1`,
+            [requestID]
+          );
 
-      if (result.rowCount > 0) {
-        return res.status(200).json({ message: "Заявка успешно обновлена." });
+          await pool.query(
+            `UPDATE user_requests_info 
+             SET worker_confirmed = FALSE 
+             WHERE request_id = $1`,
+            [requestID]
+          );
+        } else if (access_level === 1) {
+          await pool.query(
+            `UPDATE user_requests 
+             SET region_assigned_to = NULL 
+             WHERE id = $1`,
+            [requestID]
+          );
+
+          await pool.query(
+            `UPDATE user_requests_info 
+             SET wattson_confirmed = FALSE 
+             WHERE request_id = $1`,
+            [requestID]
+          );
+        }
       } else {
-        return res.status(404).json({ message: "Заявка не найдена." });
+        const updateField =
+          access_level === 1 ? "assigned_to" : "region_assigned_to";
+
+        const result = await pool.query(
+          `UPDATE user_requests SET ${updateField} = $1 WHERE id = $2`,
+          [userId, requestID]
+        );
+
+        if (result.rowCount > 0) {
+          return res.status(200).json({ message: "Заявка успешно обновлена." });
+        } else {
+          return res.status(404).json({ message: "Заявка не найдена." });
+        }
       }
+
+      return res.status(200).json({ message: "Заявка успешно обновлена." });
     } catch (error) {
       console.error("Ошибка при обновлении заявки:", error);
       return res.status(500).json({ message: "Внутренняя ошибка сервера." });
+    }
+  }
+
+  async getTooltipEmployees(req, res) {
+    try {
+      const result = await pool.query(
+        `SELECT id, username, phone_number, access_level
+         FROM users
+         WHERE access_level IN (1, 2)`
+      );
+
+      const nameList = {
+        worker_name: result.rows.filter((user) => user.access_level === 1),
+        wattson_name: result.rows.filter((user) => user.access_level === 2),
+      };
+
+      return res.json(nameList);
+    } catch (error) {
+      console.error("Ошибка при получении сотрудников для Tooltip:", error);
+      return res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 }

@@ -38,6 +38,11 @@ router.get(
 router.get("/getColumnsData", checkCookie, DataController.getColumnsData);
 router.get("/getFullRequest/:id", checkCookie, DataController.getFullRequest);
 router.get("/workersNameList", checkCookie, DataController.workersNameList);
+router.get(
+  "/getTooltipEmployees",
+  checkCookie,
+  DataController.getTooltipEmployees
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

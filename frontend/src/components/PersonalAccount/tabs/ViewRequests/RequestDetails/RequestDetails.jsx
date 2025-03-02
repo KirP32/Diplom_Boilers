@@ -13,7 +13,13 @@ import StepButton from "@mui/material/StepButton";
 import U_Materials from "./additionalComponents/User/U_Materials/U_Materials";
 import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
-import { Typography, Box, Autocomplete, TextField } from "@mui/material";
+import {
+  Typography,
+  Box,
+  Autocomplete,
+  TextField,
+  Tooltip,
+} from "@mui/material";
 import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
 import { IconButton } from "@mui/material";
@@ -214,8 +220,20 @@ export default function RequestDetails({
     ...(!fullItem?.created_by_worker
       ? [{ name: "Пользователь", confirmed: fullItem?.user_confirmed }]
       : []),
-    { name: "АСЦ", confirmed: fullItem?.worker_confirmed },
-    { name: "WATTSON", confirmed: fullItem?.regional_confirmed },
+    {
+      name: "АСЦ",
+      confirmed: fullItem?.worker_confirmed,
+      info: fullItem
+        ? { username: fullItem.worker_username, phone: fullItem.worker_phone }
+        : null,
+    },
+    {
+      name: "WATTSON",
+      confirmed: fullItem?.regional_confirmed,
+      info: fullItem
+        ? { username: fullItem.wattson_username, phone: fullItem.wattson_phone }
+        : null,
+    },
     { name: "GEFFEN", confirmed: fullItem?.service_engineer_confirmed },
   ];
 
@@ -252,15 +270,34 @@ export default function RequestDetails({
 
   const handleSubmit = async () => {
     const data = { requestID: fullItem.id, ...editingName };
-    await $api
-      .post("/setNewWorker", data)
-      .then((result) => {
-        console.log(result);
+    if (editingName) {
+      try {
+        await $api.post("/setNewWorker", data);
+
+        const tooltipResponse = await $api.get("/getTooltipEmployees");
+
+        setNameList(tooltipResponse.data);
+
+        const updatedFull = await $api.get(`/getFullRequest/${fullItem.id}`);
+        setFullItem(updatedFull.data);
+
+        const updatedEditingName =
+          (tooltipResponse.data.worker_name || []).find(
+            (worker) => worker.username === editingName.username
+          ) ||
+          (tooltipResponse.data.wattson_name || []).find(
+            (worker) => worker.username === editingName.username
+          ) ||
+          "";
+
+        setEditingName(updatedEditingName);
         setKeyEditing(null);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.log(error);
-      });
+      }
+    } else {
+      setKeyEditing(null);
+    }
   };
 
   return (
@@ -370,11 +407,19 @@ export default function RequestDetails({
                   sx={{ width: "300px" }}
                   options={
                     conf.name === "АСЦ"
-                      ? nameList.worker_name
-                      : nameList.wattson_name
+                      ? [
+                          { id: null, username: "Нет", access_level: 0 },
+                          ...nameList.worker_name,
+                        ]
+                      : [
+                          { id: null, username: "Нет", access_level: 1 },
+                          ...nameList.wattson_name,
+                        ]
                   }
                   value={editingName}
-                  onChange={(event, newValue) => setEditingName(newValue || "")}
+                  onChange={(event, newValue) => {
+                    setEditingName(newValue);
+                  }}
                   getOptionLabel={(option) => option.username || ""}
                   renderInput={(params) => (
                     <TextField
@@ -386,25 +431,51 @@ export default function RequestDetails({
                       onKeyDown={(event) => handleKeyDown(event)}
                     />
                   )}
-                  freeSolo
                 />
               ) : (
                 <>
-                  <Typography
-                    variant="body2"
-                    sx={{ mr: 1 }}
-                    style={{
-                      cursor: conf.name !== "GEFFEN" ? "pointer" : "default",
-                    }}
-                  >
-                    {conf.name}:
-                  </Typography>
+                  {conf.name === "GEFFEN" ? (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mr: 1,
+                        cursor: "default",
+                      }}
+                    >
+                      {conf.name}:
+                    </Typography>
+                  ) : (
+                    <Tooltip
+                      title={
+                        conf.info && conf.info.username
+                          ? `${conf.info.username} (${
+                              conf.info.phone
+                                ? conf.info.phone
+                                : "телефон не известен"
+                            })`
+                          : "Нет информации"
+                      }
+                      arrow
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          mr: 1,
+                          cursor: "default",
+                        }}
+                      >
+                        {conf.name}:
+                      </Typography>
+                    </Tooltip>
+                  )}
+
                   <Typography
                     variant="body2"
                     color={conf.confirmed ? "green" : "error"}
                   >
                     {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
                   </Typography>
+
                   {conf.name !== "GEFFEN" && (
                     <IconButton
                       onClick={() => {

@@ -66,16 +66,23 @@ async function handleStage(request_id, access_level, max_stage, action) {
     } = updatedResult.rows[0];
 
     const requestResult = await pool.query(
-      `SELECT created_by_worker, stage FROM user_requests WHERE id = $1`,
+      `SELECT created_by_worker, stage, assigned_to, region_assigned_to FROM user_requests WHERE id = $1`,
       [request_id]
     );
-    const { created_by_worker, stage: currentStage } = requestResult.rows[0];
+    const {
+      created_by_worker,
+      stage: currentStage,
+      assigned_to,
+      region_assigned_to,
+    } = requestResult.rows[0];
 
     const allConfirmed = created_by_worker
-      ? worker_confirmed && regional_confirmed && service_engineer_confirmed
+      ? (worker_confirmed || assigned_to === null) &&
+        (regional_confirmed || region_assigned_to === null) &&
+        service_engineer_confirmed
       : user_confirmed &&
-        worker_confirmed &&
-        regional_confirmed &&
+        (worker_confirmed || assigned_to === null) &&
+        (regional_confirmed || region_assigned_to === null) &&
         service_engineer_confirmed;
 
     if (allConfirmed) {
