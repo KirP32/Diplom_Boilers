@@ -437,36 +437,46 @@ export default function RequestDetails({
                   {conf.name === "GEFFEN" ? (
                     <Typography
                       variant="body2"
-                      sx={{
-                        mr: 1,
-                        cursor: "default",
-                      }}
+                      sx={{ mr: 1, cursor: "default" }}
                     >
                       {conf.name}:
                     </Typography>
                   ) : (
-                    <Tooltip
-                      title={
-                        conf.info && conf.info.username
-                          ? `${conf.info.username} (${
-                              conf.info.phone
-                                ? conf.info.phone
-                                : "телефон не известен"
-                            })`
-                          : "Нет информации"
-                      }
-                      arrow
-                    >
+                    <>
                       <Typography
                         variant="body2"
-                        sx={{
-                          mr: 1,
-                          cursor: "default",
-                        }}
+                        sx={{ mr: 1, cursor: "default" }}
                       >
                         {conf.name}:
                       </Typography>
-                    </Tooltip>
+
+                      {access_level === 3 &&
+                        conf.info &&
+                        conf.info.username && (
+                          <Tooltip
+                            title={`${conf.info.username} (${
+                              conf.info.phone
+                                ? conf.info.phone
+                                : "телефон не известен"
+                            })`}
+                            arrow
+                          >
+                            <span></span>{" "}
+                          </Tooltip>
+                        )}
+
+                      {access_level === 3 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingName(null);
+                            setKeyEditing(conf.name);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
+                    </>
                   )}
 
                   <Typography
@@ -475,18 +485,6 @@ export default function RequestDetails({
                   >
                     {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
                   </Typography>
-
-                  {conf.name !== "GEFFEN" && (
-                    <IconButton
-                      onClick={() => {
-                        setEditingName(null);
-                        setKeyEditing(conf.name);
-                      }}
-                      size="small"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  )}
                 </>
               )}
             </Box>
