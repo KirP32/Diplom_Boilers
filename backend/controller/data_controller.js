@@ -1477,49 +1477,82 @@ class DataController {
     try {
       const { username, access_level, requestID, id: userId } = req.body;
 
+      const requestQuery = await pool.query(
+        `SELECT ur.assigned_to, ur.region_assigned_to, ur.system_name 
+         FROM user_requests ur 
+         JOIN user_requests_info uri ON ur.id = uri.request_id 
+         WHERE ur.id = $1`,
+        [requestID]
+      );
+
+      if (requestQuery.rowCount === 0) {
+        return res.status(404).json({ message: "Заявка не найдена." });
+      }
+      const { assigned_to, region_assigned_to, system_name } =
+        requestQuery.rows[0];
+
+      let updateField;
+      let oldUserId = null;
+
+      if (username === "Нет") {
+        if (access_level === 0) {
+          updateField = "assigned_to";
+          oldUserId = assigned_to;
+        } else if (access_level === 1) {
+          updateField = "region_assigned_to";
+          oldUserId = region_assigned_to;
+        } else {
+          return res.status(400).json({ message: "Неверный уровень доступа." });
+        }
+      } else {
+        updateField = access_level === 1 ? "assigned_to" : "region_assigned_to";
+        oldUserId = requestQuery.rows[0][updateField];
+      }
+
       if (username === "Нет") {
         if (access_level === 0) {
           await pool.query(
-            `UPDATE user_requests 
-             SET assigned_to = NULL 
-             WHERE id = $1`,
+            `UPDATE user_requests SET assigned_to = NULL WHERE id = $1`,
             [requestID]
           );
-
           await pool.query(
-            `UPDATE user_requests_info 
-             SET worker_confirmed = FALSE 
-             WHERE request_id = $1`,
+            `UPDATE user_requests_info SET worker_confirmed = FALSE WHERE request_id = $1`,
             [requestID]
           );
         } else if (access_level === 1) {
           await pool.query(
-            `UPDATE user_requests 
-             SET region_assigned_to = NULL 
-             WHERE id = $1`,
+            `UPDATE user_requests SET region_assigned_to = NULL WHERE id = $1`,
             [requestID]
           );
-
           await pool.query(
-            `UPDATE user_requests_info 
-             SET wattson_confirmed = FALSE 
-             WHERE request_id = $1`,
+            `UPDATE user_requests_info SET wattson_confirmed = FALSE WHERE request_id = $1`,
             [requestID]
           );
         }
       } else {
-        const updateField =
-          access_level === 1 ? "assigned_to" : "region_assigned_to";
-
         const result = await pool.query(
           `UPDATE user_requests SET ${updateField} = $1 WHERE id = $2`,
           [userId, requestID]
         );
-
-        if (result.rowCount > 0) {
-          return res.status(200).json({ message: "Заявка успешно обновлена." });
-        } else {
+        if (result.rowCount === 0) {
           return res.status(404).json({ message: "Заявка не найдена." });
+        }
+      }
+
+      if (oldUserId) {
+        const checkQuery = await pool.query(
+          `SELECT COUNT(*) 
+           FROM user_requests ur
+           JOIN user_requests_info uri ON ur.id = uri.request_id
+           WHERE ur.${updateField} = $1 AND ur.system_name = $2`,
+          [oldUserId, system_name]
+        );
+        const remainingRequests = parseInt(checkQuery.rows[0].count, 10);
+        if (remainingRequests === 0) {
+          await pool.query(
+            `DELETE FROM user_systems WHERE user_id = $1 AND name = $2`,
+            [oldUserId, system_name]
+          );
         }
       }
 
