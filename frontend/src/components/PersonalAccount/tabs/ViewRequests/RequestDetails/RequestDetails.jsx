@@ -24,6 +24,7 @@ import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
 import { IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import DataBaseColums from "./DataBaseColums/DataBaseColums";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -165,7 +166,6 @@ export default function RequestDetails({
       );
     }
   }
-
   async function handlePrevStage() {
     try {
       if (access_level > 0) {
@@ -202,20 +202,6 @@ export default function RequestDetails({
     setItem(null);
   };
 
-  const react_functional_components = {
-    "Поиск специалиста": [
-      <U_SearchWorker item={fullItem} />,
-      <A_SearchWorker />,
-      <U_SearchWorker item={fullItem} />,
-      <U_SearchWorker item={fullItem} />,
-      <U_SearchWorker item={fullItem} />,
-    ],
-    Материалы: [<U_Materials />, <A_Materials />],
-    "В пути": <></>,
-    "Проводятся работы": <></>,
-    Завершенно: <></>,
-  };
-
   const confirmations = [
     ...(!fullItem?.created_by_worker
       ? [{ name: "Пользователь", confirmed: fullItem?.user_confirmed }]
@@ -249,8 +235,70 @@ export default function RequestDetails({
   const isLastStage = data_type_1.length - 1 === fullItem?.stage;
   const stepKey =
     data_type_1[fullItem?.status === 0 ? fullItem?.stage : itemStage];
+
+  const stageMapping = {
+    Материалы: "materials",
+    "В пути": "in_transit",
+    "Проводятся работы": "work_in_progress",
+  };
+
+  const react_functional_components = {
+    "Поиск специалиста": {
+      0: <U_SearchWorker item={fullItem} />,
+      1: <A_SearchWorker />,
+    },
+    Материалы: {
+      0: (
+        <DataBaseColums
+          stageName={stageMapping[stepKey]}
+          requestID={fullItem?.id}
+        />
+      ),
+      1: (
+        <DataBaseColums
+          stageName={stageMapping[stepKey]}
+          requestID={fullItem?.id}
+        />
+      ),
+    },
+    "В пути": {
+      0: (
+        <DataBaseColums
+          stageName={stageMapping[stepKey]}
+          requestID={fullItem?.id}
+        />
+      ),
+      1: (
+        <DataBaseColums
+          stageName={stageMapping[stepKey]}
+          requestID={fullItem?.id}
+        />
+      ),
+    },
+    "Проводятся работы": {
+      0: (
+        <DataBaseColums
+          stageName={stageMapping[stepKey]}
+          requestID={fullItem?.id}
+        />
+      ),
+      1: (
+        <DataBaseColums
+          stageName={stageMapping[stepKey]}
+          requestID={fullItem?.id}
+        />
+      ),
+    },
+    Завершенно: {
+      0: <></>,
+      1: <></>,
+    },
+  };
+
   const component =
-    react_functional_components[stepKey]?.[access_level] || null;
+    react_functional_components[stepKey]?.[access_level] ||
+    Object.values(react_functional_components[stepKey] || {})[0] ||
+    null;
 
   const userConfirmed =
     (access_level === 0 && fullItem?.user_confirmed) ||
@@ -300,6 +348,16 @@ export default function RequestDetails({
     }
   };
 
+  const formatDate = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleString("ru-RU", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -385,87 +443,98 @@ export default function RequestDetails({
         )}
 
         <Box
-          sx={{
-            mt: 2,
-            mb: 2,
-            p: 1,
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-          }}
+          sx={{ display: "flex", flexDirection: "row", width: "100%", gap: 2 }}
         >
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            Подтверждения:
-          </Typography>
-
-          {confirmations.map((conf) => (
-            <Box
-              key={conf.name}
-              sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
-            >
-              {conf.name === keyEditing ? (
-                <Autocomplete
-                  sx={{ width: "300px" }}
-                  options={
-                    conf.name === "АСЦ"
-                      ? [
-                          { id: null, username: "Нет", access_level: 0 },
-                          ...nameList.worker_name,
-                        ]
-                      : [
-                          { id: null, username: "Нет", access_level: 1 },
-                          ...nameList.wattson_name,
-                        ]
-                  }
-                  value={editingName}
-                  onChange={(event, newValue) => {
-                    setEditingName(newValue);
-                  }}
-                  getOptionLabel={(option) => option.username || ""}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      autoFocus
-                      label="Введите имя пользователя"
-                      size="small"
-                      onBlur={() => handleFieldBlur()}
-                      onKeyDown={(event) => handleKeyDown(event)}
-                    />
-                  )}
-                />
-              ) : (
-                <>
-                  {conf.name === "GEFFEN" ? (
-                    <Typography
-                      variant="body2"
-                      sx={{ mr: 1, cursor: "default" }}
-                    >
-                      {conf.name}:
-                    </Typography>
-                  ) : (
-                    <>
+          <Box
+            sx={{
+              width: "50%",
+              mt: 2,
+              mb: 2,
+              p: 1,
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              maxHeight: "200px",
+              overflowY: "auto",
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Подтверждения:
+            </Typography>
+            {confirmations.map((conf) => (
+              <Box
+                key={conf.name}
+                sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
+              >
+                {conf.name === keyEditing ? (
+                  <Autocomplete
+                    sx={{ width: "300px" }}
+                    options={
+                      conf.name === "АСЦ"
+                        ? [
+                            { id: null, username: "Нет", access_level: 0 },
+                            ...nameList.worker_name,
+                          ]
+                        : [
+                            { id: null, username: "Нет", access_level: 1 },
+                            ...nameList.wattson_name,
+                          ]
+                    }
+                    value={editingName}
+                    onChange={(event, newValue) =>
+                      setEditingName(newValue || "")
+                    }
+                    getOptionLabel={(option) => option.username || ""}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        autoFocus
+                        label="Введите имя пользователя"
+                        size="small"
+                        onBlur={() => handleFieldBlur()}
+                        onKeyDown={(event) => handleKeyDown(event)}
+                      />
+                    )}
+                    freeSolo
+                  />
+                ) : (
+                  <>
+                    {access_level === 3 && conf.name !== "GEFFEN" ? (
+                      <Tooltip
+                        title={
+                          conf.info && conf.info.username
+                            ? `${conf.info.username} (${
+                                conf.info.phone
+                                  ? conf.info.phone
+                                  : "телефон не известен"
+                              })`
+                            : "Нет информации"
+                        }
+                        arrow
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ mr: 1, cursor: "default" }}
+                        >
+                          {conf.name}:
+                        </Typography>
+                      </Tooltip>
+                    ) : (
                       <Typography
                         variant="body2"
                         sx={{ mr: 1, cursor: "default" }}
                       >
                         {conf.name}:
                       </Typography>
-
-                      {access_level === 3 &&
-                        conf.info &&
-                        conf.info.username && (
-                          <Tooltip
-                            title={`${conf.info.username} (${
-                              conf.info.phone
-                                ? conf.info.phone
-                                : "телефон не известен"
-                            })`}
-                            arrow
-                          >
-                            <span></span>{" "}
-                          </Tooltip>
-                        )}
-
-                      {access_level === 3 && (
+                    )}
+                    <Typography
+                      variant="body2"
+                      color={conf.confirmed ? "green" : "error"}
+                    >
+                      {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
+                    </Typography>
+                    {access_level === 3 &&
+                      conf.name !== "GEFFEN" &&
+                      conf.name !== "Пользователь" && (
                         <IconButton
                           onClick={() => {
                             setEditingName(null);
@@ -476,23 +545,46 @@ export default function RequestDetails({
                           <EditIcon />
                         </IconButton>
                       )}
-                    </>
-                  )}
+                  </>
+                )}
+              </Box>
+            ))}
+          </Box>
 
-                  <Typography
-                    variant="body2"
-                    color={conf.confirmed ? "green" : "error"}
-                  >
-                    {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
-                  </Typography>
-                </>
-              )}
-            </Box>
-          ))}
+          <Box
+            sx={{
+              width: "50%",
+              mt: 2,
+              mb: 2,
+              p: 1,
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              maxHeight: "200px",
+              overflowY: "auto",
+            }}
+          >
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              <b>Система:</b> {fullItem?.system_name}
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              <b>Создана:</b> {fullItem ? formatDate(fullItem.created_at) : ""}
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              <b>Проблема:</b> {fullItem?.problem_name}
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              <b>Описание:</b> {fullItem?.description}
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              <b>Проблема с модулем:</b> {fullItem?.module}
+            </Typography>
+            <Typography variant="body1">
+              <b>Контактный номер:</b> {fullItem?.phone_number}
+            </Typography>
+          </Box>
         </Box>
 
         {component}
-
         {fullItem?.status !== 1 && (
           <section className={styles.request_buttons}>
             <Button

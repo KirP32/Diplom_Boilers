@@ -6,7 +6,7 @@ export default function U_SearchWorker({ item }) {
       className="search_worker__wrapper__main_content"
       style={{ margin: "auto", fontSize: 20 }}
     >
-      {item.username === null ? (
+      {item.uri_worker_confirmed === false ? (
         <>
           <section>Ожидаем подтверждения от специалиста</section>
         </>
@@ -14,7 +14,7 @@ export default function U_SearchWorker({ item }) {
         <>
           <section>
             Специалист найден:
-            <span style={{ fontWeight: "bold" }}> {item.username}</span>
+            <span style={{ fontWeight: "bold" }}> {item.worker_username}</span>
           </section>
         </>
       )}

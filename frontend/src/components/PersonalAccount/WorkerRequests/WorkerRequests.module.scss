@@ -86,3 +86,10 @@
         }
     }
 }
+
+.available_requests__grid__item__header h3 {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    overflow: hidden;
+}

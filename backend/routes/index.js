@@ -43,6 +43,11 @@ router.get(
   checkCookie,
   DataController.getTooltipEmployees
 );
+router.get(
+  "/getRequestColumnsData/:stageName/:requestID",
+  checkCookie,
+  DataController.getRequestColumnsData
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
@@ -93,5 +98,10 @@ router.delete(
 router.put("/off_esp", checkCookie, DataController.off_esp);
 router.put("/updateUser", checkCookie, DataController.updateUser);
 router.put("/setAccessLevel", checkCookie, DataController.setAccessLevel);
+router.put(
+  "/updateRequestColumn",
+  checkCookie,
+  DataController.updateRequestColumn
+);
 
 module.exports = router;

@@ -30,6 +30,7 @@ export default function DataBaseUsers() {
   const [allColumns, setAllColumns] = useState({});
 
   const [columns, setColumns] = useState([]);
+
   const [editingColumn, setEditingColumn] = useState(null);
   const [editedValue, setEditedValue] = useState("");
 
@@ -50,6 +51,9 @@ export default function DataBaseUsers() {
     cgs_details: "cgs_details",
     gef_details: "gef_details",
     user_requests_info: "user_requests_info",
+    materials_stage: "materials_stage",
+    in_transit_stage: "in_transit_stage",
+    work_in_progress_stage: "work_in_progress_stage",
   };
 
   useEffect(() => {
@@ -240,6 +244,11 @@ export default function DataBaseUsers() {
               <MenuItem value="gef_details">GEFFEN</MenuItem>
               <MenuItem value="user_requests_info">
                 <strong>ЗАЯВКИ</strong>
+              </MenuItem>
+              <MenuItem value="materials_stage">Заявка - Материалы</MenuItem>
+              <MenuItem value="in_transit_stage">Заявка - В пути</MenuItem>
+              <MenuItem value="work_in_progress_stage">
+                Заявка - Проводятся работы
               </MenuItem>
             </Select>
           </FormControl>

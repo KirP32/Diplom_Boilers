@@ -1193,6 +1193,15 @@ class DataController {
       const result_requests = await pool.query(
         `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'user_requests_info';`
       );
+      const result_materials = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'materials_stage';`
+      );
+      const result_in_transit = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'in_transit_stage';`
+      );
+      const result_work_in_progress = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'work_in_progress_stage';`
+      );
 
       if (
         result_workers.rowCount > 0 &&
@@ -1207,6 +1216,9 @@ class DataController {
           cgs_details: result_cgs.rows,
           gef_details: result_gef.rows,
           user_requests_info: result_requests.rows,
+          materials_stage: result_materials.rows,
+          in_transit_stage: result_in_transit.rows,
+          work_in_progress_stage: result_work_in_progress.rows,
         });
       }
       return res.sendStatus(400);
@@ -1400,6 +1412,15 @@ class DataController {
       const result_requests = await pool.query(
         `SELECT * FROM user_requests_info;`
       );
+      const result_materials = await pool.query(
+        `SELECT * FROM materials_stage`
+      );
+      const result_in_transit_stage = await pool.query(
+        `SELECT * FROM in_transit_stage`
+      );
+      const result_work_in_progress_stage = await pool.query(
+        `SELECT * FROM work_in_progress_stage`
+      );
       if (
         result_workers.rowCount > 0 &&
         result_users.rowCount > 0 &&
@@ -1413,6 +1434,9 @@ class DataController {
           cgs_details: result_cgs.rows,
           gef_details: result_gef.rows,
           user_requests_info: result_requests.rows,
+          materials_stage: result_materials.rows,
+          in_transit_stage: result_in_transit_stage.rows,
+          work_in_progress_stage: result_work_in_progress_stage.rows,
         });
       }
       return res.sendStatus(400);
@@ -1424,22 +1448,24 @@ class DataController {
     try {
       const { id } = req.params;
       const response = await pool.query(
-        `SELECT 
-           ur.*, 
-           u.username AS worker_username,
-           u.phone_number AS worker_phone,
-           w.username AS wattson_username,
-           w.phone_number AS wattson_phone,
-           rc.user_confirmed,
-           rc.worker_confirmed,
-           rc.regional_confirmed,
-           rc.service_engineer_confirmed,
-           rc.action
-         FROM user_requests ur
-         LEFT JOIN users u ON ur.assigned_to = u.id
-         LEFT JOIN users w ON ur.region_assigned_to = w.id
-         LEFT JOIN request_confirmations rc ON ur.id = rc.request_id
-         WHERE ur.id = $1;`,
+        `SELECT
+          ur.*, 
+          u.username AS worker_username,
+          u.phone_number AS worker_phone,
+          w.username AS wattson_username,
+          w.phone_number AS wattson_phone,
+          rc.user_confirmed,
+          rc.worker_confirmed,
+          rc.regional_confirmed,
+          rc.service_engineer_confirmed,
+          rc.action,
+          uri.worker_confirmed AS uri_worker_confirmed
+        FROM user_requests ur
+        LEFT JOIN users u ON ur.assigned_to = u.id
+        LEFT JOIN users w ON ur.region_assigned_to = w.id
+        LEFT JOIN request_confirmations rc ON ur.id = rc.request_id
+        LEFT JOIN user_requests_info uri ON ur.id = uri.request_id
+        WHERE ur.id = $1;`,
         [id]
       );
 
@@ -1555,7 +1581,17 @@ class DataController {
           );
         }
       }
-
+      if (access_level === 1) {
+        await pool.query(
+          "UPDATE request_confirmations SET worker_confirmed = false where request_id = $1",
+          [requestID]
+        );
+      } else if (access_level === 2) {
+        await pool.query(
+          "UPDATE request_confirmations SET regional_confirmed = false where request_id = $1",
+          [requestID]
+        );
+      }
       return res.status(200).json({ message: "Заявка успешно обновлена." });
     } catch (error) {
       console.error("Ошибка при обновлении заявки:", error);
@@ -1580,6 +1616,68 @@ class DataController {
     } catch (error) {
       console.error("Ошибка при получении сотрудников для Tooltip:", error);
       return res.status(500).json({ message: "Ошибка сервера" });
+    }
+  }
+  async getRequestColumnsData(req, res) {
+    try {
+      const { stageName, requestID } = req.params;
+      let tableName = "";
+      let selectQuery = "";
+      let insertQuery = "";
+      let insertValues = [];
+
+      if (stageName === "materials") {
+        tableName = "materials_stage";
+        selectQuery = `SELECT * FROM ${tableName} WHERE request_id = $1`;
+        insertQuery = `INSERT INTO ${tableName} (request_id, details) VALUES ($1, '') RETURNING *`;
+        insertValues = [requestID];
+      } else if (stageName === "in_transit") {
+        tableName = "in_transit_stage";
+        selectQuery = `SELECT * FROM ${tableName} WHERE request_id = $1`;
+        insertQuery = `INSERT INTO ${tableName} (request_id, estimated_arrival, status) VALUES ($1, NULL, '') RETURNING *`;
+        insertValues = [requestID];
+      } else if (stageName === "work_in_progress") {
+        tableName = "work_in_progress_stage";
+        selectQuery = `SELECT * FROM ${tableName} WHERE request_id = $1`;
+        insertQuery = `INSERT INTO ${tableName} (request_id, work_description, started_at, completed_at) VALUES ($1, '', current_timestamp, NULL) RETURNING *`;
+        insertValues = [requestID];
+      } else {
+        return res.status(400).json({ error: "Invalid stage name" });
+      }
+
+      const result = await pool.query(selectQuery, [requestID]);
+      if (result.rowCount === 0) {
+        const insertResult = await pool.query(insertQuery, insertValues);
+        return res.json(insertResult.rows[0]);
+      }
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error("Error in getRequestColumnsData:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+  async updateRequestColumn(req, res) {
+    try {
+      const { stageName, key, newValue, id } = req.body;
+      let tableName = "";
+
+      if (stageName === "materials") {
+        tableName = "materials_stage";
+      } else if (stageName === "in_transit") {
+        tableName = "in_transit_stage";
+      } else if (stageName === "work_in_progress") {
+        tableName = "work_in_progress_stage";
+      } else {
+        return res.status(400).json({ error: "Invalid stage name" });
+      }
+
+      const query = `UPDATE ${tableName} SET ${key} = $1 WHERE id = $2`;
+      await pool.query(query, [newValue, id]);
+      res.json({ message: "Updated successfully" });
+    } catch (error) {
+      console.error("Error in updateRequestColumn:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
   }
 }
