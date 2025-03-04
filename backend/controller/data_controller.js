@@ -1257,7 +1257,7 @@ class DataController {
   }
   async addDatabaseColumn(req, res) {
     try {
-      const { column_name, c  olumn_type, tableName } = req.body;
+      const { column_name, column_type, tableName } = req.body;
       const query = `ALTER TABLE "${tableName}" ADD "${column_name}" ${column_type}`;
       await pool.query(query);
       return res.sendStatus(200);
