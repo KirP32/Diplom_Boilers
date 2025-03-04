@@ -93,3 +93,12 @@
     max-width: 100%;
     overflow: hidden;
 }
+
+.button_styles {
+    background-color: rgb(160, 34, 42);
+    color: var(--text-color);
+    border-radius: 6px;
+    &::before {
+        border-radius: 6px;
+    }
+}

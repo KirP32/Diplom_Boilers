@@ -129,13 +129,11 @@ export default function WorkerRequests({
             onClick={() => {
               navigate("/workerPanel");
             }}
-            style={{
-              backgroundColor: "rgb(160, 34, 42)",
-              color: "var(--text-color)",
-            }}
+            className={styles.button_styles}
           >
             Админ панель
           </Button>
+
           <Button
             style={{
               backgroundColor:
