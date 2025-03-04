@@ -1679,6 +1679,52 @@ class DataController {
       res.status(500).json({ error: "Internal Server Error" });
     }
   }
+
+  async getFreeName(req, res) {
+    const MAX_ATTEMPTS = 15;
+
+    try {
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        const timestamp = Date.now();
+        const now = new Date(timestamp);
+
+        const formattedDate = [
+          String(now.getMonth() + 1).padStart(2, "0"),
+          String(now.getDate()).padStart(2, "0"),
+        ].join("-");
+
+        const formattedTime = [
+          String(now.getHours()).padStart(2, "0"),
+          String(now.getMinutes()).padStart(2, "0"),
+          String(now.getSeconds()).padStart(2, "0"),
+          String(now.getMilliseconds()).padStart(3, "0"),
+        ].join("-");
+
+        const freeName = `${formattedDate}_${formattedTime}_${Math.random()
+          .toString(36)
+          .slice(2, 3)}`;
+
+        const result = await pool.query(
+          "SELECT COUNT(*) as count FROM systems WHERE name = $1",
+          [freeName]
+        );
+
+        if (Number(result.rows[0].count) === 0) {
+          return res.json({ freeName });
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
+      throw new Error("Не удалось сгенерировать уникальное имя");
+    } catch (error) {
+      console.error("Ошибка генерации свободного имени:", error);
+      return res.status(500).json({
+        message: error.message || "Ошибка сервера",
+        error: error.message,
+      });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

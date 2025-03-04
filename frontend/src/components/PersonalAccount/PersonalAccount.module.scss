@@ -126,6 +126,10 @@
         .device__text {
             font-size: 17px;
             text-align: center;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            overflow: hidden;
         }
     }
 }

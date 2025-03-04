@@ -18,6 +18,10 @@
         gap: 10px;
         padding: 16px 0px 16px 0px;
         &__item {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            overflow: hidden;
             position: relative;
             color: var(--text-color-on-surface);
             text-align: center;
@@ -87,12 +91,12 @@
     }
 }
 
-.available_requests__grid__item__header h3 {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    overflow: hidden;
-}
+// .available_requests__grid__item__header h3 {
+//     white-space: nowrap;
+//     text-overflow: ellipsis;
+//     max-width: 100%;
+//     overflow: hidden;
+// }
 
 .button_styles {
     background-color: rgb(160, 34, 42);

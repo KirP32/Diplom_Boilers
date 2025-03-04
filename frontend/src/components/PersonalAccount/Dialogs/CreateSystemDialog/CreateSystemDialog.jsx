@@ -40,6 +40,15 @@ export default function CreateSystemDialog({ open, onClose, getAllDevices }) {
     }
   };
 
+  async function generateName() {
+    await $api
+      .get("/getFreeName")
+      .then((result) => setSystemName(result.data.freeName))
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
@@ -56,18 +65,23 @@ export default function CreateSystemDialog({ open, onClose, getAllDevices }) {
             onChange={(e) => setSystemName(e.target.value)}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} color="info" variant="contained">
-            Отмена
+        <DialogActions sx={{ display: "flex", justifyContent: "space-around" }}>
+          <Button color="primary" variant="outlined" onClick={generateName}>
+            Генерация
           </Button>
-          <Button
-            onClick={handleCreate}
-            color="primary"
-            variant="contained"
-            disabled={!systemName.trim()}
-          >
-            Создать
-          </Button>
+          <section style={{ gap: "15px", display: "flex" }}>
+            <Button onClick={onClose} color="error" variant="outlined">
+              Отмена
+            </Button>
+            <Button
+              onClick={handleCreate}
+              color="success"
+              variant="contained"
+              disabled={!systemName?.trim()}
+            >
+              Создать
+            </Button>
+          </section>
         </DialogActions>
       </Dialog>
 
