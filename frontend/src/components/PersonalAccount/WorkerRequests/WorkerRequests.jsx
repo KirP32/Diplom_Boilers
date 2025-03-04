@@ -12,6 +12,7 @@ import RequestDetails from "../tabs/ViewRequests/RequestDetails/RequestDetails";
 import InfoIcon from "@mui/icons-material/Info";
 import MuiButton from "@mui/material/Button";
 import AdditionalInfoDialog from "./AdditionalInfoDialog/AdditionalInfoDialog";
+import { useNavigate } from "react-router-dom";
 
 export default function WorkerRequests({
   systems_names,
@@ -107,7 +108,7 @@ export default function WorkerRequests({
       console.log("Токен не найден");
     }
   }, []);
-
+  const navigate = useNavigate();
   return (
     <div className={styles.worker_requests__wrapper}>
       <div className={styles.indicators__wrapper}>
@@ -118,20 +119,38 @@ export default function WorkerRequests({
         >
           <h4>Создать систему</h4>
         </Button>
-        <Button
+        <section
           style={{
-            backgroundColor:
-              access_level === 3
-                ? "hsl(356, 65%, 38%)"
-                : access_level === 2
-                ? "hsl(140, 50%, 45%)"
-                : undefined,
+            gap: "30px",
+            display: "flex",
           }}
-          className={styles.indicators__button}
-          onClick={() => setOptions_flag(!options_flag)}
         >
-          <h4>{user_name}</h4>
-        </Button>
+          <Button
+            onClick={() => {
+              navigate("/workerPanel");
+            }}
+            style={{
+              backgroundColor: "rgb(160, 34, 42)",
+              color: "var(--text-color)",
+            }}
+          >
+            Админ панель
+          </Button>
+          <Button
+            style={{
+              backgroundColor:
+                access_level === 3
+                  ? "hsl(356, 65%, 38%)"
+                  : access_level === 2
+                  ? "hsl(140, 50%, 45%)"
+                  : undefined,
+            }}
+            className={styles.indicators__button}
+            onClick={() => setOptions_flag(!options_flag)}
+          >
+            <h4>{user_name}</h4>
+          </Button>
+        </section>
       </div>
       <div className={styles.available_requests}>
         <h2>Доступные заявки</h2>

@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Box, Typography, TextField, IconButton, Divider } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import $api from "../../../../../../http";
+import { ThemeContext, useTheme } from "@emotion/react";
 
 export default function DataBaseColums({ stageName, requestID }) {
   const [record, setRecord] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [editedValue, setEditedValue] = useState("");
+  const { access_level } = useTheme(ThemeContext);
 
   useEffect(() => {
     $api
@@ -63,7 +65,7 @@ export default function DataBaseColums({ stageName, requestID }) {
             <Typography variant="body2" color="textSecondary">
               <strong>{key}:</strong>
             </Typography>
-            {key === "id" || key === "request_id" ? (
+            {key === "id" || key === "request_id" || access_level !== 3 ? (
               <Typography variant="body1">{record[key]}</Typography>
             ) : editingField === key ? (
               <TextField

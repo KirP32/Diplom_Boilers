@@ -72,7 +72,6 @@ class DataController {
         token_data = jwt.verify(token, process.env.JWT_REFRESH_KEY);
       } catch (e) {
         token_data = null;
-        console.error("Error refreshing token:", e.message);
         return res.status(401).send("TokenExpired");
       }
 
@@ -1258,7 +1257,8 @@ class DataController {
   }
   async addDatabaseColumn(req, res) {
     try {
-      const { column_name, column_type, tableName } = req.body;
+      const { column_name, c  olumn_type, tableName } = req.body;
+      console.log(column_name);
       const query = `ALTER TABLE "${tableName}" ADD "${column_name}" ${column_type}`;
       await pool.query(query);
       return res.sendStatus(200);

@@ -5,6 +5,7 @@ import SignUp from "./SignUp/SignUp";
 import AddDevice from "./AddDevice/AddDevice";
 import WorkerHistory from "./WorkerHistory/WorkerHistory";
 import DataBaseUsers from "./DataBaseUsers/DataBaseUsers";
+import { useNavigate } from "react-router-dom";
 
 function WorkerPanel() {
   const [activeComponent, setActiveComponent] = useState("addUser");
@@ -23,7 +24,7 @@ function WorkerPanel() {
         return null;
     }
   };
-
+  const navigate = useNavigate();
   return (
     <div className={styles.worker_wrapper}>
       <div className={styles.worker_wrapper__sidebar}>
@@ -31,7 +32,6 @@ function WorkerPanel() {
           className={styles.worker_wrapper__sidebar__button}
           onClick={() => setActiveComponent("addUser")}
         >
-          {" "}
           <h4>Добавить пользователя</h4>
         </Button>
         <Button
@@ -52,8 +52,19 @@ function WorkerPanel() {
         >
           <h4>История</h4>
         </Button>
+        <Button
+          className={styles.worker_wrapper__sidebar__button}
+          onClick={() => navigate("/personalAccount")}
+        >
+          <h4>На главную</h4>
+        </Button>
       </div>
-      <div className={styles.worker_wrapper__main}>{renderContent()}</div>
+      <div
+        className={styles.worker_wrapper__main}
+        style={{ position: "relative", maxWidth: "1500px", minWidth: "200px" }}
+      >
+        {renderContent()}
+      </div>
     </div>
   );
 }

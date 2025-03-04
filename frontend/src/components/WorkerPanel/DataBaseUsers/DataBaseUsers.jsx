@@ -19,6 +19,7 @@ import {
   InputLabel,
   Button,
   Autocomplete,
+  Box,
 } from "@mui/material";
 import { Edit, Delete, Add, Check } from "@mui/icons-material";
 import styles from "./DataBaseUsers.module.scss";
@@ -434,35 +435,43 @@ export default function DataBaseUsers() {
             <Typography
               variant="h5"
               className={styles.data_table__header}
-              style={{ paddingTop: "15px" }}
+              sx={{ pt: 2 }}
             >
               Данные таблицы {tableName}
             </Typography>
-            <TableContainer
-              component={Paper}
-              className={styles.data_table__container}
+            <Paper
+              sx={{
+                maxWidth: "100%", // ограничиваем ширину Paper
+                minWidth: "200px",
+                mx: "auto", // центрируем Paper по горизонтали
+                overflow: "hidden", // скрываем переполнение по горизонтали
+              }}
             >
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    {Object.keys(columnsData[tableName][0]).map((colKey) => (
-                      <TableCell key={colKey}>
-                        <strong>{colKey}</strong>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {columnsData[tableName].map((row, rowIndex) => (
-                    <TableRow key={rowIndex}>
-                      {Object.keys(row).map((colKey) => (
-                        <TableCell key={colKey}>{row[colKey]}</TableCell>
+              <TableContainer
+                sx={{ maxHeight: 440, overflowX: "auto", width: "100%" }}
+              >
+                <Table stickyHeader aria-label="sticky table">
+                  <TableHead>
+                    <TableRow>
+                      {Object.keys(columnsData[tableName][0]).map((colKey) => (
+                        <TableCell key={colKey}>
+                          <strong>{colKey}</strong>
+                        </TableCell>
                       ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {columnsData[tableName].map((row, rowIndex) => (
+                      <TableRow key={rowIndex}>
+                        {Object.keys(row).map((colKey) => (
+                          <TableCell key={colKey}>{row[colKey]}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
           </>
         )}
     </div>

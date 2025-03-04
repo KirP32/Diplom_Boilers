@@ -8,7 +8,6 @@ async function checkCookie(req, res, next) {
   const refreshToken = req.cookies["refreshToken"];
 
   if (!accesstoken) {
-    console.log("Нет accessToken");
     return res.sendStatus(401);
   }
 

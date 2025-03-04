@@ -2,7 +2,7 @@ import styles from "./LogIn.module.scss";
 import Input from "../Input/Input";
 import Button from "../Button/Button";
 import { Link } from "react-router-dom";
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { sha256 } from "js-sha256";
 import $api from "../../http";
 import { useNavigate } from "react-router-dom";
