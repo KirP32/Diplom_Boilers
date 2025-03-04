@@ -125,14 +125,18 @@ export default function WorkerRequests({
             display: "flex",
           }}
         >
-          <Button
-            onClick={() => {
-              navigate("/workerPanel");
-            }}
-            className={styles.button_styles}
-          >
-            Админ панель
-          </Button>
+          {access_level === 3 ? (
+            <Button
+              onClick={() => {
+                navigate("/workerPanel");
+              }}
+              className={styles.button_styles}
+            >
+              Админ панель
+            </Button>
+          ) : (
+            <></>
+          )}
 
           <Button
             style={{
