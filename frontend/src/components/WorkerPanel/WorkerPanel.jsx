@@ -6,6 +6,7 @@ import AddDevice from "./AddDevice/AddDevice";
 import WorkerHistory from "./WorkerHistory/WorkerHistory";
 import DataBaseUsers from "./DataBaseUsers/DataBaseUsers";
 import { useNavigate } from "react-router-dom";
+import { lightGreen } from "@mui/material/colors";
 
 function WorkerPanel() {
   const [activeComponent, setActiveComponent] = useState("addUser");
@@ -55,6 +56,7 @@ function WorkerPanel() {
         <Button
           className={styles.worker_wrapper__sidebar__button}
           onClick={() => navigate("/personalAccount")}
+          style={{ backgroundColor: "rgb(160, 34, 42)" }}
         >
           <h4>На главную</h4>
         </Button>
