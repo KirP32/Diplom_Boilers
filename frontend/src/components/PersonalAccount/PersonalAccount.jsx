@@ -226,7 +226,6 @@ export default function PersonalAccount() {
           )}
         </div>
       </div>
-
       <SettingsDialog
         open={settingsDialog}
         setSettingsDialog={(e) => setSettingsDialog(e)}

@@ -13,6 +13,7 @@ import "material-icons/iconfont/material-icons.css";
 import { ThemeProvider } from "./Theme.jsx";
 import RequestDetails from "./components/PersonalAccount/tabs/ViewRequests/RequestDetails/RequestDetails";
 import ErrorComponent from "./components/ErrorComponent/ErrorComponent.jsx";
+import WorkerContract from "./components/PersonalAccount/Dialogs/OptionsDialog/WorkerContract/WorkerContract.jsx";
 
 const router = createBrowserRouter(
   [
@@ -47,6 +48,10 @@ const router = createBrowserRouter(
           <WorkerPanel />
         </WorkerGuard>
       ),
+    },
+    {
+      path: "work_contract", // Генерация "документа"
+      element: <WorkerContract />,
     },
   ],
   {
