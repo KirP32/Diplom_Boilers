@@ -69,7 +69,7 @@ export default function CreateSystemDialog({ open, onClose, getAllDevices }) {
           <Button color="primary" variant="outlined" onClick={generateName}>
             Генерация
           </Button>
-          <section style={{ gap: "15px", display: "flex" }}>
+          <section style={{ gap: "15px", display: "flex", padding: 15 }}>
             <Button onClick={onClose} color="error" variant="outlined">
               Отмена
             </Button>

@@ -15,13 +15,15 @@ import { useContext, useEffect, useState } from "react";
 import $api from "../../../../http";
 import EditIcon from "@mui/icons-material/Edit";
 import { ThemeContext } from "../../../../Theme";
+import DownloadIcon from "@mui/icons-material/Download";
+import { useNavigate } from "react-router-dom";
 
 export default function OptionsDialog({ open, user, setOptions }) {
   const [userData, setUserData] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [editedValue, setEditedValue] = useState(null);
   const { access_level } = useContext(ThemeContext);
-
+  const navigate = useNavigate();
   const handleSaveChanges = (key, newValue) => {
     $api
       .put("/updateUser", { key, newValue, access_level })
@@ -63,8 +65,26 @@ export default function OptionsDialog({ open, user, setOptions }) {
 
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="xs">
-      <DialogTitle style={{ textAlign: "center" }}>
-        {user.user_name}
+      <DialogTitle
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}
+      >
+        <span
+          style={{
+            gridColumn: 2,
+            textAlign: "center",
+            fontSize: "28px",
+            fontWeight: "bold",
+          }}
+        >
+          {user.user_name}
+        </span>
+
+        <DownloadIcon
+          style={{ alignSelf: "center", marginLeft: "auto", cursor: "pointer" }}
+          onClick={() => {
+            navigate("/work_contract");
+          }}
+        />
       </DialogTitle>
       <DialogContent>
         {userData ? (
