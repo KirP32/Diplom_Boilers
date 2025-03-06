@@ -70,7 +70,13 @@ export default function WorkerContract() {
               </View>
 
               {/* Основной текст */}
-              <Text style={[styles.paragraph, styles.paragraphNoMargin]}>
+              <Text
+                style={[
+                  styles.paragraph,
+                  styles.paragraphNoMargin,
+                  { marginTop: 10 },
+                ]}
+              >
                 Настоящий Договор (далее именуемый «Договор») заключен между
                 компанией ООО «ГЕФФЕН» в лице Директора Орехова Алексея
                 Сергеевича, действующего на основании Устава и именуемое в
@@ -733,7 +739,7 @@ export default function WorkerContract() {
                   <Text style={[styles.paragraph, { marginTop: 43 }]}>
                     ______________________
                   </Text>
-                  <Text style={[styles.paragraph, { marginTop: 36 }]}>
+                  <Text style={[styles.paragraph, { marginTop: 38 }]}>
                     М.П.
                   </Text>
                 </View>
