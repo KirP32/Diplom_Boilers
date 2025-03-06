@@ -4,6 +4,7 @@ import { PDFViewer } from "@react-pdf/renderer";
 import { Font } from "@react-pdf/renderer";
 import RobotoRegular from "../../../../../fonts/Roboto-Regular.ttf";
 import RobotoBold from "../../../../../fonts/Roboto-Bold.ttf";
+import RobotoItalic from "../../../../../fonts/Roboto-Italic.ttf";
 
 const worksData = [
   { no: 1, name: "Замена электрода розжига и ионизации", cost: "1 500,00" },
@@ -51,14 +52,14 @@ export default function WorkerContract() {
               ПОСТГАРАНТИЙНОМУ РЕМОНТУ № -АСЦ
             </Text>
 
-            {/* Строка с городом и датой */}
+            {/* город и дата */}
             <View style={styles.subHeader}>
               <Text style={styles.city}>г. Тула</Text>
               <Text style={styles.date}>« » 2024 г.</Text>
             </View>
 
             {/* Основной текст */}
-            <Text style={styles.paragraph}>
+            <Text style={[styles.paragraph, styles.paragraphNoMargin]}>
               Настоящий Договор (далее именуемый «Договор») заключен между
               компанией ООО «ГЕФФЕН» в лице Директора Орехова Алексея
               Сергеевича, действующего на основании Устава и именуемое в
@@ -67,13 +68,15 @@ export default function WorkerContract() {
               дальнейшем как «Исполнитель».
             </Text>
 
-            <Text style={styles.paragraph}>
+            <Text style={[styles.paragraph, styles.paragraphNoMargin]}>
               Далее по тексту договора вышеуказанные компании совместно
               именуются как «Стороны», а по отдельности – «Сторона».
             </Text>
 
             {/* 1. ПРЕДМЕТ ДОГОВОРА */}
-            <Text style={styles.sectionTitle}>1. ПРЕДМЕТ ДОГОВОРА</Text>
+            <Text style={[styles.sectionTitle, { textAlign: "center" }]}>
+              1. ПРЕДМЕТ ДОГОВОРА
+            </Text>
 
             <Text style={styles.paragraph}>
               1.1. Заказчик поручает, а Исполнитель принимает на себя
@@ -86,12 +89,18 @@ export default function WorkerContract() {
             <Text style={styles.paragraph}>
               1.2. Исполнитель обязуется выполнять Работы своими силами и не
               вправе привлекать к выполнению Работ третьих лиц, за исключением
-              случаев, предварительно согласованных с Заказчиком. Во исполнение
-              данной обязанности Исполнителю придается статус Авторизованный
-              сервисный центр (АСЦ) Продукции GEFFEN. Исполнитель имеет право
-              именовать себя «Сервисный центр GEFFEN», а также давать
-              соответствующую рекламу. Недопустимо использовать марку GEFFEN в
-              качестве составной части названия Исполнителя.
+              случаев, предварительно согласованных с Заказчиком.
+            </Text>
+
+            <Text style={styles.paragraph}>
+              Во исполнение данной обязанности Исполнителю придается статус
+              Авторизованный сервисный центр (АСЦ) Продукции GEFFEN.
+            </Text>
+
+            <Text style={styles.paragraph}>
+              Исполнитель имеет право именовать себя «Сервисный центр GEFFEN», а
+              также давать соответствующую рекламу. Недопустимо использовать
+              марку GEFFEN в качестве составной части названия Исполнителя.
             </Text>
 
             <Text style={styles.paragraph}>
@@ -113,10 +122,14 @@ export default function WorkerContract() {
               2.1. При обращении потребителя к Исполнителю для выполнения Работ,
               Исполнитель обязан руководствоваться правилами и условиями
               предоставления гарантии на Продукцию, установленными
-              Изготовителем. Информация об этом содержится в паспорте котла,
-              передаваемом потребителю при продаже ему Продукции. В паспорте
-              котла также указан гарантийный срок, в течение которого должны
-              выполняться Работы.
+              Изготовителем.
+            </Text>
+
+            <Text style={styles.paragraph}>
+              Информация об этом содержится в паспорте котла, передаваемом
+              потребителю при продаже ему Продукции. В паспорте котла также
+              указан гарантийный срок, в течение которого должны выполняться
+              Работы.
             </Text>
 
             <Text style={styles.paragraph}>
@@ -300,7 +313,9 @@ export default function WorkerContract() {
               4.3. Возмещаемая Заказчиком стоимость запасных частей определяется
               на основании документа, подтверждающего расходы на их приобретение
               у уполномоченных Заказчиком на продажу запасных частей на
-              территории Российской Федерации третьих лиц.{"\n"}
+              территории Российской Федерации третьих лиц.
+            </Text>
+            <Text style={styles.paragraph}>
               Возмещаемая стоимость запасных частей не должна превышать
               розничную стоимость с учетом скидки, предусмотренной пунктом 3.2
               настоящего договора. В случае приобретения Исполнителем запасных
@@ -309,6 +324,7 @@ export default function WorkerContract() {
               3.2 настоящего договора), их стоимость в части такого превышения
               Заказчиком не возмещается.
             </Text>
+
             <Text style={styles.paragraph}>
               4.4. Заказчик вправе в любое время изменять скидку на запчасти,
               указанную в п. 3.2 настоящего Договора путем направления
@@ -375,7 +391,9 @@ export default function WorkerContract() {
               организации.
             </Text>
 
-            <Text style={styles.sectionTitle}>5. ОБЯЗАННОСТИ ЗАКАЗЧИКА</Text>
+            <Text style={[styles.sectionTitle, { marginTop: 27 }]}>
+              5. ОБЯЗАННОСТИ ЗАКАЗЧИКА
+            </Text>
             <Text style={styles.paragraph}>
               5.1. Заказчик обязуется организовать обучение сотрудников
               Исполнителя на лабораторной базе в г. Тула своими силами и за свой
@@ -561,46 +579,67 @@ export default function WorkerContract() {
               если Стороны в явной форме не договорятся об ином.
             </Text>
 
-            <Text style={styles.sectionTitle}>
-              12. АДРЕСА И РЕКВИЗИТЫ СТОРОН
-            </Text>
+            {/* Блок с реквизитами */}
+            <View style={styles.requisitesContainer}>
+              <Text style={styles.requisitesTitle}>
+                12. АДРЕСА И РЕКВИЗИТЫ СТОРОН
+              </Text>
 
-            {/* Блок с реквизитами Заказчика */}
-            <Text style={[styles.paragraph, { marginBottom: 2 }]}>
-              Заказчик:
-            </Text>
-            <Text style={styles.paragraph}>ООО «ГЕФФЕН»</Text>
-            <Text style={styles.paragraph}>
-              300004, г. Тула, ул. Щегловская засека, д. 31, 1 этаж, пом. 116
-            </Text>
-            <Text style={styles.paragraph}>ИНН 7105049609</Text>
-            <Text style={styles.paragraph}>КПП 710501001</Text>
-            <Text style={styles.paragraph}>р/с 40702810966000001077</Text>
-            <Text style={styles.paragraph}>
-              В банке ТУЛЬСКОЕ ОТДЕЛЕНИЕ №8604
-            </Text>
-            <Text style={styles.paragraph}>ПАО СБЕРБАНК</Text>
-            <Text style={styles.paragraph}>к/с 30101810300000000608</Text>
-            <Text style={styles.paragraph}>БИК 047003608</Text>
+              {/* Контейнер для двух колонок */}
+              <View style={styles.requisitesColumns}>
+                {/* Колонка Заказчика */}
+                <View style={styles.requisiteColumn}>
+                  <Text style={styles.requisiteText}>Заказчик:</Text>
+                  <Text style={styles.requisiteText}>ООО «ГЕФФЕН»</Text>
+                  <Text style={styles.requisiteText}>
+                    300004, г. Тула, ул. Щегловская засека, д. 31, 1 этаж, пом.
+                    116
+                  </Text>
+                  <Text style={styles.requisiteText}>ИНН 7105049609</Text>
+                  <Text style={styles.requisiteText}>КПП 710501001</Text>
+                  <Text style={styles.requisiteText}>
+                    р/с 40702810966000001077
+                  </Text>
+                  <Text style={styles.requisiteText}>
+                    В банке ТУЛЬСКОЕ ОТДЕЛЕНИЕ №8604
+                  </Text>
+                  <Text style={styles.requisiteText}>ПАО СБЕРБАНК</Text>
+                  <Text style={styles.requisiteText}>
+                    к/с 30101810300000000608
+                  </Text>
+                  <Text style={styles.requisiteText}>БИК 047003608</Text>
 
-            {/* Подпись и печать Заказчика */}
-            <Text style={styles.paragraph}>
-              Директор ООО «ГЕФФЕН»{"\n"}
-              /Орехов А.С./
-            </Text>
-            <Text style={styles.paragraph}>М.П.</Text>
+                  {/* Подпись и печать Заказчика */}
+                  <Text style={styles.requisiteText}>
+                    Директор ООО «ГЕФФЕН»
+                  </Text>
+                  <Text>_____________________/Орехов А.С./</Text>
+                  <Text style={styles.requisiteText}>М.П.</Text>
+                </View>
 
-            {/* Блок с реквизитами Исполнителя */}
-            <Text style={[styles.paragraph, { marginTop: 15 }]}>
-              Исполнитель:
-            </Text>
+                {/* Колонка Исполнителя */}
+                <View style={styles.requisiteColumn}>
+                  <Text style={styles.requisiteText}>Исполнитель:</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
+                  <Text style={styles.requisiteText}>{` `}</Text>
 
-            {/* Оставляем пустые строки для заполнения */}
-            <Text style={styles.paragraph}>{` `}</Text>
-            <Text style={styles.paragraph}>{` `}</Text>
-            <Text style={styles.paragraph}>{` `}</Text>
-            <Text style={styles.paragraph}>{` `}</Text>
-            <Text style={styles.paragraph}>М.П.</Text>
+                  {/* Подпись и печать Исполнителя */}
+                  <Text
+                    style={[styles.requisiteText, { marginTop: 7 }]}
+                  >{` `}</Text>
+                  <View style={styles.signatureLine}></View>
+                  <Text style={styles.requisiteText}>М.П.</Text>
+                </View>
+              </View>
+            </View>
           </Page>
           <Page size="A4" style={styles.page}>
             {/* Заголовок Приложения */}
@@ -677,6 +716,33 @@ export default function WorkerContract() {
             <View style={{ fontSize: 10 }}>
               <MyTable data={worksData} />
             </View>
+            <Text style={[styles.paragraph, styles.italic]}>
+              При необходимости выезда за черту города на расстояние более 100
+              км, стоимость работ дополнительно согласовывать с ООО «ГЕФФЕН».
+            </Text>
+            <View>
+              <Text style={styles.signatureHeader}>Подписи сторон</Text>
+              <View style={styles.signatureView}>
+                <View style={{ width: "35%" }}>
+                  <Text>Заказчик:</Text>
+                  <Text>ООО «ГЕФФЕН»</Text>
+                  <Text style={styles.signatureMargin}></Text>
+                  <View style={styles.signatureLine}></View>
+                  <Text>А.С. Орехов</Text>
+                  <Text>М.П.</Text>
+                </View>
+                <View style={{ width: "35%" }}>
+                  <Text>Исполнитель:</Text>
+                  <Text></Text>
+                  <Text style={styles.signatureMargin}></Text>
+                  <Text style={styles.signatureMarginTop}></Text>
+                  <View style={styles.signatureLine}></View>
+                  <Text style={styles.signatureMarginTop}></Text>
+                  <Text></Text>
+                  <Text>М.П.</Text>
+                </View>
+              </View>
+            </View>
           </Page>
         </Document>
       </PDFViewer>
@@ -726,16 +792,16 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
   },
   title: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
     textTransform: "uppercase",
-    marginBottom: 5,
+    //marginBottom: 5,
   },
   subHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 15,
+    //marginBottom: 15,
   },
   city: {
     fontSize: 12,
@@ -745,13 +811,16 @@ const styles = StyleSheet.create({
   },
   paragraph: {
     textAlign: "justify",
-    marginBottom: 10,
+    //marginBottom: 10,
+    lineHeight: 1.0,
+    textIndent: 25,
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: "bold",
-    marginTop: 10,
-    marginBottom: 5,
+    textAlign: "center",
+    //marginTop: 10,
+    //marginBottom: 5,
   },
   bulletItem: {
     marginLeft: 15,
@@ -799,6 +868,52 @@ const styles = StyleSheet.create({
     width: "100px",
     textAlign: "left",
   },
+  italic: {
+    fontStyle: "italic",
+    paddingTop: 10,
+    textIndent: 25,
+  },
+  signatureHeader: { textAlign: "center" },
+  signatureView: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  signatureMargin: { marginTop: 35 },
+  signatureMarginTop: { marginTop: 18 },
+  signatureLine: {
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    marginBottom: 5,
+  },
+  paragraphNoMargin: {
+    marginTop: 0,
+    paddingTop: 0,
+    marginBottom: 0,
+    paddingBottom: 0,
+  },
+  requisitesContainer: {
+    marginTop: 10,
+  },
+  requisitesTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  requisitesColumns: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  requisiteColumn: {
+    width: "45%",
+  },
+  requisiteText: {
+    fontSize: 12,
+    lineHeight: 1.0,
+    marginBottom: 5,
+  },
 });
 
 Font.register({
@@ -811,6 +926,10 @@ Font.register({
     {
       src: RobotoBold,
       fontWeight: "bold",
+    },
+    {
+      src: RobotoItalic,
+      fontStyle: "italic",
     },
   ],
 });
