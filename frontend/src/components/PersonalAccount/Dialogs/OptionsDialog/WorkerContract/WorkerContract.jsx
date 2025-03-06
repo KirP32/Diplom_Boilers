@@ -1,9 +1,9 @@
+/* eslint-disable react/prop-types */
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import { PDFViewer } from "@react-pdf/renderer";
 import { Font } from "@react-pdf/renderer";
 import RobotoRegular from "../../../../../fonts/Roboto-Regular.ttf";
 import RobotoBold from "../../../../../fonts/Roboto-Bold.ttf";
-import { Table, TR, TH, TD } from "@ag-media/react-pdf-table";
 
 const worksData = [
   { no: 1, name: "Замена электрода розжига и ионизации", cost: "1 500,00" },
@@ -674,19 +674,47 @@ export default function WorkerContract() {
               к Договору № -АСЦ от « » 2024 г.
             </Text>
             <Text style={styles.subTitle}>Стоимость работ</Text>
-            <Table>
-              <TH>
-                <TD>№ п/п</TD>
-                <TD>Наименование работ</TD>
-                <TD>Стоимость работ</TD>
-              </TH>
-            </Table>
+            <View style={{ fontSize: 10 }}>
+              <MyTable data={worksData} />
+            </View>
           </Page>
         </Document>
       </PDFViewer>
     </div>
   );
 }
+
+const MyTable = ({ data }) => (
+  <View style={styles.table}>
+    {/* Заголовок таблицы */}
+    <View style={styles.tableRow}>
+      <Text
+        style={[styles.tableColHeader, styles.colSmall, styles.alignCenter]}
+      >
+        № п/п
+      </Text>
+      <Text
+        style={[styles.tableColHeader, styles.colLarge, styles.alignCenter]}
+      >
+        Наименование работ
+      </Text>
+      <Text
+        style={[styles.tableColHeader, styles.colMedium, styles.alignCenter]}
+      >
+        Стоимость
+      </Text>
+    </View>
+
+    {/* Динамическое заполнение строк */}
+    {data.map((item, index) => (
+      <View style={styles.tableRow} key={index}>
+        <Text style={[styles.tableCol, styles.colSmall]}>{index + 1}</Text>
+        <Text style={[styles.tableCol, styles.colLarge]}>{item.name}</Text>
+        <Text style={[styles.tableCol, styles.colMedium]}>{item.cost} ₽</Text>
+      </View>
+    ))}
+  </View>
+);
 
 const styles = StyleSheet.create({
   page: {
@@ -731,6 +759,45 @@ const styles = StyleSheet.create({
   },
   subTitle: {
     textAlign: "center",
+  },
+  table: {
+    display: "table",
+    width: "auto",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+  },
+  tableRow: {
+    flexDirection: "row",
+  },
+  tableColHeader: {
+    width: "33.33%",
+    borderStyle: "solid",
+    borderBottomWidth: 1,
+    backgroundColor: "#f2f2f2",
+    fontWeight: "bold",
+    borderRight: 1,
+    paddingTop: 7,
+  },
+  tableCol: {
+    width: "33.33%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: "7px 0px 0px 5px",
+  },
+  colSmall: {
+    width: "50px",
+  },
+  colLarge: {
+    flexGrow: 1,
+  },
+  alignCenter: { textAlign: "center" },
+  colMedium: {
+    width: "100px",
+    textAlign: "left",
   },
 });
 
