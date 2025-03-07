@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
-import { jwtDecode } from "jwt-decode";
 import { useEffect, createContext, useState } from "react";
+import $api from "./http";
 
 const ThemeContext = createContext();
 
@@ -14,22 +14,21 @@ const getTheme = () => {
   }
 };
 
-const getAccessLevel = () => {
-  try {
-    const token =
-      localStorage.getItem("accessToken") ||
-      sessionStorage.getItem("accessToken");
-    if (!token) return 0;
-    return jwtDecode(token)?.access_level || 0;
-  } catch (error) {
-    console.error("Token decode error:", error);
-    return 0;
-  }
-};
-
 const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(getTheme);
-  const [access_level, setAccesslevel] = useState(getAccessLevel());
+  const [access_level, setAccesslevel] = useState(0);
+
+  useEffect(() => {
+    $api
+      .get("/getUserAccessLevel")
+      .then((result) => {
+        setAccesslevel(result.data.accesslevel);
+      })
+      .catch((error) => {
+        console.error(error);
+        setAccesslevel(0);
+      });
+  }, []);
 
   function refreshAccess(access_level) {
     setAccesslevel(access_level);

@@ -1725,6 +1725,22 @@ class DataController {
       });
     }
   }
+  async getUserAccessLevel(req, res) {
+    try {
+      const user_id = decodeJWT(req.cookies.refreshToken).login;
+      const response = await pool.query(
+        "SELECT access_level FROM users WHERE username = $1",
+        [user_id]
+      );
+      if (response.rowCount > 0) {
+        return res.send({ accesslevel: response.rows[0].access_level });
+      } else {
+        return res.sendStatus(500);
+      }
+    } catch (error) {
+      return res.status(500).send({ message: error });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

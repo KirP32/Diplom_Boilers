@@ -49,6 +49,11 @@ router.get(
   DataController.getRequestColumnsData
 );
 router.get("/getFreeName", checkCookie, DataController.getFreeName);
+router.get(
+  "/getUserAccessLevel",
+  checkCookie,
+  DataController.getUserAccessLevel
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
