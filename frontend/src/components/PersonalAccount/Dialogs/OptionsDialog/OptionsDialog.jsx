@@ -79,12 +79,18 @@ export default function OptionsDialog({ open, user, setOptions }) {
           {user.user_name}
         </span>
 
-        <DownloadIcon
-          style={{ alignSelf: "center", marginLeft: "auto", cursor: "pointer" }}
-          onClick={() => {
-            navigate("/work_contract");
-          }}
-        />
+        {access_level === 1 && (
+          <DownloadIcon
+            style={{
+              alignSelf: "center",
+              marginLeft: "auto",
+              cursor: "pointer",
+            }}
+            onClick={() => {
+              navigate("/work_contract");
+            }}
+          />
+        )}
       </DialogTitle>
       <DialogContent>
         {userData ? (

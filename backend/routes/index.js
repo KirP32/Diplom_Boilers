@@ -78,6 +78,7 @@ router.post(
 );
 router.post("/createSystem", checkCookie, DataController.createSystem);
 router.post("/setNewWorker", checkCookie, DataController.setNewWorker);
+router.post("/addRowData", checkCookie, DataController.addRowData);
 
 router.delete(
   "/delete_device/:device_uid",
@@ -100,6 +101,11 @@ router.delete(
   checkCookie,
   DataController.deleteDatabaseColumn
 );
+router.delete(
+  `/deleteRowData/:rowToDelete/:tableName`,
+  checkCookie,
+  DataController.handleDeleteRow
+);
 
 router.put("/off_esp", checkCookie, DataController.off_esp);
 router.put("/updateUser", checkCookie, DataController.updateUser);
@@ -109,5 +115,6 @@ router.put(
   checkCookie,
   DataController.updateRequestColumn
 );
+router.put("/updateRowData", checkCookie, DataController.updateRowData);
 
 module.exports = router;

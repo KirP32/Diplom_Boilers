@@ -1201,6 +1201,9 @@ class DataController {
       const result_work_in_progress = await pool.query(
         `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'work_in_progress_stage';`
       );
+      const result_services = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'services';`
+      );
 
       if (
         result_workers.rowCount > 0 &&
@@ -1218,6 +1221,7 @@ class DataController {
           materials_stage: result_materials.rows,
           in_transit_stage: result_in_transit.rows,
           work_in_progress_stage: result_work_in_progress.rows,
+          services_and_prices: result_services.rows,
         });
       }
       return res.sendStatus(400);
@@ -1412,14 +1416,25 @@ class DataController {
         `SELECT * FROM user_requests_info;`
       );
       const result_materials = await pool.query(
-        `SELECT * FROM materials_stage`
+        `SELECT * FROM materials_stage;`
       );
       const result_in_transit_stage = await pool.query(
-        `SELECT * FROM in_transit_stage`
+        `SELECT * FROM in_transit_stage;`
       );
       const result_work_in_progress_stage = await pool.query(
-        `SELECT * FROM work_in_progress_stage`
+        `SELECT * FROM work_in_progress_stage;`
       );
+
+      const result_services_and_prices = await pool.query(`
+        SELECT s.id AS service_id, 
+               s.name AS service_name, 
+               s.description, 
+               sp.region, 
+               sp.price
+        FROM services s
+        JOIN service_prices sp ON s.id = sp.service_id;
+      `);
+
       if (
         result_workers.rowCount > 0 &&
         result_users.rowCount > 0 &&
@@ -1436,6 +1451,7 @@ class DataController {
           materials_stage: result_materials.rows,
           in_transit_stage: result_in_transit_stage.rows,
           work_in_progress_stage: result_work_in_progress_stage.rows,
+          services_and_prices: result_services_and_prices.rows,
         });
       }
       return res.sendStatus(400);
@@ -1443,6 +1459,7 @@ class DataController {
       res.status(400).send(error);
     }
   }
+
   async getFullRequest(req, res) {
     try {
       const { id } = req.params;
@@ -1740,6 +1757,24 @@ class DataController {
     } catch (error) {
       return res.status(500).send({ message: error });
     }
+  }
+  async updateRowData(req, res) {
+    try {
+      const { tableName, rowId, rowData } = req.body;
+      console.log(tableName, rowId, rowData);
+    } catch (error) {}
+  }
+  async handleDeleteRow(req, res) {
+    try {
+      const { rowToDelete, tableName } = req.params;
+      console.log(rowToDelete, tableName, rowData);
+    } catch (error) {}
+  }
+  async addRowData(req, res) {
+    try {
+      const { tableName, rowData } = req.body;
+      console.log(tableName, rowData);
+    } catch (error) {}
   }
 }
 async function updateToken(login, refreshToken, UUID4) {
