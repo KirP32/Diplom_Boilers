@@ -2,12 +2,14 @@
 import { useEffect, useState } from "react";
 import $api from "../../../http";
 import logout from "../../Logout/logout";
+import region_data from "./russian_regions_codes.json";
 
 import {
   IconButton,
   Paper,
   Table,
   TableBody,
+  Snackbar,
   TableCell,
   TableContainer,
   TableHead,
@@ -19,6 +21,7 @@ import {
   FormControl,
   InputLabel,
   Button,
+  Alert,
   Autocomplete,
 } from "@mui/material";
 import { Edit, Delete, Add, Check } from "@mui/icons-material";
@@ -49,12 +52,11 @@ export default function DataBaseUsers() {
   const [isAddingRow, setIsAddingRow] = useState(false);
   const [newRowData, setNewRowData] = useState({});
 
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   // Массив с вариантами регионов. 71 – Тульская область,
-  const regionOptions = [
-    { code: 71, name: "Тульская область" },
-    { code: 50, name: "Московская область" },
-    { code: 30, name: "Что-то ещё" },
-  ];
+  const regionOptions = region_data;
 
   const tableMapping = {
     user_details: "user_details",
@@ -71,9 +73,11 @@ export default function DataBaseUsers() {
   const [filters, setFilters] = useState({});
 
   const handleFilterChange = (colKey, value) => {
+    // обрезаем строку чтобы не было лишних пробелов
+    const trimed_value = value.trim();
     setFilters((prevFilters) => ({
       ...prevFilters,
-      [colKey]: value,
+      [colKey]: trimed_value,
     }));
   };
 
@@ -268,9 +272,7 @@ export default function DataBaseUsers() {
     const rowToUpdate = editedRowData;
     $api
       .put("/updateRowData", {
-        tableName,
-        rowId: rowToUpdate.id,
-        rowData: rowToUpdate,
+        ...rowToUpdate,
       })
       .then(() => {
         const updatedRows = [...columnsData[tableName]];
@@ -281,6 +283,8 @@ export default function DataBaseUsers() {
       })
       .catch((error) => {
         console.error("Ошибка обновления записи:", error);
+        setErrorMessage("Ошибка обновления записи:", error);
+        setSnackbarOpen(true);
         if (
           error.status === 401 &&
           localStorage.getItem("stay_logged") === "false"
@@ -292,8 +296,11 @@ export default function DataBaseUsers() {
 
   const handleDeleteRow = (rowIndex) => {
     const rowToDelete = columnsData[tableName][rowIndex];
+
     $api
-      .delete(`/deleteRowData/${rowToDelete.id}/${tableName}`)
+      .delete(
+        `/deleteRowData/${rowToDelete.service_id}/${rowToDelete.service_name}`
+      )
       .then(() => {
         const updatedRows = columnsData[tableName].filter(
           (_, i) => i !== rowIndex
@@ -302,6 +309,8 @@ export default function DataBaseUsers() {
       })
       .catch((error) => {
         console.error("Ошибка удаления записи:", error);
+        setErrorMessage("Ошибка удаления записи: ", error);
+        setSnackbarOpen(true);
         if (
           error.status === 401 &&
           localStorage.getItem("stay_logged") === "false"
@@ -338,6 +347,10 @@ export default function DataBaseUsers() {
       })
       .catch((error) => {
         console.error("Ошибка добавления записи:", error);
+        setErrorMessage(
+          "Сервер недоступен ИЛИ такая услуга и регион уже существуют "
+        );
+        setSnackbarOpen(true);
         if (
           error.status === 401 &&
           localStorage.getItem("stay_logged") === "false"
@@ -358,7 +371,12 @@ export default function DataBaseUsers() {
         }}
       >
         <section
-          style={{ display: "flex", gap: "25px", paddingBottom: "15px" }}
+          style={{
+            display: "flex",
+            gap: "25px",
+            paddingBottom: "15px",
+            alignItems: "center",
+          }}
         >
           <Typography variant="h5" className={styles.data_table__header}>
             Таблица
@@ -577,7 +595,7 @@ export default function DataBaseUsers() {
               <Typography
                 variant="h5"
                 className={styles.data_table__header}
-                sx={{ pt: 2 }}
+                sx={{ pt: 2, textAlign: "center" }}
               >
                 Данные таблицы {tableName}
               </Typography>
@@ -613,89 +631,113 @@ export default function DataBaseUsers() {
                       )}
                     </TableRow>
                     <TableRow>
-                      {Object.keys(columnsData[tableName][0]).map((colKey) => (
-                        <TableCell key={`filter-${colKey}`}>
-                          {colKey === "region" ? (
-                            <Autocomplete
-                              options={regionOptions}
-                              getOptionLabel={(option) => option.name}
-                              value={
-                                regionOptions.find(
-                                  (opt) => opt.name === filters[colKey]
-                                ) || null
-                              }
-                              onChange={(event, newValue) =>
-                                handleFilterChange(
-                                  colKey,
-                                  newValue ? newValue.name : ""
-                                )
-                              }
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  size="small"
-                                  placeholder="Фильтр"
-                                />
-                              )}
-                            />
-                          ) : (
-                            <TextField
-                              value={filters[colKey] || ""}
-                              onChange={(e) =>
-                                handleFilterChange(colKey, e.target.value)
-                              }
-                              size="small"
-                              placeholder="Фильтр"
-                            />
-                          )}
-                        </TableCell>
-                      ))}
-                      {tableName === "services_and_prices" && <TableCell />}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {isAddingRow && tableName === "services_and_prices" && (
-                      <TableRow>
-                        {Object.keys(newRowData).map((colKey) => (
-                          <TableCell key={colKey}>
+                      {/* Это фильтры ! Input*/}
+                      {Object.keys(columnsData[tableName][0]).map((colKey) => {
+                        if (colKey === "service_id") {
+                          return <TableCell key={`filter-${colKey}`} />;
+                        }
+                        return (
+                          <TableCell key={`filter-${colKey}`}>
                             {colKey === "region" ? (
                               <Autocomplete
                                 options={regionOptions}
                                 getOptionLabel={(option) => option.name}
                                 value={
                                   regionOptions.find(
-                                    (opt) =>
-                                      opt.code === Number(newRowData[colKey])
+                                    (opt) => opt.name === filters[colKey]
                                   ) || null
                                 }
                                 onChange={(event, newValue) =>
-                                  setNewRowData((prev) => ({
-                                    ...prev,
-                                    [colKey]: newValue ? newValue.code : "",
-                                  }))
+                                  handleFilterChange(
+                                    colKey,
+                                    newValue ? newValue.name : ""
+                                  )
                                 }
                                 renderInput={(params) => (
                                   <TextField
                                     {...params}
                                     size="small"
-                                    label="Регион"
+                                    placeholder="Фильтр"
                                   />
                                 )}
                               />
                             ) : (
                               <TextField
-                                value={newRowData[colKey]}
+                                value={filters[colKey] || ""}
                                 onChange={(e) =>
-                                  setNewRowData((prev) => ({
-                                    ...prev,
-                                    [colKey]: e.target.value,
-                                  }))
+                                  handleFilterChange(colKey, e.target.value)
                                 }
                                 size="small"
+                                placeholder="Фильтр"
                               />
                             )}
                           </TableCell>
-                        ))}
+                        );
+                      })}
+                      {tableName === "services_and_prices" && <TableCell />}
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {isAddingRow && tableName === "services_and_prices" && (
+                      <TableRow>
+                        {Object.keys(newRowData).map((colKey) => {
+                          if (colKey === "service_id" || colKey === "spid") {
+                            return <TableCell key={colKey} />;
+                          }
+                          return (
+                            <TableCell key={colKey}>
+                              {colKey === "region" ? (
+                                <Autocomplete
+                                  options={regionOptions}
+                                  getOptionLabel={(option) => option.name}
+                                  value={
+                                    regionOptions.find(
+                                      (opt) =>
+                                        opt.code === Number(newRowData[colKey])
+                                    ) || null
+                                  }
+                                  onChange={(event, newValue) =>
+                                    setNewRowData((prev) => ({
+                                      ...prev,
+                                      [colKey]: newValue ? newValue.code : "",
+                                    }))
+                                  }
+                                  renderInput={(params) => (
+                                    <TextField
+                                      {...params}
+                                      size="small"
+                                      label="Регион"
+                                    />
+                                  )}
+                                />
+                              ) : (
+                                <TextField
+                                  value={newRowData[colKey]}
+                                  onChange={(e) =>
+                                    setNewRowData((prev) => ({
+                                      ...prev,
+                                      [colKey]:
+                                        colKey === "service_name"
+                                          ? e.target.value
+                                          : e.target.value,
+                                    }))
+                                  }
+                                  onBlur={(e) =>
+                                    setNewRowData((prev) => ({
+                                      ...prev,
+                                      [colKey]:
+                                        colKey === "service_name"
+                                          ? e.target.value
+                                          : e.target.value,
+                                    }))
+                                  }
+                                  size="small"
+                                />
+                              )}
+                            </TableCell>
+                          );
+                        })}
                         <TableCell align="right">
                           <IconButton
                             color="success"
@@ -711,8 +753,10 @@ export default function DataBaseUsers() {
                       <TableRow key={row.id || rowIndex}>
                         {Object.keys(row).map((colKey) => (
                           <TableCell key={colKey}>
-                            {editingRowIndex === rowIndex &&
-                            tableName === "services_and_prices" ? (
+                            {colKey === "service_id" || colKey === "spid" ? (
+                              <TableCell>{row[colKey]}</TableCell>
+                            ) : editingRowIndex === rowIndex &&
+                              tableName === "services_and_prices" ? (
                               colKey === "region" ? (
                                 <Autocomplete
                                   options={regionOptions}
@@ -747,6 +791,12 @@ export default function DataBaseUsers() {
                                       [colKey]: e.target.value,
                                     }))
                                   }
+                                  onBlur={(e) =>
+                                    setEditedRowData((prev) => ({
+                                      ...prev,
+                                      [colKey]: e.target.value,
+                                    }))
+                                  }
                                   size="small"
                                 />
                               )
@@ -756,9 +806,9 @@ export default function DataBaseUsers() {
                               )?.name || row[colKey]
                             ) : typeof row[colKey] === "boolean" ? (
                               row[colKey] ? (
-                                "Да"
+                                "true"
                               ) : (
-                                "Нет"
+                                "false"
                               )
                             ) : (
                               row[colKey]
@@ -798,6 +848,16 @@ export default function DataBaseUsers() {
                 </Table>
               </TableContainer>
             </Paper>
+            <Snackbar
+              open={snackbarOpen}
+              autoHideDuration={4000}
+              onClose={() => setSnackbarOpen(false)}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+              <Alert severity="error" onClose={() => setSnackbarOpen(false)}>
+                {errorMessage}
+              </Alert>
+            </Snackbar>
           </>
         )}
     </div>

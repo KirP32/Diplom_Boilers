@@ -181,57 +181,61 @@ class DataController {
     const { login, password, email, access_level } = req.body;
     const hash = bcrypt.hashSync(password);
     const authcookie = req.headers["accesstoken"];
+    const client = await pool.connect();
 
     try {
-      await pool.query("BEGIN");
+      await client.query("BEGIN");
 
-      const userResult = await pool.query(
-        "INSERT INTO users (username, phone_number, password_hash, access_level, email) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      const userResult = await client.query(
+        "INSERT INTO users (username, phone_number, password_hash, access_level, email) VALUES ($1, $2, $3, $4, $5) RETURNING id",
         [login, "123456789", hash, access_level, email]
       );
 
-      if (userResult.rowCount > 0) {
-        let tableName = "";
-        switch (parseInt(access_level)) {
-          case 0:
-            tableName = "user_details";
-            break;
-          case 1:
-            tableName = "worker_details";
-            break;
-          case 2:
-            tableName = "cgs_details";
-            break;
-          case 3:
-            tableName = "gef_details";
-            break;
-          default:
-            await pool.query("ROLLBACK");
-            return res.status(400).send("Некорректный уровень доступа");
-        }
-
-        await pool.query(`INSERT INTO ${tableName} (username) VALUES ($1)`, [
-          login,
-        ]);
-
-        const data = {
-          user_id: await getID(decodeJWT(authcookie).login),
-          action: "Добавлен пользователь",
-          time: new Date(),
-          subject_id: await getID(login),
-        };
-        await log_history(data);
-
-        await pool.query("COMMIT");
-        res.send("OK");
-      } else {
-        await pool.query("ROLLBACK");
-        res.sendStatus(500);
+      if (userResult.rowCount === 0) {
+        throw new Error("Ошибка при добавлении пользователя");
       }
+
+      const userId = userResult.rows[0].id;
+      let tableName = "";
+
+      switch (parseInt(access_level)) {
+        case 0:
+          tableName = "user_details";
+          break;
+        case 1:
+          tableName = "worker_details";
+          break;
+        case 2:
+          tableName = "cgs_details";
+          break;
+        case 3:
+          tableName = "gef_details";
+          break;
+        default:
+          throw new Error("Некорректный уровень доступа");
+      }
+
+      await client.query(`INSERT INTO ${tableName} (username) VALUES ($1)`, [
+        login,
+      ]);
+
+      const data = {
+        user_id: await getID(decodeJWT(authcookie).login),
+        action: "Добавлен пользователь",
+        time: new Date(),
+        subject_id: userId,
+      };
+
+      await log_history(data);
+
+      await client.query("COMMIT");
+      res.send("OK");
     } catch (error) {
-      await pool.query("ROLLBACK");
+      await client.query("ROLLBACK");
       console.error("Ошибка при регистрации:", error);
-      res.sendStatus(500);
+      res.status(500).send({ message: error.message });
+    } finally {
+      client.release();
     }
   }
 
@@ -1430,7 +1434,8 @@ class DataController {
                s.name AS service_name, 
                s.description, 
                sp.region, 
-               sp.price
+               sp.price,
+               sp.id as spID
         FROM services s
         JOIN service_prices sp ON s.id = sp.service_id;
       `);
@@ -1760,21 +1765,110 @@ class DataController {
   }
   async updateRowData(req, res) {
     try {
-      const { tableName, rowId, rowData } = req.body;
-      console.log(tableName, rowId, rowData);
-    } catch (error) {}
+      const { service_id, service_name, region, description, price, spid } =
+        req.body;
+
+      await pool.query(
+        "UPDATE services SET name = $1, description = $2 WHERE id = $3",
+        [service_name, description, service_id]
+      );
+
+      await pool.query(
+        "UPDATE service_prices SET region = $1, price = $2 WHERE id = $3",
+        [region, price, spid]
+      );
+
+      res.status(200).json({ message: "Данные успешно обновлены" });
+    } catch (error) {
+      console.error("Ошибка при обновлении данных:", error);
+      res.status(500).json({ error: "Ошибка сервера" });
+    }
   }
+
   async handleDeleteRow(req, res) {
     try {
-      const { rowToDelete, tableName } = req.params;
-      console.log(rowToDelete, tableName, rowData);
-    } catch (error) {}
+      const { rowToDelete: service_id, serviceName: service_name } = req.params;
+
+      await pool.query("DELETE FROM service_prices WHERE service_id = $1", [
+        service_id,
+      ]);
+
+      const result = await pool.query("DELETE FROM services WHERE id = $1", [
+        service_id,
+      ]);
+
+      if (result.rowCount > 0) {
+        res.send({ message: "Услуга успешно удалена" });
+      } else {
+        res.status(404).send({ message: "Услуга не найдена" });
+      }
+    } catch (error) {
+      console.error("Ошибка при удалении записи:", error);
+      res.status(500).send({ message: "Ошибка сервера" });
+    }
   }
+
   async addRowData(req, res) {
+    const client = await pool.connect();
     try {
       const { tableName, rowData } = req.body;
-      console.log(tableName, rowData);
-    } catch (error) {}
+      let id = null;
+
+      await client.query("BEGIN");
+
+      const existingService = await client.query(
+        "SELECT id FROM services WHERE name = $1",
+        [rowData.service_name]
+      );
+
+      if (existingService.rowCount > 0) {
+        id = existingService.rows[0].id;
+      } else {
+        const newRow = await client.query(
+          "INSERT INTO services (name, description) VALUES ($1, $2) RETURNING id",
+          [rowData.service_name, rowData.description]
+        );
+
+        if (newRow.rowCount === 0) {
+          throw new Error("Ошибка при добавлении услуги");
+        }
+
+        id = newRow.rows[0].id;
+      }
+
+      const duplicateCheck = await client.query(
+        "SELECT 1 FROM service_prices WHERE service_id = $1 AND region = $2",
+        [id, rowData.region]
+      );
+
+      if (duplicateCheck.rowCount > 0) {
+        throw new Error(
+          "Такая запись с данным service_id и region уже существует"
+        );
+      }
+
+      const result = await client.query(
+        "INSERT INTO service_prices (service_id, region, price) VALUES ($1, $2, $3)",
+        [id, rowData.region, rowData.price]
+      );
+
+      if (result.rowCount === 0) {
+        throw new Error("Ошибка при добавлении цены для услуги");
+      }
+
+      await client.query("COMMIT");
+
+      return res.send({
+        message: "OK",
+        service_id: id,
+        newRow: { ...rowData, service_id: id },
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      return res.status(500).send({ message: error.message });
+    } finally {
+      client.release();
+    }
   }
 }
 async function updateToken(login, refreshToken, UUID4) {
