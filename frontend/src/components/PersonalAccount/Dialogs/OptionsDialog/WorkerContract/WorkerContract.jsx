@@ -6,7 +6,8 @@ import RobotoRegular from "../../../../../fonts/Roboto-Regular.ttf";
 import RobotoBold from "../../../../../fonts/Roboto-Bold.ttf";
 import RobotoItalic from "../../../../../fonts/Roboto-Italic.ttf";
 import { LoadingSpinner } from "./../../../../LoadingSpinner/LoadingSpinner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import $api from "../../../../../http";
 
 const worksData = [
   { no: 1, name: "Замена электрода розжига и ионизации", cost: "1 500,00" },
@@ -36,11 +37,25 @@ const worksData = [
     cost: "2 500,00",
   },
 ];
+const date = new Date();
+const day = date.getDate();
+const month = date.getMonth();
+const year = date.getFullYear();
+console.log(day, month, year);
+
 export default function WorkerContract() {
   const [isLoading, setIsLoading] = useState(true);
   function handleOnLoad() {
     setIsLoading(false);
   }
+  useEffect(() => {
+    $api
+      .get("/getWorkerInfo")
+      .then((result) => {})
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
   return (
     <>
       {isLoading && <LoadingSpinner />}

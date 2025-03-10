@@ -360,6 +360,11 @@ export default function DataBaseUsers() {
       });
   };
 
+  console.log("columnsData", columnsData);
+  console.log("tableName", tableName);
+  console.log("columnsData[tableName]", columnsData[tableName]);
+  console.log("columnsData[tableName].length", columnsData[tableName]?.length);
+
   return (
     <div className={styles.data_table__wrapper} style={{ overflowY: "auto" }}>
       <div
@@ -580,286 +585,280 @@ export default function DataBaseUsers() {
         </Button>
       </div>
 
-      {columnsData &&
-        columnsData[tableName] &&
-        columnsData[tableName].length > 0 && (
-          <>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginTop: "20px",
-              }}
+      {columnsData && (
+        <>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "20px",
+            }}
+          >
+            <Typography
+              variant="h5"
+              className={styles.data_table__header}
+              sx={{ pt: 2, textAlign: "center" }}
             >
-              <Typography
-                variant="h5"
-                className={styles.data_table__header}
-                sx={{ pt: 2, textAlign: "center" }}
-              >
-                Данные таблицы {tableName}
-              </Typography>
-              {tableName === "services_and_prices" && (
-                <IconButton color="success" onClick={handleAddRow}>
-                  <Add />
-                </IconButton>
-              )}
-            </div>
-            <Paper
-              sx={{
-                maxWidth: "100%",
-                minWidth: "200px",
-                mx: "auto",
-                overflow: "hidden",
-              }}
+              Данные таблицы {tableName}
+            </Typography>
+            {tableName === "services_and_prices" && (
+              <IconButton color="success" onClick={handleAddRow}>
+                <Add />
+              </IconButton>
+            )}
+          </div>
+          <Paper
+            sx={{
+              maxWidth: "100%",
+              minWidth: "200px",
+              mx: "auto",
+              overflow: "hidden",
+            }}
+          >
+            <TableContainer
+              sx={{ maxHeight: 440, overflowX: "auto", width: "100%" }}
             >
-              <TableContainer
-                sx={{ maxHeight: 440, overflowX: "auto", width: "100%" }}
-              >
-                <Table stickyHeader aria-label="sticky table">
-                  <TableHead>
-                    <TableRow>
-                      {Object.keys(columnsData[tableName][0]).map((colKey) => (
-                        <TableCell key={colKey}>
-                          <strong>{colKey}</strong>
+              <Table stickyHeader aria-label="sticky table">
+                <TableHead>
+                  <TableRow>
+                    {Object.keys(columnsData[tableName][0]).map((colKey) => (
+                      <TableCell key={colKey}>
+                        <strong>{colKey}</strong>
+                      </TableCell>
+                    ))}
+                    {tableName === "services_and_prices" && (
+                      <TableCell align="right">
+                        <strong>Действия</strong>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                  <TableRow>
+                    {/* Это фильтры ! Input*/}
+                    {Object.keys(columnsData[tableName][0]).map((colKey) => {
+                      if (colKey === "service_id") {
+                        return <TableCell key={`filter-${colKey}`} />;
+                      }
+                      return (
+                        <TableCell key={`filter-${colKey}`}>
+                          {colKey === "region" ? (
+                            <Autocomplete
+                              options={regionOptions}
+                              getOptionLabel={(option) => option.name}
+                              value={
+                                regionOptions.find(
+                                  (opt) => opt.name === filters[colKey]
+                                ) || null
+                              }
+                              onChange={(event, newValue) =>
+                                handleFilterChange(
+                                  colKey,
+                                  newValue ? newValue.name : ""
+                                )
+                              }
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  size="small"
+                                  placeholder="Фильтр"
+                                />
+                              )}
+                            />
+                          ) : (
+                            <TextField
+                              value={filters[colKey] || ""}
+                              onChange={(e) =>
+                                handleFilterChange(colKey, e.target.value)
+                              }
+                              size="small"
+                              placeholder="Фильтр"
+                            />
+                          )}
                         </TableCell>
-                      ))}
-                      {tableName === "services_and_prices" && (
-                        <TableCell align="right">
-                          <strong>Действия</strong>
-                        </TableCell>
-                      )}
-                    </TableRow>
+                      );
+                    })}
+                    {tableName === "services_and_prices" && <TableCell />}
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {isAddingRow && tableName === "services_and_prices" && (
                     <TableRow>
-                      {/* Это фильтры ! Input*/}
-                      {Object.keys(columnsData[tableName][0]).map((colKey) => {
-                        if (colKey === "service_id") {
-                          return <TableCell key={`filter-${colKey}`} />;
+                      {Object.keys(newRowData).map((colKey) => {
+                        if (colKey === "service_id" || colKey === "spid") {
+                          return <TableCell key={colKey} />;
                         }
                         return (
-                          <TableCell key={`filter-${colKey}`}>
+                          <TableCell key={colKey}>
                             {colKey === "region" ? (
                               <Autocomplete
                                 options={regionOptions}
                                 getOptionLabel={(option) => option.name}
                                 value={
                                   regionOptions.find(
-                                    (opt) => opt.name === filters[colKey]
+                                    (opt) =>
+                                      opt.code === Number(newRowData[colKey])
                                   ) || null
                                 }
                                 onChange={(event, newValue) =>
-                                  handleFilterChange(
-                                    colKey,
-                                    newValue ? newValue.name : ""
-                                  )
+                                  setNewRowData((prev) => ({
+                                    ...prev,
+                                    [colKey]: newValue ? newValue.code : "",
+                                  }))
                                 }
                                 renderInput={(params) => (
                                   <TextField
                                     {...params}
                                     size="small"
-                                    placeholder="Фильтр"
+                                    label="Регион"
                                   />
                                 )}
                               />
                             ) : (
                               <TextField
-                                value={filters[colKey] || ""}
+                                value={newRowData[colKey]}
                                 onChange={(e) =>
-                                  handleFilterChange(colKey, e.target.value)
+                                  setNewRowData((prev) => ({
+                                    ...prev,
+                                    [colKey]:
+                                      colKey === "service_name"
+                                        ? e.target.value
+                                        : e.target.value,
+                                  }))
+                                }
+                                onBlur={(e) =>
+                                  setNewRowData((prev) => ({
+                                    ...prev,
+                                    [colKey]:
+                                      colKey === "service_name"
+                                        ? e.target.value
+                                        : e.target.value,
+                                  }))
                                 }
                                 size="small"
-                                placeholder="Фильтр"
                               />
                             )}
                           </TableCell>
                         );
                       })}
-                      {tableName === "services_and_prices" && <TableCell />}
+                      <TableCell align="right">
+                        <IconButton color="success" onClick={handleAddRowSave}>
+                          <Check />
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
+                  )}
 
-                  <TableBody>
-                    {isAddingRow && tableName === "services_and_prices" && (
-                      <TableRow>
-                        {Object.keys(newRowData).map((colKey) => {
-                          if (colKey === "service_id" || colKey === "spid") {
-                            return <TableCell key={colKey} />;
-                          }
-                          return (
-                            <TableCell key={colKey}>
-                              {colKey === "region" ? (
-                                <Autocomplete
-                                  options={regionOptions}
-                                  getOptionLabel={(option) => option.name}
-                                  value={
-                                    regionOptions.find(
-                                      (opt) =>
-                                        opt.code === Number(newRowData[colKey])
-                                    ) || null
-                                  }
-                                  onChange={(event, newValue) =>
-                                    setNewRowData((prev) => ({
-                                      ...prev,
-                                      [colKey]: newValue ? newValue.code : "",
-                                    }))
-                                  }
-                                  renderInput={(params) => (
-                                    <TextField
-                                      {...params}
-                                      size="small"
-                                      label="Регион"
-                                    />
-                                  )}
-                                />
-                              ) : (
-                                <TextField
-                                  value={newRowData[colKey]}
-                                  onChange={(e) =>
-                                    setNewRowData((prev) => ({
-                                      ...prev,
-                                      [colKey]:
-                                        colKey === "service_name"
-                                          ? e.target.value
-                                          : e.target.value,
-                                    }))
-                                  }
-                                  onBlur={(e) =>
-                                    setNewRowData((prev) => ({
-                                      ...prev,
-                                      [colKey]:
-                                        colKey === "service_name"
-                                          ? e.target.value
-                                          : e.target.value,
-                                    }))
-                                  }
-                                  size="small"
-                                />
-                              )}
-                            </TableCell>
-                          );
-                        })}
-                        <TableCell align="right">
-                          <IconButton
-                            color="success"
-                            onClick={handleAddRowSave}
-                          >
-                            <Check />
-                          </IconButton>
+                  {filteredData.map((row, rowIndex) => (
+                    <TableRow key={row.id || rowIndex}>
+                      {Object.keys(row).map((colKey) => (
+                        <TableCell key={colKey}>
+                          {colKey === "service_id" || colKey === "spid" ? (
+                            <TableCell>{row[colKey]}</TableCell>
+                          ) : editingRowIndex === rowIndex &&
+                            tableName === "services_and_prices" ? (
+                            colKey === "region" ? (
+                              <Autocomplete
+                                options={regionOptions}
+                                getOptionLabel={(option) => option.name}
+                                value={
+                                  regionOptions.find(
+                                    (opt) =>
+                                      opt.code === Number(editedRowData[colKey])
+                                  ) || null
+                                }
+                                onChange={(event, newValue) =>
+                                  setEditedRowData((prev) => ({
+                                    ...prev,
+                                    [colKey]: newValue ? newValue.code : "",
+                                  }))
+                                }
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    size="small"
+                                    label="Регион"
+                                  />
+                                )}
+                              />
+                            ) : (
+                              <TextField
+                                value={editedRowData[colKey]}
+                                onChange={(e) =>
+                                  setEditedRowData((prev) => ({
+                                    ...prev,
+                                    [colKey]: e.target.value,
+                                  }))
+                                }
+                                onBlur={(e) =>
+                                  setEditedRowData((prev) => ({
+                                    ...prev,
+                                    [colKey]: e.target.value,
+                                  }))
+                                }
+                                size="small"
+                              />
+                            )
+                          ) : colKey === "region" ? (
+                            regionOptions.find(
+                              (opt) => opt.code === Number(row[colKey])
+                            )?.name || row[colKey]
+                          ) : typeof row[colKey] === "boolean" ? (
+                            row[colKey] ? (
+                              "true"
+                            ) : (
+                              "false"
+                            )
+                          ) : (
+                            row[colKey]
+                          )}
                         </TableCell>
-                      </TableRow>
-                    )}
-
-                    {filteredData.map((row, rowIndex) => (
-                      <TableRow key={row.id || rowIndex}>
-                        {Object.keys(row).map((colKey) => (
-                          <TableCell key={colKey}>
-                            {colKey === "service_id" || colKey === "spid" ? (
-                              <TableCell>{row[colKey]}</TableCell>
-                            ) : editingRowIndex === rowIndex &&
-                              tableName === "services_and_prices" ? (
-                              colKey === "region" ? (
-                                <Autocomplete
-                                  options={regionOptions}
-                                  getOptionLabel={(option) => option.name}
-                                  value={
-                                    regionOptions.find(
-                                      (opt) =>
-                                        opt.code ===
-                                        Number(editedRowData[colKey])
-                                    ) || null
-                                  }
-                                  onChange={(event, newValue) =>
-                                    setEditedRowData((prev) => ({
-                                      ...prev,
-                                      [colKey]: newValue ? newValue.code : "",
-                                    }))
-                                  }
-                                  renderInput={(params) => (
-                                    <TextField
-                                      {...params}
-                                      size="small"
-                                      label="Регион"
-                                    />
-                                  )}
-                                />
-                              ) : (
-                                <TextField
-                                  value={editedRowData[colKey]}
-                                  onChange={(e) =>
-                                    setEditedRowData((prev) => ({
-                                      ...prev,
-                                      [colKey]: e.target.value,
-                                    }))
-                                  }
-                                  onBlur={(e) =>
-                                    setEditedRowData((prev) => ({
-                                      ...prev,
-                                      [colKey]: e.target.value,
-                                    }))
-                                  }
-                                  size="small"
-                                />
-                              )
-                            ) : colKey === "region" ? (
-                              regionOptions.find(
-                                (opt) => opt.code === Number(row[colKey])
-                              )?.name || row[colKey]
-                            ) : typeof row[colKey] === "boolean" ? (
-                              row[colKey] ? (
-                                "true"
-                              ) : (
-                                "false"
-                              )
-                            ) : (
-                              row[colKey]
-                            )}
-                          </TableCell>
-                        ))}
-                        {tableName === "services_and_prices" && (
-                          <TableCell align="right">
-                            {editingRowIndex === rowIndex ? (
+                      ))}
+                      {tableName === "services_and_prices" && (
+                        <TableCell align="right">
+                          {editingRowIndex === rowIndex ? (
+                            <IconButton
+                              color="success"
+                              onClick={() => handleSaveRow(rowIndex)}
+                            >
+                              <Check />
+                            </IconButton>
+                          ) : (
+                            <>
                               <IconButton
-                                color="success"
-                                onClick={() => handleSaveRow(rowIndex)}
+                                color="primary"
+                                onClick={() => handleEditRow(rowIndex)}
                               >
-                                <Check />
+                                <Edit />
                               </IconButton>
-                            ) : (
-                              <>
-                                <IconButton
-                                  color="primary"
-                                  onClick={() => handleEditRow(rowIndex)}
-                                >
-                                  <Edit />
-                                </IconButton>
-                                <IconButton
-                                  color="secondary"
-                                  onClick={() => handleDeleteRow(rowIndex)}
-                                >
-                                  <Delete />
-                                </IconButton>
-                              </>
-                            )}
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-            <Snackbar
-              open={snackbarOpen}
-              autoHideDuration={4000}
-              onClose={() => setSnackbarOpen(false)}
-              anchorOrigin={{ vertical: "top", horizontal: "center" }}
-            >
-              <Alert severity="error" onClose={() => setSnackbarOpen(false)}>
-                {errorMessage}
-              </Alert>
-            </Snackbar>
-          </>
-        )}
+                              <IconButton
+                                color="secondary"
+                                onClick={() => handleDeleteRow(rowIndex)}
+                              >
+                                <Delete />
+                              </IconButton>
+                            </>
+                          )}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={4000}
+            onClose={() => setSnackbarOpen(false)}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Alert severity="error" onClose={() => setSnackbarOpen(false)}>
+              {errorMessage}
+            </Alert>
+          </Snackbar>
+        </>
+      )}
     </div>
   );
 }
