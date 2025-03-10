@@ -585,7 +585,7 @@ export default function DataBaseUsers() {
         </Button>
       </div>
 
-      {columnsData && (
+      {columnsData && columnsData[tableName] && (
         <>
           <div
             style={{
