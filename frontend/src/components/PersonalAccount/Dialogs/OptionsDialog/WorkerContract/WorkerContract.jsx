@@ -8,54 +8,59 @@ import RobotoItalic from "../../../../../fonts/Roboto-Italic.ttf";
 import { LoadingSpinner } from "./../../../../LoadingSpinner/LoadingSpinner";
 import { useEffect, useState } from "react";
 import $api from "../../../../../http";
+import region_data from "../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 
-const worksData = [
-  { no: 1, name: "Замена электрода розжига и ионизации", cost: "1 500,00" },
-  { no: 2, name: "Замена датчика температуры", cost: "1 500,00" },
-  { no: 3, name: "Замена датчика давления воды", cost: "1 500,00" },
-  { no: 4, name: "Замена реле давления воды", cost: "1 500,00" },
-  { no: 5, name: "Замена платы ввода питания", cost: "1 500,00" },
-  {
-    no: 6,
-    name: "Замена панели управления/контроллера горения",
-    cost: "1 700,00",
-  },
-  { no: 7, name: "Замена горелочного узла в сборе", cost: "2 000,00" },
-  { no: 8, name: "Замена горелочной трубы", cost: "2 000,00" },
-  { no: 9, name: "Замена газового клапана", cost: "2 000,00" },
-  { no: 10, name: "Замена вентилятора", cost: "2 000,00" },
-  { no: 11, name: "Замена смесителя газового", cost: "2 000,00" },
-  { no: 12, name: "Замена теплоизоляции", cost: "2 500,00" },
-  { no: 13, name: "Замена теплообменника GEFFEN МВ 4.1", cost: "3 500,00" },
-  { no: 14, name: "Замена котла", cost: "2 000,00" },
-  { no: 15, name: "Выезд на объект в черте города", cost: "500,00" },
-  { no: 16, name: "Выезд на объект за чертой города", cost: "20 руб./км" },
-  { no: 17, name: "Первый запуск котла GEFFEN МВ 4.1", cost: "1 500,00" },
-  {
-    no: 18,
-    name: "Первый запуск котла GEFFEN МВ 3.1 127, 145, 200, 251, 301",
-    cost: "2 500,00",
-  },
-];
+const monthGenitive = {
+  январь: "января",
+  февраль: "февраля",
+  март: "марта",
+  апрель: "апреля",
+  май: "мая",
+  июнь: "июня",
+  июль: "июля",
+  август: "августа",
+  сентябрь: "сентября",
+  октябрь: "октября",
+  ноябрь: "ноября",
+  декабрь: "декабря",
+};
+
 const date = new Date();
 const day = date.getDate();
-const month = date.getMonth();
 const year = date.getFullYear();
-console.log(day, month, year);
+const monthName = date.toLocaleString("ru", { month: "long" });
+const formattedDate = `«${day}» ${monthGenitive[monthName]} ${year} г.`;
 
 export default function WorkerContract() {
   const [isLoading, setIsLoading] = useState(true);
   function handleOnLoad() {
     setIsLoading(false);
   }
+  const [data, setData] = useState();
+  const [dataPrices, setDataPrices] = useState();
+
   useEffect(() => {
     $api
       .get("/getWorkerInfo")
-      .then((result) => {})
+      .then((result) => {
+        setData(result.data);
+      })
       .catch((error) => {
         console.log(error);
       });
   }, []);
+
+  useEffect(() => {
+    $api
+      .get("/getServicePrices")
+      .then((result) => {
+        setDataPrices(result.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
+
   return (
     <>
       {isLoading && <LoadingSpinner />}
@@ -75,13 +80,13 @@ export default function WorkerContract() {
               {/* Заголовок документа */}
               <Text style={styles.title}>
                 ДОГОВОР НА ВЫПОЛНЕНИЕ РАБОТ И ОКАЗАНИЕ УСЛУГ ПО ГАРАНТИЙНОМУ И
-                ПОСТГАРАНТИЙНОМУ РЕМОНТУ № -АСЦ
+                ПОСТГАРАНТИЙНОМУ РЕМОНТУ № {data?.contract_number}-АСЦ
               </Text>
 
               {/* город и дата */}
               <View style={styles.subHeader}>
                 <Text style={styles.city}>г. Тула</Text>
-                <Text style={styles.date}>« » 2024 г.</Text>
+                <Text style={styles.date}>{formattedDate}</Text>
               </View>
 
               {/* Основной текст */}
@@ -95,9 +100,9 @@ export default function WorkerContract() {
                 Настоящий Договор (далее именуемый «Договор») заключен между
                 компанией ООО «ГЕФФЕН» в лице Директора Орехова Алексея
                 Сергеевича, действующего на основании Устава и именуемое в
-                дальнейшем как «Заказчик», и компанией НАИМЕНОВАНИЕ КОМПАНИИ в
-                лице ДОЛЖНОСТЬ ФИО, действующего на основании Устава и именуемое
-                в дальнейшем как «Исполнитель».
+                дальнейшем как «Заказчик», и компанией {data?.company_name} в
+                лице {data?.position} {data?.full_name}, действующего на
+                основании Устава и именуемое в дальнейшем как «Исполнитель».
               </Text>
 
               <Text style={[styles.paragraph, styles.paragraphNoMargin]}>
@@ -143,8 +148,12 @@ export default function WorkerContract() {
 
               <Text style={styles.paragraph}>
                 1.4. Исполнитель выполняет Работы в отношении Продукции,
-                установленной (введенной в эксплуатацию) на территории УКАЗАТЬ
-                РЕГИОН.
+                установленной (введенной в эксплуатацию) на территории{" "}
+                {
+                  region_data.filter((item) => item.code === data?.region)[0]
+                    ?.namecase_genitive
+                }
+                .
               </Text>
 
               {/* 2. ОБЯЗАННОСТИ ИСПОЛНИТЕЛЯ */}
@@ -685,7 +694,7 @@ export default function WorkerContract() {
                 Приложение № 1
               </Text>
               <Text style={[styles.paragraph, { textAlign: "right" }]}>
-                к Договору № -АСЦ от « » 2024 г.
+                к Договору № {data?.contract_number}-АСЦ от {formattedDate}
               </Text>
 
               {/* Основной текст приложения */}
@@ -711,8 +720,9 @@ export default function WorkerContract() {
               {/* Специалист АСЦ, ФИО, телефон */}
               <Text style={[styles.paragraph, { marginTop: 50 }]}>
                 Специалист АСЦ{"\n"}
-                ФИО{"\n"}
-                Контактный телефон
+                ФИО: {data?.full_name}
+                {"\n"}
+                Контактный телефон: {data?.phone_number}
               </Text>
 
               {/* Подписи сторон */}
@@ -765,13 +775,13 @@ export default function WorkerContract() {
                 Приложение № 2
               </Text>
               <Text style={[styles.paragraph, { textAlign: "right" }]}>
-                к Договору № -АСЦ от « » 2024 г.
+                к Договору № {data?.contract_number}-АСЦ от {formattedDate}
               </Text>
               <Text style={[styles.subTitle, { marginTop: 20 }]}>
                 Стоимость работ
               </Text>
               <View style={{ fontSize: 10 }}>
-                <MyTable data={worksData} />
+                <MyTable data={dataPrices !== null ? dataPrices : []} />
               </View>
               <Text style={[styles.paragraph, styles.italic]}>
                 При необходимости выезда за черту города на расстояние более 100
@@ -835,8 +845,10 @@ const MyTable = ({ data }) => (
     {data.map((item, index) => (
       <View style={styles.tableRow} key={index}>
         <Text style={[styles.tableCol, styles.colSmall]}>{index + 1}</Text>
-        <Text style={[styles.tableCol, styles.colLarge]}>{item.name}</Text>
-        <Text style={[styles.tableCol, styles.colMedium]}>{item.cost} ₽</Text>
+        <Text style={[styles.tableCol, styles.colLarge]}>
+          {item.service_name}
+        </Text>
+        <Text style={[styles.tableCol, styles.colMedium]}>{item.price} ₽</Text>
       </View>
     ))}
   </View>

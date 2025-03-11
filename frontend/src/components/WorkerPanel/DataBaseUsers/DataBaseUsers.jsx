@@ -360,10 +360,10 @@ export default function DataBaseUsers() {
       });
   };
 
-  console.log("columnsData", columnsData);
-  console.log("tableName", tableName);
-  console.log("columnsData[tableName]", columnsData[tableName]);
-  console.log("columnsData[tableName].length", columnsData[tableName]?.length);
+  // console.log("columnsData", columnsData);
+  // console.log("tableName", tableName);
+  // console.log("columnsData[tableName]", columnsData[tableName]);
+  // console.log("columnsData[tableName].length", columnsData[tableName]?.length);
 
   return (
     <div className={styles.data_table__wrapper} style={{ overflowY: "auto" }}>

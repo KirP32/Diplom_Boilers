@@ -1870,6 +1870,52 @@ class DataController {
       client.release();
     }
   }
+  async getWorkerInfo(req, res) {
+    try {
+      const login = decodeJWT(req.cookies.refreshToken).login;
+      const result_data = await pool.query(
+        "SELECT region, company_name, position, full_name, contract_number, phone_number FROM worker_details WHERE username = $1",
+        [login]
+      );
+      if (result_data.rowCount > 0) {
+        return res.send(result_data.rows[0]);
+      } else {
+        return res.sendStatus(500);
+      }
+    } catch (error) {
+      return res.status(500).send({ message: error });
+    }
+  }
+  async getServicePrices(req, res) {
+    try {
+      const login = decodeJWT(req.cookies.refreshToken).login;
+
+      const user_region_result = await pool.query(
+        "SELECT region FROM worker_details WHERE username = $1",
+        [login]
+      );
+
+      if (user_region_result.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Регион пользователя не найден" });
+      }
+
+      const user_region = user_region_result.rows[0].region;
+      const dataPrices = await pool.query(
+        `SELECT s.id AS service_id, s.name AS service_name, sp.price
+         FROM services s
+         JOIN service_prices sp ON s.id = sp.service_id
+         WHERE sp.region = $1`,
+        [user_region]
+      );
+
+      res.json(dataPrices.rows);
+    } catch (error) {
+      console.error("Ошибка при получении цен на услуги:", error);
+      res.status(500).json({ message: "Ошибка сервера" });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

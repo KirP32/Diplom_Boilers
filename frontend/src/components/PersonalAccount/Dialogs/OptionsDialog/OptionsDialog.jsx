@@ -10,6 +10,7 @@ import {
   Button,
   IconButton,
   TextField,
+  Autocomplete,
 } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import $api from "../../../../http";
@@ -17,6 +18,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { ThemeContext } from "../../../../Theme";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useNavigate } from "react-router-dom";
+import region_data from "../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 
 export default function OptionsDialog({ open, user, setOptions }) {
   const [userData, setUserData] = useState(null);
@@ -25,6 +27,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const { access_level } = useContext(ThemeContext);
   const navigate = useNavigate();
   const handleSaveChanges = (key, newValue) => {
+    console.log(key, newValue);
     $api
       .put("/updateUser", { key, newValue, access_level })
       .then(() => {
@@ -62,6 +65,12 @@ export default function OptionsDialog({ open, user, setOptions }) {
   function onFinish() {
     setOptions(false);
   }
+
+  const defaultProps = {
+    options: region_data,
+    getOptionLabel: (option) => option.name,
+  };
+  const [region_value, setRegion_value] = useState(null);
 
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="xs">
@@ -102,21 +111,45 @@ export default function OptionsDialog({ open, user, setOptions }) {
               {key === "id" || key === "username" ? (
                 <Typography variant="body1">{userData[key]}</Typography>
               ) : editingField === key ? (
-                <TextField
-                  autoFocus
-                  fullWidth
-                  variant="outlined"
-                  value={
-                    editedValue !== null ? editedValue : userData[key] || ""
-                  }
-                  onChange={(e) => setEditedValue(e.target.value)}
-                  onBlur={() => handleBlurOrEnter(key)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleBlurOrEnter(key);
+                editingField === "region" ? (
+                  <Autocomplete
+                    {...defaultProps}
+                    value={region_value}
+                    onChange={(event, newValue) => {
+                      setRegion_value(newValue);
+                      setEditedValue(newValue ? newValue.code : "");
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        size="small"
+                        onBlur={() => handleBlurOrEnter(key)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleBlurOrEnter(key);
+                          }
+                        }}
+                      />
+                    )}
+                    freeSolo
+                  />
+                ) : (
+                  <TextField
+                    autoFocus
+                    fullWidth
+                    variant="outlined"
+                    value={
+                      editedValue !== null ? editedValue : userData[key] || ""
                     }
-                  }}
-                />
+                    onChange={(e) => setEditedValue(e.target.value)}
+                    onBlur={() => handleBlurOrEnter(key)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleBlurOrEnter(key);
+                      }
+                    }}
+                  />
+                )
               ) : (
                 <div style={{ display: "flex" }}>
                   <Typography variant="body1">{userData[key]}</Typography>

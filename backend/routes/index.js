@@ -54,6 +54,8 @@ router.get(
   checkCookie,
   DataController.getUserAccessLevel
 );
+router.get("/getWorkerInfo", checkCookie, DataController.getWorkerInfo);
+router.get("/getServicePrices", checkCookie, DataController.getServicePrices);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
