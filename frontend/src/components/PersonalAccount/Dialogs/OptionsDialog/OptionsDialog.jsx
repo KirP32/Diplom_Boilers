@@ -27,7 +27,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const { access_level } = useContext(ThemeContext);
   const navigate = useNavigate();
   const handleSaveChanges = (key, newValue) => {
-    console.log(key, newValue);
     $api
       .put("/updateUser", { key, newValue, access_level })
       .then(() => {
@@ -111,7 +110,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
               {key === "id" || key === "username" ? (
                 <Typography variant="body1">{userData[key]}</Typography>
               ) : editingField === key ? (
-                editingField === "region" ? (
+                key === "region" ? (
                   <Autocomplete
                     {...defaultProps}
                     value={region_value}
@@ -152,7 +151,13 @@ export default function OptionsDialog({ open, user, setOptions }) {
                 )
               ) : (
                 <div style={{ display: "flex" }}>
-                  <Typography variant="body1">{userData[key]}</Typography>
+                  <Typography variant="body1">
+                    {key === "region"
+                      ? region_data.find(
+                          (r) => r.code === Number(userData[key])
+                        )?.name || userData[key]
+                      : userData[key]}
+                  </Typography>
                   <IconButton
                     onClick={() => {
                       setEditingField(key);
