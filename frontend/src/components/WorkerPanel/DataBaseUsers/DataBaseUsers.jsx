@@ -267,7 +267,6 @@ export default function DataBaseUsers() {
     const editing_object = columnsData[tableName].find(
       (item) => item.spid === rowIndex
     );
-    console.log(editing_object);
     setEditedRowData(editing_object);
   };
 
@@ -750,103 +749,108 @@ export default function DataBaseUsers() {
                       </TableRow>
                     )}
 
-                    {filteredData.map((row) => (
-                      <TableRow key={row.spid}>
-                        {Object.keys(row).map((colKey) => (
-                          <TableCell key={colKey}>
-                            {colKey === "service_id" || colKey === "spid" ? (
-                              row[colKey]
-                            ) : editingRowIndex === row.spid &&
-                              tableName === "services_and_prices" ? (
-                              colKey === "region" ? (
-                                <Autocomplete
-                                  options={regionOptions}
-                                  getOptionLabel={(option) => option.name}
-                                  value={
-                                    regionOptions.find(
-                                      (opt) =>
-                                        opt.code ===
-                                        Number(editedRowData[colKey])
-                                    ) || null
-                                  }
-                                  onChange={(event, newValue) =>
-                                    setEditedRowData((prev) => ({
-                                      ...prev,
-                                      [colKey]: newValue ? newValue.code : "",
-                                    }))
-                                  }
-                                  renderInput={(params) => (
-                                    <TextField
-                                      {...params}
-                                      size="small"
-                                      label="Регион"
-                                    />
-                                  )}
-                                />
+                    {filteredData.map(
+                      (
+                        row
+                        // до этого совпадали ключи, сейчас row.spid уникален и всё нормально, проверить как работают ключи и как они влияют на значения
+                      ) => (
+                        <TableRow key={row.spid}>
+                          {Object.keys(row).map((colKey) => (
+                            <TableCell key={colKey}>
+                              {colKey === "service_id" || colKey === "spid" ? (
+                                row[colKey]
+                              ) : editingRowIndex === row.spid &&
+                                tableName === "services_and_prices" ? (
+                                colKey === "region" ? (
+                                  <Autocomplete
+                                    options={regionOptions}
+                                    getOptionLabel={(option) => option.name}
+                                    value={
+                                      regionOptions.find(
+                                        (opt) =>
+                                          opt.code ===
+                                          Number(editedRowData[colKey])
+                                      ) || null
+                                    }
+                                    onChange={(event, newValue) =>
+                                      setEditedRowData((prev) => ({
+                                        ...prev,
+                                        [colKey]: newValue ? newValue.code : "",
+                                      }))
+                                    }
+                                    renderInput={(params) => (
+                                      <TextField
+                                        {...params}
+                                        size="small"
+                                        label="Регион"
+                                      />
+                                    )}
+                                  />
+                                ) : (
+                                  <TextField
+                                    value={editedRowData[colKey] ?? row[colKey]}
+                                    onChange={(e) =>
+                                      setEditedRowData((prev) => ({
+                                        ...prev,
+                                        [colKey]: e.target.value,
+                                      }))
+                                    }
+                                    onBlur={(e) =>
+                                      setEditedRowData((prev) => ({
+                                        ...prev,
+                                        [colKey]: e.target.value,
+                                      }))
+                                    }
+                                    size="small"
+                                  />
+                                )
+                              ) : colKey === "region" ? (
+                                regionOptions.find(
+                                  (opt) => opt.code === Number(row[colKey])
+                                )?.name || row[colKey]
+                              ) : typeof row[colKey] === "boolean" ? (
+                                row[colKey] ? (
+                                  "true"
+                                ) : (
+                                  "false"
+                                )
                               ) : (
-                                <TextField
-                                  value={editedRowData[colKey] ?? row[colKey]}
-                                  onChange={(e) =>
-                                    setEditedRowData((prev) => ({
-                                      ...prev,
-                                      [colKey]: e.target.value,
-                                    }))
-                                  }
-                                  onBlur={(e) =>
-                                    setEditedRowData((prev) => ({
-                                      ...prev,
-                                      [colKey]: e.target.value,
-                                    }))
-                                  }
-                                  size="small"
-                                />
-                              )
-                            ) : colKey === "region" ? (
-                              regionOptions.find(
-                                (opt) => opt.code === Number(row[colKey])
-                              )?.name || row[colKey]
-                            ) : typeof row[colKey] === "boolean" ? (
-                              row[colKey] ? (
-                                "true"
-                              ) : (
-                                "false"
-                              )
-                            ) : (
-                              row[colKey]
-                            )}
-                          </TableCell>
-                        ))}
-
-                        {tableName &&
-                          tableName === "services_and_prices" && ( // editingRowIndex === row.spid и дальше такие проверки
-                            <TableCell align="right">
-                              {editingRowIndex === row.spid ? (
-                                <IconButton
-                                  color="success"
-                                  onClick={() => handleSaveRow(row.spid)}
-                                >
-                                  <Check />
-                                </IconButton>
-                              ) : (
-                                <>
-                                  <IconButton
-                                    color="primary"
-                                    onClick={() => handleEditRow(row.spid)}
-                                  >
-                                    <Edit />
-                                  </IconButton>
-                                  <IconButton
-                                    color="secondary"
-                                    onClick={() => handleDeleteRow(row.spid)}
-                                  >
-                                    <Delete />
-                                  </IconButton>
-                                </>
+                                row[colKey]
                               )}
                             </TableCell>
-                          )}
-                      </TableRow>
-                    ))}
+                          ))}
+
+                          {tableName &&
+                            tableName === "services_and_prices" && ( // editingRowIndex === row.spid и дальше такие проверки
+                              <TableCell align="right">
+                                {editingRowIndex === row.spid ? (
+                                  <IconButton
+                                    color="success"
+                                    onClick={() => handleSaveRow(row.spid)}
+                                  >
+                                    <Check />
+                                  </IconButton>
+                                ) : (
+                                  <>
+                                    <IconButton
+                                      color="primary"
+                                      onClick={() => handleEditRow(row.spid)}
+                                    >
+                                      <Edit />
+                                    </IconButton>
+                                    <IconButton
+                                      color="secondary"
+                                      onClick={() => handleDeleteRow(row.spid)}
+                                    >
+                                      <Delete />
+                                    </IconButton>
+                                  </>
+                                )}
+                              </TableCell>
+                            )}
+                        </TableRow>
+                      )
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
