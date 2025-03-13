@@ -842,13 +842,13 @@ const MyTable = ({ data }) => (
     </View>
 
     {/* Динамическое заполнение строк */}
-    {data.map((item, index) => (
+    {data?.map((item, index) => (
       <View style={styles.tableRow} key={index}>
         <Text style={[styles.tableCol, styles.colSmall]}>{index + 1}</Text>
         <Text style={[styles.tableCol, styles.colLarge]}>
-          {item.service_name}
+          {item?.service_name}
         </Text>
-        <Text style={[styles.tableCol, styles.colMedium]}>{item.price} ₽</Text>
+        <Text style={[styles.tableCol, styles.colMedium]}>{item?.price} ₽</Text>
       </View>
     ))}
   </View>
