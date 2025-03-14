@@ -1,5 +1,5 @@
 import styles from "./SignUp.module.scss";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Input from "../../Input/Input";
 import Button from "../../Button/Button";
 import $api from "../../../http";
@@ -29,6 +29,8 @@ export default function SignUp({ updateRegFlag, ...props }) {
     setValue(event.target.value);
   };
 
+  const flag_logout = useRef(false);
+
   function registration() {
     if (validate()) {
       const data = {
@@ -39,7 +41,7 @@ export default function SignUp({ updateRegFlag, ...props }) {
       };
       $api
         .post("/sign_up", data)
-        .then((response) => {
+        .then(() => {
           setSign_failure(false);
           alert("Успешно");
         })
@@ -47,8 +49,12 @@ export default function SignUp({ updateRegFlag, ...props }) {
           console.log(error.message);
           if (
             error.status === 401 &&
-            localStorage.getItem("stay_logged") == false
+            localStorage.getItem("stay_logged") === "false"
           ) {
+            if (flag_logout.current === false) {
+              flag_logout.current = true;
+              alert("Ваш сеанс истёк, авторизуйтесь повторно");
+            }
             logout(navigate);
           }
           setSign_failure(true);

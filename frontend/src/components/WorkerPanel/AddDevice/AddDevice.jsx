@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Button from "../../Button/Button";
 import Input from "../../Input/Input";
 import $api from "../../../http";
@@ -15,6 +15,8 @@ export default function AddDevice() {
   const [device, setDevice] = useState({});
   const [addEspDialog, setAddEspDialog] = useState(false);
   const navigate = useNavigate();
+
+  const flag_logout = useRef(false);
 
   async function findUser() {
     const body = { login: login };
@@ -34,8 +36,12 @@ export default function AddDevice() {
         console.log(err);
         if (
           err.status === 401 &&
-          localStorage.getItem("stay_logged") == false
+          localStorage.getItem("stay_logged") === "false"
         ) {
+          if (flag_logout.current === false) {
+            flag_logout.current = true;
+            alert("Ваш сеанс истёк, авторизуйтесь повторно");
+          }
           logout(navigate);
         }
       });

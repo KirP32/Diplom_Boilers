@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import $api from "../../../http";
 import logout from "../../Logout/logout";
 import region_data from "./russian_regions_codes.json";
@@ -54,6 +54,8 @@ export default function DataBaseUsers() {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const flag_logout = useRef(false);
 
   // Массив с вариантами регионов. 71 – Тульская область,
   const regionOptions = region_data;
@@ -111,7 +113,19 @@ export default function DataBaseUsers() {
           setColumns(result.data[tableMapping[tableName]]);
         }
       })
-      .catch(() => setAllColumns({}));
+      .catch((err) => {
+        setAllColumns({});
+        if (
+          err.status === 401 &&
+          localStorage.getItem("stay_logged") === "false"
+        ) {
+          if (flag_logout.current === false) {
+            flag_logout.current = true;
+            alert("Ваш сеанс истёк, авторизуйтесь повторно");
+          }
+          logout(navigate);
+        }
+      });
   }, []);
 
   useEffect(() => {

@@ -6,7 +6,6 @@ import AddDevice from "./AddDevice/AddDevice";
 import WorkerHistory from "./WorkerHistory/WorkerHistory";
 import DataBaseUsers from "./DataBaseUsers/DataBaseUsers";
 import { useNavigate } from "react-router-dom";
-import { lightGreen } from "@mui/material/colors";
 
 function WorkerPanel() {
   const [activeComponent, setActiveComponent] = useState("addUser");

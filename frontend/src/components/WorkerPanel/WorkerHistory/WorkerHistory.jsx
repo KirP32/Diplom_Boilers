@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import $api from "../../../http";
 import styles from "./WorkerHistory.module.scss";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,8 @@ export default function WorkerHistory() {
     getActions();
   }, []);
 
+  const flag_logout = useRef(false);
+
   async function getActions() {
     await $api
       .post("/getActions")
@@ -21,8 +23,12 @@ export default function WorkerHistory() {
         console.log(error);
         if (
           error.status === 401 &&
-          localStorage.getItem("stay_logged") == false
+          localStorage.getItem("stay_logged") === "false"
         ) {
+          if (flag_logout.current === false) {
+            flag_logout.current = true;
+            alert("Ваш сеанс истёк, авторизуйтесь повторно");
+          }
           logout(navigate);
         }
       });
