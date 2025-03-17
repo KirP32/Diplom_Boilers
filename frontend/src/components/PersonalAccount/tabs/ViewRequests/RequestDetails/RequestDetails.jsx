@@ -10,8 +10,6 @@ import U_SearchWorker from "./additionalComponents/User/U_SearchWorker/U_SearchW
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepButton from "@mui/material/StepButton";
-import U_Materials from "./additionalComponents/User/U_Materials/U_Materials";
-import A_Materials from "./additionalComponents/Admin/A_Materials/A_Materials";
 import Button from "@mui/material/Button";
 import {
   Typography,

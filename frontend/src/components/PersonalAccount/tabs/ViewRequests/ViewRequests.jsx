@@ -133,7 +133,10 @@ export default function ViewRequests({ deviceObject, getAllDevices }) {
               }
             >
               <h5>{item.problem_name}</h5>
-              <div className={styles.status_wrapper}>
+              <div
+                className={styles.status_wrapper}
+                style={{ maxWidth: "166px" }}
+              >
                 <span
                   className={`${
                     item.status === 0 ? styles.inProgress : styles.completed

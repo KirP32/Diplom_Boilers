@@ -1472,9 +1472,9 @@ class DataController {
         `SELECT
           ur.*, 
           u.username AS worker_username,
-          u.phone_number AS worker_phone,
+          wd.phone_number AS worker_phone,
           w.username AS wattson_username,
-          w.phone_number AS wattson_phone,
+          cd.phone_number AS wattson_phone,
           rc.user_confirmed,
           rc.worker_confirmed,
           rc.regional_confirmed,
@@ -1483,7 +1483,9 @@ class DataController {
           uri.worker_confirmed AS uri_worker_confirmed
         FROM user_requests ur
         LEFT JOIN users u ON ur.assigned_to = u.id
+        LEFT JOIN worker_details wd ON u.username = wd.username
         LEFT JOIN users w ON ur.region_assigned_to = w.id
+        LEFT JOIN cgs_details cd ON w.username = cd.username
         LEFT JOIN request_confirmations rc ON ur.id = rc.request_id
         LEFT JOIN user_requests_info uri ON ur.id = uri.request_id
         WHERE ur.id = $1;`,
