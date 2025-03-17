@@ -376,7 +376,7 @@ export default function DataBaseUsers() {
       .catch((error) => {
         console.error("Ошибка добавления записи:", error);
         setErrorMessage(
-          "Сервер недоступен ИЛИ такая услуга и регион уже существуют "
+          "Заполните все поля/Такая услуга и регион уже существуют/Сервер недоступен"
         );
         setSnackbarOpen(true);
         if (
