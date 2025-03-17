@@ -108,9 +108,15 @@ export default function DataBaseUsers() {
     $api
       .get("/getDatabaseColumns")
       .then((result) => {
-        setAllColumns(result.data);
-        if (tableName && result.data[tableMapping[tableName]]) {
-          setColumns(result.data[tableMapping[tableName]]);
+        if (result?.data) {
+          setAllColumns(result.data);
+          if (
+            tableName &&
+            tableMapping?.[tableName] &&
+            result.data?.[tableMapping[tableName]]
+          ) {
+            setColumns(result.data[tableMapping[tableName]]);
+          }
         }
       })
       .catch((err) => {
@@ -142,7 +148,11 @@ export default function DataBaseUsers() {
   }, []);
 
   useEffect(() => {
-    if (tableName && allColumns[tableMapping[tableName]]) {
+    if (
+      tableName &&
+      tableMapping[tableName] &&
+      allColumns?.[tableMapping[tableName]]
+    ) {
       setColumns(allColumns[tableMapping[tableName]]);
     } else {
       setColumns([]);
