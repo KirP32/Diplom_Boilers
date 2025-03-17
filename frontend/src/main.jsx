@@ -48,6 +48,7 @@ const router = createBrowserRouter(
           <WorkerPanel />
         </WorkerGuard>
       ),
+      errorElement: <ErrorComponent />,
     },
     {
       path: "work_contract",
