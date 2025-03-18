@@ -14,6 +14,7 @@ import { ThemeProvider } from "./Theme.jsx";
 import RequestDetails from "./components/PersonalAccount/tabs/ViewRequests/RequestDetails/RequestDetails";
 import ErrorComponent from "./components/ErrorComponent/ErrorComponent.jsx";
 import WorkerContract from "./components/PersonalAccount/Dialogs/OptionsDialog/WorkerContract/WorkerContract.jsx";
+import ContractGuard from "./components/Guards/ContractGuard.jsx";
 
 const router = createBrowserRouter(
   [
@@ -52,7 +53,11 @@ const router = createBrowserRouter(
     },
     {
       path: "work_contract",
-      element: <WorkerContract />,
+      element: (
+        <ContractGuard>
+          <WorkerContract />
+        </ContractGuard>
+      ),
     },
   ],
   {

@@ -17,7 +17,6 @@ const getTheme = () => {
 const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(getTheme);
   const [access_level, setAccesslevel] = useState(0);
-
   useEffect(() => {
     $api
       .get("/getUserAccessLevel")

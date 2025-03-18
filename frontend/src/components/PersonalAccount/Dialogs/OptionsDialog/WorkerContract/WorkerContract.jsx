@@ -648,9 +648,8 @@ export default function WorkerContract() {
                       р/с 40702810966000001077
                     </Text>
                     <Text style={styles.requisiteText}>
-                      В банке ТУЛЬСКОЕ ОТДЕЛЕНИЕ №8604
+                      В банке ТУЛЬСКОЕ ОТДЕЛЕНИЕ №8604 ПАО СБЕРБАНК
                     </Text>
-                    <Text style={styles.requisiteText}>ПАО СБЕРБАНК</Text>
                     <Text style={styles.requisiteText}>
                       к/с 30101810300000000608
                     </Text>
@@ -667,16 +666,25 @@ export default function WorkerContract() {
                   {/* Колонка Исполнителя */}
                   <View style={styles.requisiteColumn}>
                     <Text style={styles.requisiteText}>Исполнитель:</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
-                    <Text style={styles.requisiteText}>{` `}</Text>
+                    <Text style={styles.requisiteText}>
+                      {data?.company_name}
+                    </Text>
+                    <Text style={styles.requisiteText}>
+                      {data?.legal_address}
+                    </Text>
+                    <Text style={styles.requisiteText}>ИНН {data?.inn}</Text>
+                    <Text style={styles.requisiteText}>КПП {data?.kpp}</Text>
+                    <Text style={styles.requisiteText}>
+                      р/с {data?.current_account}
+                    </Text>
+                    <Text style={styles.requisiteText}>
+                      В банке {data?.bank_name?.toUpperCase()}
+                    </Text>
+                    <Text style={styles.requisiteText}>
+                      к/с {data?.correspondent_account}
+                    </Text>
+                    <Text style={styles?.requisiteText}>БИК {data?.bic}</Text>
+                    <Text style={styles?.requisiteText}>{` `}</Text>
 
                     {/* Подпись и печать Исполнителя */}
                     <Text
