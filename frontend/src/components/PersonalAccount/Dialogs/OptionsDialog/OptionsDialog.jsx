@@ -27,7 +27,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const { access_level } = useContext(ThemeContext);
   const navigate = useNavigate();
   const handleSaveChanges = (key, newValue) => {
-    console.log(newValue.trim());
     $api
       .put("/updateUser", { key, newValue, access_level })
       .then(() => {
