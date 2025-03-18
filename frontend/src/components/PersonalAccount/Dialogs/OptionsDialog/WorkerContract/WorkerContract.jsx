@@ -9,7 +9,7 @@ import { LoadingSpinner } from "./../../../../LoadingSpinner/LoadingSpinner";
 import { useEffect, useState } from "react";
 import $api from "../../../../../http";
 import region_data from "../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
-
+Font.registerHyphenationCallback((word) => ["", word, ""]);
 const monthGenitive = {
   январь: "января",
   февраль: "февраля",
@@ -60,7 +60,6 @@ export default function WorkerContract() {
         console.log(error);
       });
   }, []);
-
   return (
     <>
       {isLoading && <LoadingSpinner />}
@@ -684,13 +683,22 @@ export default function WorkerContract() {
                       к/с {data?.correspondent_account}
                     </Text>
                     <Text style={styles?.requisiteText}>БИК {data?.bic}</Text>
-                    <Text style={styles?.requisiteText}>{` `}</Text>
+                    <Text style={styles?.requisiteText}>
+                      {data?.position + " " + data?.company_name}
+                    </Text>
 
                     {/* Подпись и печать Исполнителя */}
-                    <Text
-                      style={[styles.requisiteText, { marginTop: 7 }]}
-                    >{` `}</Text>
-                    <View style={styles.signatureLine}></View>
+                    <Text style={[styles.requisiteText]}>
+                      {`________________/${
+                        data?.full_name
+                          ?.split(" ")
+                          .map((word, index) =>
+                            index === 0 ? word : word[0] + "."
+                          )
+                          .join(" ") || ""
+                      }/`}
+                    </Text>
+
                     <Text style={styles.requisiteText}>М.П.</Text>
                   </View>
                 </View>
@@ -728,7 +736,7 @@ export default function WorkerContract() {
               {/* Специалист АСЦ, ФИО, телефон */}
               <Text style={[styles.paragraph, { marginTop: 50 }]}>
                 Специалист АСЦ{"\n"}
-                ФИО: {data?.full_name}
+                ФИО: {data?.contact_person}
                 {"\n"}
                 Контактный телефон: {data?.phone_number}
               </Text>
@@ -769,10 +777,18 @@ export default function WorkerContract() {
                 {/* Правая колонка - Исполнитель */}
                 <View style={{ width: "45%" }}>
                   <Text style={styles.paragraph}>Исполнитель:</Text>
-                  <Text style={[styles.paragraph, { marginTop: 43 }]}>
+                  <Text style={styles.paragraph}>{data?.company_name}</Text>
+                  <Text style={[styles.paragraph, { marginTop: 25 }]}>
                     ______________________
                   </Text>
-                  <Text style={[styles.paragraph, { marginTop: 38 }]}>
+                  <Text style={[styles.paragraph, { marginTop: 10 }]}>
+                    {data?.full_name.split(" ")[1][0] +
+                      "." +
+                      data?.full_name.split(" ")[2][0] +
+                      ". " +
+                      data?.full_name.split(" ")[0]}
+                  </Text>
+                  <Text style={[styles.paragraph, { marginTop: 10 }]}>
                     М.П.
                   </Text>
                 </View>
@@ -810,12 +826,16 @@ export default function WorkerContract() {
                   </View>
                   <View style={{ width: "35%" }}>
                     <Text>Исполнитель:</Text>
-                    <Text></Text>
+                    <Text>{data?.company_name}</Text>
                     <Text style={styles.signatureMargin}></Text>
-                    <Text style={styles.signatureMarginTop}></Text>
                     <View style={styles.signatureLine}></View>
-                    <Text style={styles.signatureMarginTop}></Text>
-                    <Text></Text>
+                    <Text>
+                      {data?.full_name.split(" ")[1][0] +
+                        "." +
+                        data?.full_name.split(" ")[2][0] +
+                        ". " +
+                        data?.full_name.split(" ")[0]}
+                    </Text>
                     <Text>М.П.</Text>
                   </View>
                 </View>

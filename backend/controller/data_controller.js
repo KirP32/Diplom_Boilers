@@ -1876,7 +1876,7 @@ class DataController {
     try {
       const login = decodeJWT(req.cookies.refreshToken).login;
       const result_data = await pool.query(
-        "SELECT region, company_name, position, full_name, contract_number, phone_number, legal_address, inn, kpp, current_account, bank_name, correspondent_account, bic FROM worker_details WHERE username = $1",
+        "SELECT region, company_name, position, full_name, contract_number, phone_number, legal_address, inn, kpp, current_account, bank_name, correspondent_account, bic, contact_person FROM worker_details WHERE username = $1",
         [login]
       );
       if (result_data.rowCount > 0) {
