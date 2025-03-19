@@ -659,7 +659,7 @@ export default function DataBaseUsers() {
               <TableContainer
                 sx={{ maxHeight: 440, overflowX: "auto", width: "100%" }}
               >
-                <Table stickyHeader aria-label="sticky table">
+                <Table aria-label="sticky table">
                   <TableHead>
                     <TableRow>
                       {Object.keys(columnsData[tableName][0]).map((colKey) => (
@@ -667,11 +667,12 @@ export default function DataBaseUsers() {
                           <strong>{colKey}</strong>
                         </TableCell>
                       ))}
-                      {tableName === "services_and_prices" && (
-                        <TableCell align="right">
-                          <strong>Действия</strong>
-                        </TableCell>
-                      )}
+                      {tableName === "services_and_prices" ||
+                        (tableName === "worker_details" && (
+                          <TableCell align="right">
+                            <strong>Действия</strong>
+                          </TableCell>
+                        ))}
                     </TableRow>
                     <TableRow>
                       {Object.keys(columnsData[tableName][0]).map((colKey) => {
