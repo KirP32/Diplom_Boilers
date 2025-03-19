@@ -9,10 +9,12 @@ import OptionsDialog from "../Dialogs/OptionsDialog/OptionsDialog";
 import CreateSystemDialog from "../Dialogs/CreateSystemDialog/CreateSystemDialog";
 import { ThemeContext } from "../../../Theme";
 import RequestDetails from "../tabs/ViewRequests/RequestDetails/RequestDetails";
-import InfoIcon from "@mui/icons-material/Info";
-import MuiButton from "@mui/material/Button";
 import AdditionalInfoDialog from "./AdditionalInfoDialog/AdditionalInfoDialog";
 import { useNavigate } from "react-router-dom";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import TableView from "./TableView";
+import ListView from "./ListView";
 
 export default function WorkerRequests({
   systems_names,
@@ -36,7 +38,6 @@ export default function WorkerRequests({
   }, []);
 
   const [detailsObject, setDetailsObject] = useState(null);
-
   const removeRequest = useCallback(
     async (item) => {
       try {
@@ -108,6 +109,8 @@ export default function WorkerRequests({
       console.log("Токен не найден");
     }
   }, []);
+  const [isTableView, setIsTableView] = useState(true);
+
   const navigate = useNavigate();
   return (
     <div className={styles.worker_requests__wrapper}>
@@ -154,117 +157,78 @@ export default function WorkerRequests({
           </Button>
         </section>
       </div>
-      <div className={styles.available_requests}>
-        <h2>Доступные заявки</h2>
-        <div className={styles.available_requests__grid__container}>
-          <div className={styles.available_requests__grid}>
-            {availData?.allDevices?.map((item) => (
-              <div
-                key={item.id}
-                className={styles.available_requests__grid__item}
-              >
-                <div className={styles.available_requests__grid__item__header}>
-                  <h3>{item.problem_name}</h3>
-                  <p>Датчик: {item.module}</p>
-                  <h3>Система: {item.system_name}</h3>
-                </div>
-                <section
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    position: "relative",
-                    width: "100%",
-                  }}
-                >
-                  <div
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <MuiButton
-                      variant="contained"
-                      onClick={() => addRequest(item.system_name, item.id)}
-                      disabled={isProcessing}
-                    >
-                      Принять
-                    </MuiButton>
-                  </div>
+      <section
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          height: "35px",
+          marginBottom: "10px",
+        }}
+      >
+        <ToggleButtonGroup
+          value={isTableView}
+          exclusive
+          onChange={(e, newValue) => {
+            if (newValue !== null) setIsTableView(newValue);
+          }}
+          sx={{
+            backgroundColor: "white",
+          }}
+        >
+          <ToggleButton
+            value={true}
+            sx={{
+              color: "black",
+              "&.Mui-selected": {
+                backgroundColor: "green",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "darkgreen",
+                },
+              },
+            }}
+          >
+            Таблица
+          </ToggleButton>
+          <ToggleButton
+            value={false}
+            sx={{
+              color: "black",
+              "&.Mui-selected": {
+                backgroundColor: "green",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "darkgreen",
+                },
+              },
+            }}
+          >
+            Список
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </section>
 
-                  <InfoIcon
-                    onClick={() => {
-                      setAdditionalOpen(!additionalOpen);
-                      setCurrentItem(item);
-                    }}
-                    style={{
-                      position: "absolute",
-                      right: 0,
-                      cursor: "pointer",
-                    }}
-                  />
-                </section>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className={styles.available_requests}>
-        <h2>Заявки в работе</h2>
-        <div className={styles.available_requests__grid}>
-          {availData?.workerDevices?.map((item) => (
-            <div
-              key={item.id}
-              className={styles.available_requests__grid__item}
-            >
-              <div className={styles.available_requests__grid__item__header}>
-                <h3>{item.problem_name}</h3>
-                <p>Датчик: {item.module}</p>
-                <h3>Система: {item.system_name}</h3>
-              </div>
-              <section
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  position: "relative",
-                  width: "100%",
-                }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
-                  <MuiButton
-                    variant="contained"
-                    disabled={isProcessing}
-                    onClick={() => {
-                      setDetailsObject(item);
-                    }}
-                  >
-                    Подробнее
-                  </MuiButton>
-                </div>
-
-                <span
-                  className={`material-icons ${styles.no_select}`}
-                  style={{
-                    color: "red",
-                    cursor: "pointer",
-                    position: "absolute",
-                    right: 0,
-                  }}
-                  onClick={() => removeRequest(item)}
-                >
-                  cancel
-                </span>
-              </section>
-            </div>
-          ))}
-        </div>
-      </div>
+      {isTableView ? (
+        <TableView
+          availData={availData}
+          isProcessing={isProcessing}
+          addRequest={addRequest}
+          setAdditionalOpen={() => setAdditionalOpen(!additionalOpen)}
+          setDetailsObject={(e) => setDetailsObject(e)}
+          setCurrentItem={(e) => setCurrentItem(e)}
+          removeRequest={(e) => removeRequest(e)}
+        />
+      ) : (
+        <ListView
+          availData={availData}
+          isProcessing={isProcessing}
+          addRequest={addRequest}
+          setAdditionalOpen={() => setAdditionalOpen(!additionalOpen)}
+          setDetailsObject={(e) => setDetailsObject(e)}
+          setCurrentItem={(e) => setCurrentItem(e)}
+          removeRequest={(e) => removeRequest(e)}
+        />
+      )}
       {add_failure && (
         <div className={styles.added__failed}>
           <h4>Заявка уже взята в работу</h4>
@@ -293,7 +257,6 @@ export default function WorkerRequests({
           setAdditionalOpen={() => setAdditionalOpen(false)}
         />
       )}
-
       {detailsObject !== null && (
         <RequestDetails
           item={detailsObject}
