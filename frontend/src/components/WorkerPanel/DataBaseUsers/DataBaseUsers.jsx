@@ -310,9 +310,8 @@ export default function DataBaseUsers() {
 
   const handleSaveRow = (rowKey) => {
     const rowToUpdate = editedRowData;
-
     $api
-      .put("/updateRowData", { rowToUpdate, tableName })
+      .put("/updateRowData", { ...rowToUpdate, tableName: tableName })
       .then(() => {
         setColumnsData((prev) => {
           const updatedRows = prev[tableName].map((item) => {

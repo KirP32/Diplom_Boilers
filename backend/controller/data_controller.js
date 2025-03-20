@@ -1768,11 +1768,9 @@ class DataController {
   async updateRowData(req, res) {
     try {
       const { tableName } = req.body;
-
       if (tableName === "services_and_prices") {
         const { service_id, service_name, region, description, price, spid } =
           req.body;
-
         await pool.query(
           "UPDATE services SET name = $1, description = $2 WHERE id = $3",
           [service_name, description, service_id]
