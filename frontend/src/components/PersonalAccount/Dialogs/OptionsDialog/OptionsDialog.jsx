@@ -95,7 +95,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
               cursor: "pointer",
             }}
             onClick={() => {
-              navigate("/work_contract");
+              window.open("/work_contract", "_blank");
             }}
           />
         )}

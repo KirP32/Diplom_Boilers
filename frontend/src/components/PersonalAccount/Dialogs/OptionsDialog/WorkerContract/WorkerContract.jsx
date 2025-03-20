@@ -10,7 +10,7 @@ import { LoadingSpinner } from "./../../../../LoadingSpinner/LoadingSpinner";
 import { useEffect, useState } from "react";
 import $api from "../../../../../http";
 import region_data from "../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
-
+import petrovich from "petrovich";
 Font.registerHyphenationCallback((word) => ["", word, ""]);
 const monthGenitive = {
   январь: "января",
@@ -65,26 +65,9 @@ export default function WorkerContract() {
   }, []);
   /// ПАДЕЖИ
   let genitive_postion = data?.position || "";
-  let fio_genitive = data?.full_name || "";
 
   if (window.RussianNouns) {
     const rne = new window.RussianNouns.Engine();
-
-    fio_genitive = fio_genitive
-      .split(" ")
-      .map((item, index) => {
-        return rne.decline(
-          {
-            text: item,
-            gender:
-              index === 0 && ["a", "я"].includes(item.slice(-1))
-                ? "женский"
-                : "мужской",
-          },
-          "родительный"
-        );
-      })
-      .join(" ");
 
     genitive_postion = genitive_postion
       .split(" ")
@@ -92,11 +75,18 @@ export default function WorkerContract() {
         return rne.decline({ text: item, gender: "мужской" }, "родительный");
       })
       .join(" ");
-
-    console.log(fio_genitive);
-    console.log(genitive_postion);
   }
-  ///
+  let declinedPerson = "";
+  const arr_fio = data?.full_name?.split(" ");
+  if (data?.full_name) {
+    const person = {
+      first: arr_fio[1],
+      middle: arr_fio[2],
+      last: arr_fio[0],
+    };
+
+    declinedPerson = petrovich(person, "genitive");
+  }
   return (
     <>
       {isLoading && <LoadingSpinner />}
@@ -137,8 +127,14 @@ export default function WorkerContract() {
                 компанией ООО «ГЕФФЕН» в лице Директора Орехова Алексея
                 Сергеевича, действующего на основании Устава и именуемое в
                 дальнейшем как «Заказчик», и компанией {data?.company_name} в
-                лице {genitive_postion} {fio_genitive}, действующего на
-                основании Устава и именуемое в дальнейшем как «Исполнитель».
+                лице {genitive_postion}{" "}
+                {declinedPerson.last +
+                  " " +
+                  declinedPerson.first +
+                  " " +
+                  declinedPerson.middle}
+                , действующего на основании Устава и именуемое в дальнейшем как
+                «Исполнитель».
               </Text>
 
               <Text style={[styles.paragraph, styles.paragraphNoMargin]}>
