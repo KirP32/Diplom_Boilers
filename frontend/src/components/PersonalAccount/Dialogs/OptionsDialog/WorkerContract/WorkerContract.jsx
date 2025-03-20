@@ -65,7 +65,7 @@ export default function WorkerContract() {
   }, []);
   /// ПАДЕЖИ
   let genitive_postion = data?.position || "";
-
+  console.log(window);
   if (window.RussianNouns) {
     const rne = new window.RussianNouns.Engine();
 
