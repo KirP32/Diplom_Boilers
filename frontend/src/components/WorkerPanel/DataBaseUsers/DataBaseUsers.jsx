@@ -23,7 +23,14 @@ import {
   Button,
   Alert,
   Autocomplete,
+  Checkbox,
 } from "@mui/material";
+
+const booleanColumns = [
+  "service_access_3_1_127-301",
+  "service_access_3_1_400_2000",
+  "service_access_4_1",
+];
 import { Edit, Delete, Add, Check } from "@mui/icons-material";
 import styles from "./DataBaseUsers.module.scss";
 import { useNavigate } from "react-router-dom";
@@ -284,29 +291,39 @@ export default function DataBaseUsers() {
       });
   };
 
-  // Обработчики для строк нижней таблицы
-
   const handleEditRow = (rowIndex) => {
     setEditingRowIndex(rowIndex);
-    const editing_object = columnsData[tableName].find(
-      (item) => item.spid === rowIndex
-    );
-    setEditedRowData(editing_object);
+
+    const keyField =
+      tableName === "services_and_prices"
+        ? "spid"
+        : tableName === "worker_details"
+        ? "id"
+        : null;
+
+    const editing_object = keyField
+      ? columnsData[tableName].find((item) => item[keyField] === rowIndex)
+      : columnsData[tableName][rowIndex];
+
+    setEditedRowData(editing_object || {});
   };
 
-  const handleSaveRow = (rowSpid) => {
+  const handleSaveRow = (rowKey) => {
     const rowToUpdate = editedRowData;
 
     $api
-      .put("/updateRowData", {
-        ...rowToUpdate,
-      })
+      .put("/updateRowData", { rowToUpdate, tableName })
       .then(() => {
         setColumnsData((prev) => {
-          const updatedRows = prev[tableName].map((item) =>
-            item.spid === rowSpid ? rowToUpdate : item
-          );
-
+          const updatedRows = prev[tableName].map((item) => {
+            if (tableName === "services_and_prices") {
+              return item.spid === rowKey ? rowToUpdate : item;
+            } else if (tableName === "worker_details") {
+              return item.id === rowKey ? rowToUpdate : item;
+            } else {
+              return item;
+            }
+          });
           return { ...prev, [tableName]: updatedRows };
         });
 
@@ -315,7 +332,7 @@ export default function DataBaseUsers() {
       })
       .catch((error) => {
         console.error("Ошибка обновления записи:", error);
-        setErrorMessage("Ошибка обновления записи:", error);
+        setErrorMessage("Ошибка обновления записи: " + error.message);
         setSnackbarOpen(true);
         if (
           error.status === 401 &&
@@ -326,21 +343,27 @@ export default function DataBaseUsers() {
       });
   };
 
-  const handleDeleteRow = (rowSpid) => {
-    const rowToDelete = columnsData[tableName].find(
-      (item) => item.spid === rowSpid
-    );
+  const handleDeleteRow = (rowKey) => {
+    const keyField =
+      tableName === "services_and_prices"
+        ? "spid"
+        : tableName === "worker_details"
+        ? "id"
+        : null;
+
+    const rowToDelete = keyField
+      ? columnsData[tableName].find((item) => item[keyField] === rowKey)
+      : columnsData[tableName][rowKey];
 
     if (!rowToDelete) return;
-
     $api
       .delete(
-        `/deleteRowData/${rowToDelete.service_id}/${rowToDelete.service_name}`
+        `/deleteRowData/${rowToDelete.spid || rowToDelete.id}/${tableName}`
       )
       .then(() => {
         setColumnsData((prev) => {
           const updatedRows = prev[tableName].filter(
-            (item) => item.spid !== rowSpid
+            (item) => item[keyField] !== rowKey
           );
           return { ...prev, [tableName]: updatedRows };
         });
@@ -661,20 +684,34 @@ export default function DataBaseUsers() {
               >
                 <Table aria-label="sticky table">
                   <TableHead>
-                    <TableRow>
+                    <TableRow
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        backgroundColor: "#fff",
+                        zIndex: 2,
+                      }}
+                    >
                       {Object.keys(columnsData[tableName][0]).map((colKey) => (
                         <TableCell key={colKey}>
                           <strong>{colKey}</strong>
                         </TableCell>
                       ))}
-                      {tableName === "services_and_prices" ||
-                        (tableName === "worker_details" && (
-                          <TableCell align="right">
-                            <strong>Действия</strong>
-                          </TableCell>
-                        ))}
+                      {(tableName === "services_and_prices" ||
+                        tableName === "worker_details") && (
+                        <TableCell align="right">
+                          <strong>Действия</strong>
+                        </TableCell>
+                      )}
                     </TableRow>
-                    <TableRow>
+                    <TableRow
+                      style={{
+                        position: "sticky",
+                        top: "48px",
+                        backgroundColor: "#fff",
+                        zIndex: 2,
+                      }}
+                    >
                       {Object.keys(columnsData[tableName][0]).map((colKey) => {
                         if (colKey === "service_id")
                           return <TableCell key={`filter-${colKey}`} />;
@@ -720,162 +757,206 @@ export default function DataBaseUsers() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {isAddingRow && tableName === "services_and_prices" && (
-                      <TableRow>
-                        {Object.keys(newRowData).map((colKey) => (
-                          <TableCell key={colKey}>
-                            {colKey === "service_id" ||
-                            colKey === "spid" ? null : colKey === "region" ? (
-                              <Autocomplete
-                                options={regionOptions}
-                                getOptionLabel={(option) => option.name}
-                                value={
-                                  regionOptions.find(
-                                    (opt) =>
-                                      opt.code === Number(newRowData[colKey])
-                                  ) || null
-                                }
-                                onChange={(event, newValue) =>
-                                  setNewRowData((prev) => ({
-                                    ...prev,
-                                    [colKey]: newValue ? newValue.code : "",
-                                  }))
-                                }
-                                renderInput={(params) => (
-                                  <TextField
-                                    {...params}
-                                    size="small"
-                                    label="Регион"
-                                  />
-                                )}
-                              />
-                            ) : (
-                              <TextField
-                                value={newRowData[colKey]}
-                                onChange={(e) =>
-                                  setNewRowData((prev) => ({
-                                    ...prev,
-                                    [colKey]: e.target.value,
-                                  }))
-                                }
-                                size="small"
-                              />
-                            )}
-                          </TableCell>
-                        ))}
-                        <TableCell align="right">
-                          <IconButton
-                            color="success"
-                            onClick={handleAddRowSave}
-                          >
-                            <Check />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    )}
-
-                    {filteredData.map(
-                      (
-                        row
-                        // до этого совпадали ключи, сейчас row.spid уникален и всё нормально, проверить как работают ключи и как они влияют на значения
-                      ) => (
-                        <TableRow key={row.spid}>
-                          {Object.keys(row).map((colKey) => (
+                    {isAddingRow &&
+                      (tableName === "services_and_prices" ||
+                        tableName === "worker_details") && (
+                        <TableRow>
+                          {Object.keys(newRowData).map((colKey) => (
                             <TableCell key={colKey}>
-                              {colKey === "service_id" || colKey === "spid" ? (
-                                row[colKey]
-                              ) : editingRowIndex === row.spid &&
-                                tableName === "services_and_prices" ? (
-                                colKey === "region" ? (
-                                  <Autocomplete
-                                    options={regionOptions}
-                                    getOptionLabel={(option) => option.name}
-                                    value={
-                                      regionOptions.find(
-                                        (opt) =>
-                                          opt.code ===
-                                          Number(editedRowData[colKey])
-                                      ) || null
-                                    }
-                                    onChange={(event, newValue) =>
-                                      setEditedRowData((prev) => ({
-                                        ...prev,
-                                        [colKey]: newValue ? newValue.code : "",
-                                      }))
-                                    }
-                                    renderInput={(params) => (
-                                      <TextField
-                                        {...params}
-                                        size="small"
-                                        label="Регион"
-                                      />
-                                    )}
-                                  />
-                                ) : (
-                                  <TextField
-                                    value={editedRowData[colKey] ?? row[colKey]}
-                                    onChange={(e) =>
-                                      setEditedRowData((prev) => ({
-                                        ...prev,
-                                        [colKey]: e.target.value,
-                                      }))
-                                    }
-                                    onBlur={(e) =>
-                                      setEditedRowData((prev) => ({
-                                        ...prev,
-                                        [colKey]: e.target.value,
-                                      }))
-                                    }
-                                    size="small"
-                                  />
-                                )
-                              ) : colKey === "region" ? (
-                                regionOptions.find(
-                                  (opt) => opt.code === Number(row[colKey])
-                                )?.name || row[colKey]
-                              ) : typeof row[colKey] === "boolean" ? (
-                                row[colKey] ? (
-                                  "true"
-                                ) : (
-                                  "false"
-                                )
+                              {colKey === "service_id" ||
+                              colKey === "spid" ? null : colKey === "region" ? (
+                                <Autocomplete
+                                  options={regionOptions}
+                                  getOptionLabel={(option) => option.name}
+                                  value={
+                                    regionOptions.find(
+                                      (opt) =>
+                                        opt.code === Number(newRowData[colKey])
+                                    ) || null
+                                  }
+                                  onChange={(event, newValue) =>
+                                    setNewRowData((prev) => ({
+                                      ...prev,
+                                      [colKey]: newValue ? newValue.code : "",
+                                    }))
+                                  }
+                                  renderInput={(params) => (
+                                    <TextField
+                                      {...params}
+                                      size="small"
+                                      label="Регион"
+                                    />
+                                  )}
+                                />
                               ) : (
-                                row[colKey]
+                                <TextField
+                                  value={newRowData[colKey]}
+                                  onChange={(e) =>
+                                    setNewRowData((prev) => ({
+                                      ...prev,
+                                      [colKey]: e.target.value,
+                                    }))
+                                  }
+                                  size="small"
+                                />
                               )}
                             </TableCell>
                           ))}
+                          <TableCell align="right">
+                            <IconButton
+                              color="success"
+                              onClick={handleAddRowSave}
+                            >
+                              <Check />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      )}
 
-                          {tableName &&
-                            tableName === "services_and_prices" && ( // editingRowIndex === row.spid и дальше такие проверки
-                              <TableCell align="right">
-                                {editingRowIndex === row.spid ? (
-                                  <IconButton
-                                    color="success"
-                                    onClick={() => handleSaveRow(row.spid)}
-                                  >
-                                    <Check />
-                                  </IconButton>
+                    {filteredData.map((row, rowIndex) => {
+                      let rowKey;
+                      if (tableName === "services_and_prices" && row.spid) {
+                        rowKey = row.spid;
+                      } else if (tableName === "worker_details" && row.id) {
+                        rowKey = row.id;
+                      } else {
+                        rowKey = rowIndex;
+                      }
+
+                      return (
+                        <TableRow key={rowKey}>
+                          {Object.keys(row).map((colKey) => {
+                            if (colKey === "service_id" || colKey === "spid") {
+                              return (
+                                <TableCell key={colKey}>
+                                  {row[colKey]}
+                                </TableCell>
+                              );
+                            }
+
+                            return (
+                              <TableCell key={colKey}>
+                                {editingRowIndex === rowKey &&
+                                (tableName === "services_and_prices" ||
+                                  tableName === "worker_details") ? (
+                                  colKey === "region" ? (
+                                    <Autocomplete
+                                      options={regionOptions}
+                                      getOptionLabel={(option) => option.name}
+                                      value={
+                                        regionOptions.find(
+                                          (opt) =>
+                                            opt.code ===
+                                            Number(editedRowData[colKey])
+                                        ) || null
+                                      }
+                                      onChange={(event, newValue) =>
+                                        setEditedRowData((prev) => ({
+                                          ...prev,
+                                          [colKey]: newValue
+                                            ? newValue.code
+                                            : "",
+                                        }))
+                                      }
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          size="small"
+                                          label="Регион"
+                                        />
+                                      )}
+                                    />
+                                  ) : booleanColumns.includes(colKey) ? (
+                                    <Checkbox
+                                      checked={Boolean(
+                                        editedRowData[colKey] ?? row[colKey]
+                                      )}
+                                      onChange={(e) =>
+                                        setEditedRowData((prev) => ({
+                                          ...prev,
+                                          [colKey]: e.target.checked,
+                                        }))
+                                      }
+                                    />
+                                  ) : (
+                                    <TextField
+                                      value={
+                                        editedRowData[colKey] ?? row[colKey]
+                                      }
+                                      onChange={(e) =>
+                                        setEditedRowData((prev) => ({
+                                          ...prev,
+                                          [colKey]:
+                                            colKey === "service_name"
+                                              ? e.target.value
+                                                  .replace(/\t/g, " ")
+                                                  .trim()
+                                              : e.target.value,
+                                        }))
+                                      }
+                                      onBlur={(e) =>
+                                        setEditedRowData((prev) => ({
+                                          ...prev,
+                                          [colKey]:
+                                            colKey === "service_name"
+                                              ? e.target.value
+                                                  .replace(/\t/g, " ")
+                                                  .trim()
+                                              : e.target.value,
+                                        }))
+                                      }
+                                      size="small"
+                                    />
+                                  )
+                                ) : colKey === "region" ? (
+                                  regionOptions.find(
+                                    (opt) => opt.code === Number(row[colKey])
+                                  )?.name || row[colKey]
+                                ) : typeof row[colKey] === "boolean" ? (
+                                  row[colKey] ? (
+                                    "true"
+                                  ) : (
+                                    "false"
+                                  )
                                 ) : (
-                                  <>
-                                    <IconButton
-                                      color="primary"
-                                      onClick={() => handleEditRow(row.spid)}
-                                    >
-                                      <Edit />
-                                    </IconButton>
-                                    <IconButton
-                                      color="secondary"
-                                      onClick={() => handleDeleteRow(row.spid)}
-                                    >
-                                      <Delete />
-                                    </IconButton>
-                                  </>
+                                  row[colKey]
                                 )}
                               </TableCell>
-                            )}
+                            );
+                          })}
+                          {(tableName === "services_and_prices" ||
+                            tableName === "worker_details") && (
+                            <TableCell align="right">
+                              {editingRowIndex === rowKey ? (
+                                <IconButton
+                                  color="success"
+                                  onClick={() =>
+                                    handleSaveRow(rowKey, tableName)
+                                  }
+                                >
+                                  <Check />
+                                </IconButton>
+                              ) : (
+                                <>
+                                  <IconButton
+                                    color="primary"
+                                    onClick={() => handleEditRow(rowKey)}
+                                  >
+                                    <Edit />
+                                  </IconButton>
+                                  <IconButton
+                                    color="secondary"
+                                    onClick={() => handleDeleteRow(rowKey)}
+                                  >
+                                    <Delete />
+                                  </IconButton>
+                                </>
+                              )}
+                            </TableCell>
+                          )}
                         </TableRow>
-                      )
-                    )}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>

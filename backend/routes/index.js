@@ -104,7 +104,7 @@ router.delete(
   DataController.deleteDatabaseColumn
 );
 router.delete(
-  `/deleteRowData/:rowToDelete/:serviceName`,
+  `/deleteRowData/:rowId/:tableName`,
   checkCookie,
   DataController.handleDeleteRow
 );

@@ -1412,7 +1412,7 @@ class DataController {
   }
   async getColumnsData(req, res) {
     try {
-      const result_workers = await pool.query(`SELECT * FROM worker_details;`);
+      const result_workers = await pool.query(`SELECT * FROM worker_details`);
       const result_users = await pool.query(`SELECT * FROM user_details;`);
       const result_cgs = await pool.query(`SELECT * FROM cgs_details;`);
       const result_gef = await pool.query(`SELECT * FROM gef_details;`);
@@ -1767,18 +1767,49 @@ class DataController {
   }
   async updateRowData(req, res) {
     try {
-      const { service_id, service_name, region, description, price, spid } =
-        req.body;
+      const { tableName } = req.body;
 
-      await pool.query(
-        "UPDATE services SET name = $1, description = $2 WHERE id = $3",
-        [service_name, description, service_id]
-      );
+      if (tableName === "services_and_prices") {
+        const { service_id, service_name, region, description, price, spid } =
+          req.body;
 
-      await pool.query(
-        "UPDATE service_prices SET region = $1, price = $2 WHERE id = $3",
-        [region, price, spid]
-      );
+        await pool.query(
+          "UPDATE services SET name = $1, description = $2 WHERE id = $3",
+          [service_name, description, service_id]
+        );
+
+        await pool.query(
+          "UPDATE service_prices SET region = $1, price = $2 WHERE id = $3",
+          [region, price, spid]
+        );
+      } else if (tableName === "worker_details") {
+        const {
+          id,
+          region,
+          company_name,
+          position,
+          full_name,
+          contract_number,
+          phone_number,
+        } = req.body;
+
+        await pool.query(
+          `UPDATE worker_details 
+           SET region = $1, company_name = $2, position = $3, full_name = $4, contract_number = $5, phone_number = $6 
+           WHERE id = $7`,
+          [
+            region,
+            company_name,
+            position,
+            full_name,
+            contract_number,
+            phone_number,
+            id,
+          ]
+        );
+      } else {
+        return res.status(400).json({ error: "Неверное значение tableName" });
+      }
 
       res.status(200).json({ message: "Данные успешно обновлены" });
     } catch (error) {
@@ -1789,24 +1820,80 @@ class DataController {
 
   async handleDeleteRow(req, res) {
     try {
-      const { rowToDelete: service_id, serviceName: service_name } = req.params;
+      const { rowId, tableName } = req.params;
 
-      await pool.query("DELETE FROM service_prices WHERE service_id = $1", [
-        service_id,
-      ]);
+      if (!rowId || !tableName) {
+        return res
+          .status(400)
+          .json({ message: "Некорректные параметры запроса" });
+      }
 
-      const result = await pool.query("DELETE FROM services WHERE id = $1", [
-        service_id,
-      ]);
+      if (tableName === "worker_details") {
+        const workerRes = await pool.query(
+          "SELECT username FROM worker_details WHERE id = $1",
+          [rowId]
+        );
 
-      if (result.rowCount > 0) {
-        res.send({ message: "Услуга успешно удалена" });
+        if (workerRes.rowCount === 0) {
+          return res
+            .status(404)
+            .json({ message: "Запись о работнике не найдена" });
+        }
+
+        const username = workerRes.rows[0].username;
+
+        const userRes = await pool.query(
+          "SELECT access_level FROM users WHERE username = $1",
+          [username]
+        );
+
+        if (userRes.rowCount === 0) {
+          return res.status(404).json({ message: "Пользователь не найден" });
+        }
+
+        const access_level = userRes.rows[0].access_level;
+        if (access_level !== 1) {
+          return res.status(403).json({
+            message:
+              "Удаление разрешено только для работников (access_level = 1)",
+          });
+        }
+
+        await pool.query("DELETE FROM worker_details WHERE id = $1", [rowId]);
+        await pool.query("DELETE FROM users WHERE username = $1", [username]);
+
+        return res.json({ message: "Работник успешно удалён" });
+      } else if (tableName === "services_and_prices") {
+        const deletePriceResult = await pool.query(
+          "DELETE FROM service_prices WHERE id = $1 RETURNING service_id",
+          [rowId]
+        );
+
+        if (deletePriceResult.rowCount === 0) {
+          return res
+            .status(404)
+            .json({ message: "Запись в service_prices не найдена" });
+        }
+
+        const serviceId = deletePriceResult.rows[0].service_id;
+
+        const remainingResult = await pool.query(
+          "SELECT COUNT(*) FROM service_prices WHERE service_id = $1",
+          [serviceId]
+        );
+        const remainingCount = parseInt(remainingResult.rows[0].count, 10);
+
+        if (remainingCount === 0) {
+          await pool.query("DELETE FROM services WHERE id = $1", [serviceId]);
+        }
+
+        return res.json({ message: "Запись успешно удалена" });
       } else {
-        res.status(404).send({ message: "Услуга не найдена" });
+        return res.status(400).json({ message: "Неизвестная таблица" });
       }
     } catch (error) {
       console.error("Ошибка при удалении записи:", error);
-      res.status(500).send({ message: "Ошибка сервера" });
+      return res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 
