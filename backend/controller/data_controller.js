@@ -1789,12 +1789,15 @@ class DataController {
           full_name,
           contract_number,
           phone_number,
+          service_access_3_1_127_301,
+          service_access_4_1,
+          service_access_3_1_400_2000,
         } = req.body;
 
         await pool.query(
           `UPDATE worker_details 
-           SET region = $1, company_name = $2, position = $3, full_name = $4, contract_number = $5, phone_number = $6 
-           WHERE id = $7`,
+           SET region = $1, company_name = $2, position = $3, full_name = $4, contract_number = $5, phone_number = $6, service_access_3_1_127_301 = $7, service_access_4_1 = $8, service_access_3_1_400_2000 = $9
+           WHERE id = $10`,
           [
             region,
             company_name,
@@ -1802,6 +1805,9 @@ class DataController {
             full_name,
             contract_number,
             phone_number,
+            service_access_3_1_127_301,
+            service_access_4_1,
+            service_access_3_1_400_2000,
             id,
           ]
         );
@@ -1961,7 +1967,7 @@ class DataController {
     try {
       const login = decodeJWT(req.cookies.refreshToken).login;
       const result_data = await pool.query(
-        "SELECT region, company_name, position, full_name, contract_number, phone_number, legal_address, inn, kpp, current_account, bank_name, correspondent_account, bic, contact_person FROM worker_details WHERE username = $1",
+        "SELECT region, company_name, position, full_name, contract_number, phone_number, legal_address, inn, kpp, current_account, bank_name, correspondent_account, bic, contact_person, service_access_3_1_127_301, service_access_4_1, service_access_3_1_400_2000 FROM worker_details WHERE username = $1",
         [login]
       );
       if (result_data.rowCount > 0) {

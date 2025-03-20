@@ -722,15 +722,29 @@ export default function WorkerContract() {
               </Text>
 
               {/* Список котлов */}
-              <View style={[styles.bulletItem, { marginTop: 15 }]}>
-                <Text style={styles.paragraph}>
-                  - котлы GEFFEN MB 4.1 40, 60, 80, 99 кВт;
-                </Text>
-              </View>
-              <View style={[styles.bulletItem, { marginBottom: 15 }]}>
-                <Text style={styles.paragraph}>
-                  - котлы GEFFEN MB 3.1 127, 145, 200, 251, 301 кВт.
-                </Text>
+              <View style={{ marginTop: "15px" }}>
+                {data?.service_access_3_1_127_301 && (
+                  <View style={[styles.bulletItem]}>
+                    <Text style={styles.paragraph}>
+                      - котлы GEFFEN MB 3.1 127, 145, 200, 251, 301 кВт.
+                    </Text>
+                  </View>
+                )}
+                {data?.service_access_4_1 && (
+                  <View style={[styles.bulletItem, { marginTop: 5 }]}>
+                    <Text style={styles.paragraph}>
+                      - котлы GEFFEN MB 4.1 40, 60, 80, 99 кВт;
+                    </Text>
+                  </View>
+                )}
+                {data?.service_access_3_1_400_2000 && (
+                  <View style={[styles.bulletItem, { marginTop: 5 }]}>
+                    <Text style={styles.paragraph}>
+                      - котлы GEFFEN MB 3.1 400, 500, 660, 800, 1060, 1199,
+                      1600, 2000 кВт.
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* Специалист АСЦ, ФИО, телефон */}

@@ -107,8 +107,20 @@ export default function OptionsDialog({ open, user, setOptions }) {
               <Typography variant="body2" color="textSecondary" component="div">
                 <strong>{key}:</strong>
               </Typography>
-              {key === "id" || key === "username" ? (
-                <Typography variant="body1">{userData[key]}</Typography>
+              {key === "id" ||
+              key === "username" ||
+              [
+                "service_access_3_1_127_301",
+                "service_access_4_1",
+                "service_access_3_1_400_2000",
+              ].includes(key) ? (
+                <Typography variant="body1">
+                  {typeof userData[key] === "boolean"
+                    ? userData[key]
+                      ? "Есть доступ"
+                      : "Нет доступа"
+                    : userData[key]}
+                </Typography>
               ) : editingField === key ? (
                 key === "region" ? (
                   <Autocomplete

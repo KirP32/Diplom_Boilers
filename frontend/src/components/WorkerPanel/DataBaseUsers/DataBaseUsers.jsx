@@ -26,11 +26,6 @@ import {
   Checkbox,
 } from "@mui/material";
 
-const booleanColumns = [
-  "service_access_3_1_127-301",
-  "service_access_3_1_400_2000",
-  "service_access_4_1",
-];
 import { Edit, Delete, Add, Check } from "@mui/icons-material";
 import styles from "./DataBaseUsers.module.scss";
 import { useNavigate } from "react-router-dom";
@@ -64,7 +59,6 @@ export default function DataBaseUsers() {
 
   const flag_logout = useRef(false);
 
-  // Массив с вариантами регионов. 71 – Тульская область,
   const regionOptions = region_data;
 
   const tableMapping = {
@@ -187,7 +181,7 @@ export default function DataBaseUsers() {
       setEditingColumn(null);
       return;
     }
-
+    console.log("handleSave");
     $api
       .post("/updateDatabaseColumn", {
         oldName: editingColumn.column_name,
@@ -211,6 +205,47 @@ export default function DataBaseUsers() {
           error.status === 401 &&
           localStorage.getItem("stay_logged") === "false"
         ) {
+          logout(navigate);
+        }
+      });
+  };
+
+  const fetchColumnsData = () => {
+    $api
+      .get("/getColumnsData")
+      .then((result) => {
+        setColumnsData(result.data);
+      })
+      .catch(() => {
+        setColumnsData(null);
+      });
+  };
+
+  const fetchDatabaseColumns = () => {
+    $api
+      .get("/getDatabaseColumns")
+      .then((result) => {
+        if (result?.data) {
+          setAllColumns(result.data);
+          if (
+            tableName &&
+            tableMapping?.[tableName] &&
+            result.data?.[tableMapping[tableName]]
+          ) {
+            setColumns(result.data[tableMapping[tableName]]);
+          }
+        }
+      })
+      .catch((err) => {
+        setAllColumns({});
+        if (
+          err.status === 401 &&
+          localStorage.getItem("stay_logged") === "false"
+        ) {
+          if (flag_logout.current === false) {
+            flag_logout.current = true;
+            alert("Ваш сеанс истёк, авторизуйтесь повторно");
+          }
           logout(navigate);
         }
       });
@@ -244,7 +279,6 @@ export default function DataBaseUsers() {
       setIsAdding(false);
       return;
     }
-
     $api
       .post("/addDatabaseColumn", {
         column_name: newColumnName,
@@ -259,6 +293,8 @@ export default function DataBaseUsers() {
         setNewColumnName("");
         setNewColumnType("character varying");
         setIsAdding(false);
+        fetchColumnsData();
+        fetchDatabaseColumns();
       })
       .catch((error) => {
         console.error("Ошибка добавления:", error);
@@ -419,11 +455,6 @@ export default function DataBaseUsers() {
         }
       });
   };
-
-  // console.log("columnsData", columnsData);
-  // console.log("tableName", tableName);
-  // console.log("columnsData[tableName]", columnsData[tableName]);
-  // console.log("columnsData[tableName].length", columnsData[tableName]?.length);
 
   return (
     <div className={styles.data_table__wrapper} style={{ overflowY: "auto" }}>
@@ -752,7 +783,8 @@ export default function DataBaseUsers() {
                           </TableCell>
                         );
                       })}
-                      {tableName === "services_and_prices" && <TableCell />}
+                      {(tableName === "services_and_prices" ||
+                        tableName === "worker_details") && <TableCell />}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -833,6 +865,11 @@ export default function DataBaseUsers() {
                               );
                             }
 
+                            const column = columns.find(
+                              (item) => item.column_name === colKey
+                            );
+                            const isBoolean = column?.data_type === "boolean";
+
                             return (
                               <TableCell key={colKey}>
                                 {editingRowIndex === rowKey &&
@@ -865,7 +902,7 @@ export default function DataBaseUsers() {
                                         />
                                       )}
                                     />
-                                  ) : booleanColumns.includes(colKey) ? (
+                                  ) : isBoolean ? (
                                     <Checkbox
                                       checked={Boolean(
                                         editedRowData[colKey] ?? row[colKey]
@@ -911,7 +948,7 @@ export default function DataBaseUsers() {
                                   regionOptions.find(
                                     (opt) => opt.code === Number(row[colKey])
                                   )?.name || row[colKey]
-                                ) : typeof row[colKey] === "boolean" ? (
+                                ) : isBoolean ? (
                                   row[colKey] ? (
                                     "true"
                                   ) : (
