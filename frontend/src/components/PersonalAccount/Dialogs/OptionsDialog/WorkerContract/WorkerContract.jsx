@@ -68,7 +68,7 @@ export default function WorkerContract() {
   console.log(window);
   if (window.RussianNouns) {
     const rne = new window.RussianNouns.Engine();
-
+    console.log("window.RussianNouns");
     genitive_postion = genitive_postion
       .split(" ")
       .map((item) => {
