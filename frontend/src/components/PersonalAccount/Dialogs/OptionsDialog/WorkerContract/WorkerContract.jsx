@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable react/prop-types */
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import { PDFViewer } from "@react-pdf/renderer";
@@ -9,6 +10,7 @@ import { LoadingSpinner } from "./../../../../LoadingSpinner/LoadingSpinner";
 import { useEffect, useState } from "react";
 import $api from "../../../../../http";
 import region_data from "../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
+
 Font.registerHyphenationCallback((word) => ["", word, ""]);
 const monthGenitive = {
   январь: "января",
@@ -36,6 +38,7 @@ export default function WorkerContract() {
   function handleOnLoad() {
     setIsLoading(false);
   }
+
   const [data, setData] = useState();
   const [dataPrices, setDataPrices] = useState();
 
@@ -60,6 +63,40 @@ export default function WorkerContract() {
         console.log(error);
       });
   }, []);
+  /// ПАДЕЖИ
+  let genitive_postion = data?.position || "";
+  let fio_genitive = data?.full_name || "";
+
+  if (window.RussianNouns) {
+    const rne = new window.RussianNouns.Engine();
+
+    fio_genitive = fio_genitive
+      .split(" ")
+      .map((item, index) => {
+        return rne.decline(
+          {
+            text: item,
+            gender:
+              index === 0 && ["a", "я"].includes(item.slice(-1))
+                ? "женский"
+                : "мужской",
+          },
+          "родительный"
+        );
+      })
+      .join(" ");
+
+    genitive_postion = genitive_postion
+      .split(" ")
+      .map((item) => {
+        return rne.decline({ text: item, gender: "мужской" }, "родительный");
+      })
+      .join(" ");
+
+    console.log(fio_genitive);
+    console.log(genitive_postion);
+  }
+  ///
   return (
     <>
       {isLoading && <LoadingSpinner />}
@@ -100,7 +137,7 @@ export default function WorkerContract() {
                 компанией ООО «ГЕФФЕН» в лице Директора Орехова Алексея
                 Сергеевича, действующего на основании Устава и именуемое в
                 дальнейшем как «Заказчик», и компанией {data?.company_name} в
-                лице {data?.position} {data?.full_name}, действующего на
+                лице {genitive_postion} {fio_genitive}, действующего на
                 основании Устава и именуемое в дальнейшем как «Исполнитель».
               </Text>
 
