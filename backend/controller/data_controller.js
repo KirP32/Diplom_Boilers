@@ -3,8 +3,8 @@ const pool = require("../dataBase/pool");
 const { getTokens } = require("../getTokens");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
-const e = require("express");
 require("dotenv").config();
+const RussianNouns = require("russian-nouns-js");
 
 class DataController {
   async changes(req, res, next) {
@@ -1970,8 +1970,19 @@ class DataController {
         "SELECT region, company_name, position, full_name, contract_number, phone_number, legal_address, inn, kpp, current_account, bank_name, correspondent_account, bic, contact_person, service_access_3_1_127_301, service_access_4_1, service_access_3_1_400_2000 FROM worker_details WHERE username = $1",
         [login]
       );
+      let genitive_postion = result_data.rows[0].position || "";
+      const rne = new RussianNouns.Engine();
+      genitive_postion = genitive_postion
+        .split(" ")
+        .map((item) => {
+          return rne.decline({ text: item, gender: "мужской" }, "родительный");
+        })
+        .join(" ");
       if (result_data.rowCount > 0) {
-        return res.send(result_data.rows[0]);
+        return res.send({
+          ...result_data.rows[0],
+          genitive_postion,
+        });
       } else {
         return res.sendStatus(500);
       }

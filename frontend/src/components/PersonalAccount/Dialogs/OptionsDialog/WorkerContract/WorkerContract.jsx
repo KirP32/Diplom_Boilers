@@ -64,18 +64,6 @@ export default function WorkerContract() {
       });
   }, []);
   /// ПАДЕЖИ
-  let genitive_postion = data?.position || "";
-  console.log(window);
-  if (window.RussianNouns) {
-    const rne = new window.RussianNouns.Engine();
-    console.log("window.RussianNouns");
-    genitive_postion = genitive_postion
-      .split(" ")
-      .map((item) => {
-        return rne.decline({ text: item, gender: "мужской" }, "родительный");
-      })
-      .join(" ");
-  }
   let declinedPerson = "";
   const arr_fio = data?.full_name?.split(" ");
   if (data?.full_name) {
@@ -127,7 +115,7 @@ export default function WorkerContract() {
                 компанией ООО «ГЕФФЕН» в лице Директора Орехова Алексея
                 Сергеевича, действующего на основании Устава и именуемое в
                 дальнейшем как «Заказчик», и компанией {data?.company_name} в
-                лице {genitive_postion}{" "}
+                лице {data?.genitive_postion}{" "}
                 {declinedPerson.last +
                   " " +
                   declinedPerson.first +
