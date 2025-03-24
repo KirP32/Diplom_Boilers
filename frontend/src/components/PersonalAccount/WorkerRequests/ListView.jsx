@@ -61,7 +61,7 @@ export default function ListView({
             <TableRow>
               <TableCell sx={headerCellSx}>Проблема</TableCell>
               <TableCell sx={headerCellSx} align="right">
-                Датчик
+                Оборудование
               </TableCell>
               <TableCell sx={headerCellSx} align="right">
                 Система
@@ -158,7 +158,7 @@ export default function ListView({
             <TableRow>
               <TableCell sx={headerCellSx}>Проблема</TableCell>
               <TableCell sx={headerCellSx} align="right">
-                Датчик
+                Оборудование
               </TableCell>
               <TableCell sx={headerCellSx} align="right">
                 Система

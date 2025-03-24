@@ -15,6 +15,7 @@ import RequestDetails from "./components/PersonalAccount/tabs/ViewRequests/Reque
 import ErrorComponent from "./components/ErrorComponent/ErrorComponent.jsx";
 import WorkerContract from "./components/PersonalAccount/Dialogs/OptionsDialog/WorkerContract/WorkerContract.jsx";
 import ContractGuard from "./components/Guards/ContractGuard.jsx";
+import MobilePdfTest from "./components/MobilePdfTest/MobilePdfTest.jsx";
 
 const router = createBrowserRouter(
   [
@@ -58,6 +59,10 @@ const router = createBrowserRouter(
           <WorkerContract />
         </ContractGuard>
       ),
+    },
+    {
+      path: "mobile_pdf",
+      element: <MobilePdfTest />,
     },
   ],
   {
