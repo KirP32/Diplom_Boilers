@@ -15,9 +15,9 @@ import {
 import { useContext, useEffect, useState } from "react";
 import $api from "../../../../http";
 import EditIcon from "@mui/icons-material/Edit";
+import Add from "@mui/icons-material/Add";
 import { ThemeContext } from "../../../../Theme";
 import DownloadIcon from "@mui/icons-material/Download";
-import { useNavigate } from "react-router-dom";
 import region_data from "../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 
 export default function OptionsDialog({ open, user, setOptions }) {
@@ -25,7 +25,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [editingField, setEditingField] = useState(null);
   const [editedValue, setEditedValue] = useState(null);
   const { access_level } = useContext(ThemeContext);
-  const navigate = useNavigate();
   const handleSaveChanges = (key, newValue) => {
     $api
       .put("/updateUser", { key, newValue, access_level })
@@ -43,7 +42,14 @@ export default function OptionsDialog({ open, user, setOptions }) {
 
   const handleBlurOrEnter = (key) => {
     if (editedValue !== null) {
-      handleSaveChanges(key, editedValue.trim());
+      const newValue =
+        typeof editedValue === "string"
+          ? editedValue.trim()
+          : key === "full_name"
+          ? `${editedValue.surname} ${editedValue.name} ${editedValue.patronymic}`.trim()
+          : editedValue;
+
+      handleSaveChanges(key, newValue);
     }
     setEditingField(null);
   };
@@ -72,7 +78,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [region_value, setRegion_value] = useState(null);
 
   return (
-    <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="xs">
+    <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}
       >
@@ -121,6 +127,72 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       : "Нет доступа"
                     : userData[key]}
                 </Typography>
+              ) : key === "full_name" ? (
+                editingField === key ? (
+                  <Box display="flex" gap={1}>
+                    <TextField
+                      autoFocus
+                      fullWidth
+                      variant="outlined"
+                      placeholder="Фамилия"
+                      value={editedValue?.surname || ""}
+                      onChange={(e) =>
+                        setEditedValue((prev) => ({
+                          ...prev,
+                          surname: e.target.value,
+                        }))
+                      }
+                    />
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      placeholder="Имя"
+                      value={editedValue?.name || ""}
+                      onChange={(e) =>
+                        setEditedValue((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                    />
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      placeholder="Отчество"
+                      value={editedValue?.patronymic || ""}
+                      onChange={(e) =>
+                        setEditedValue((prev) => ({
+                          ...prev,
+                          patronymic: e.target.value,
+                        }))
+                      }
+                    />
+                    <IconButton
+                      color="success"
+                      onClick={() => handleBlurOrEnter("full_name")}
+                    >
+                      <Add />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <Typography variant="body1">
+                      {userData[key] ? userData[key] : "—"}
+                    </Typography>
+                    <IconButton
+                      onClick={() => {
+                        const [surname, name, patronymic] = userData[
+                          key
+                        ]?.split(" ") || ["", "", ""];
+                        setEditingField(key);
+                        setEditedValue({ surname, name, patronymic });
+                      }}
+                      size="small"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </div>
+                )
               ) : editingField === key ? (
                 key === "region" ? (
                   <Autocomplete
