@@ -473,6 +473,11 @@ export default function DataBaseUsers() {
     setFile(files[0]);
     setDrag(false);
   }
+  function handleFileChange(e) {
+    if (e.target.files) {
+      setFile(e.target.files[0]);
+    }
+  }
   const [file, setFile] = useState(null);
 
   function handleUpdatePrices() {
@@ -738,6 +743,15 @@ export default function DataBaseUsers() {
               Перетащите файл, чтобы загрузить
             </div>
           )}
+          {
+            <div>
+              <input
+                type="file"
+                accept=".xls, .xlsx"
+                onChange={(e) => handleFileChange(e)}
+              />
+            </div>
+          }
           {file && (
             <>
               <section>
