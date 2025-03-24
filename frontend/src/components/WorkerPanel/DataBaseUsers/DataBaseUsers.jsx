@@ -745,7 +745,12 @@ export default function DataBaseUsers() {
           )}
           {
             <div>
+              <label className={styles.label_form} htmlFor="excel_updoad">
+                Выберите файл
+              </label>
               <input
+                style={{ display: "none" }}
+                id="excel_updoad"
                 type="file"
                 accept=".xls, .xlsx"
                 onChange={(e) => handleFileChange(e)}
