@@ -12,3 +12,21 @@
         flex-direction: column;
     }
 }
+
+.drop_area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dashed {
+    border: 3px dashed black;
+    height: 15%;
+    padding: 15px;
+    width: 35%;
+    text-align: center;
+}

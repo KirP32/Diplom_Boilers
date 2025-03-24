@@ -3,6 +3,10 @@ const pool = require("../dataBase/pool");
 const { getTokens } = require("../getTokens");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
+//файлы
+const fs = require("node:fs");
+const XLSX = require("xlsx");
+// конец файлы
 require("dotenv").config();
 const RussianNouns = require("russian-nouns-js");
 
@@ -1208,7 +1212,9 @@ class DataController {
       const result_services = await pool.query(
         `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'services';`
       );
-
+      const result_good = await pool.query(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'goods';`
+      );
       if (
         result_workers.rowCount > 0 &&
         result_users.rowCount > 0 &&
@@ -1226,6 +1232,7 @@ class DataController {
           in_transit_stage: result_in_transit.rows,
           work_in_progress_stage: result_work_in_progress.rows,
           services_and_prices: result_services.rows,
+          goods: result_good.rows,
         });
       }
       return res.sendStatus(400);
@@ -1439,7 +1446,7 @@ class DataController {
         FROM services s
         JOIN service_prices sp ON s.id = sp.service_id;
       `);
-
+      const result_goods = await pool.query(`SELECT * FROM goods;`);
       if (
         result_workers.rowCount > 0 &&
         result_users.rowCount > 0 &&
@@ -1457,6 +1464,7 @@ class DataController {
           in_transit_stage: result_in_transit_stage.rows,
           work_in_progress_stage: result_work_in_progress_stage.rows,
           services_and_prices: result_services_and_prices.rows,
+          goods: result_goods.rows,
         });
       }
       return res.sendStatus(400);
@@ -2018,6 +2026,81 @@ class DataController {
     } catch (error) {
       console.error("Ошибка при получении цен на услуги:", error);
       res.status(500).json({ message: "Ошибка сервера" });
+    }
+  }
+  async updatePrices(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Файл не передан" });
+      }
+
+      const workbook = XLSX.readFile(req.file.path);
+      fs.unlink(req.file.path, (err) => {
+        if (err) throw err;
+      });
+
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(firstSheet, {
+        header: 1,
+        defval: "",
+      });
+
+      const expectedHeaders = ["Артикул", "Товар", "Цена"];
+
+      let headerRowIndex = -1;
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        if (expectedHeaders.every((header) => row.includes(header))) {
+          headerRowIndex = i;
+          break;
+        }
+      }
+
+      if (headerRowIndex === -1) {
+        return res
+          .status(400)
+          .json({ error: "Не найдена строка с заголовками!" });
+      }
+
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+        header: data[headerRowIndex],
+        range: headerRowIndex + 1,
+      });
+      const validData = jsonData.filter(
+        (item) =>
+          item["Артикул"] &&
+          item["Товар"] &&
+          item["Цена"] !== null &&
+          item["Цена"] !== undefined
+      );
+
+      const values = [];
+      const queryParams = [];
+
+      validData.forEach((item, index) => {
+        queryParams.push(
+          `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`
+        );
+        values.push(item["Артикул"], item["Товар"], item["Цена"]);
+      });
+
+      const queryText = `
+        INSERT INTO goods (article, name, price)
+        VALUES ${queryParams.join(", ")}
+        ON CONFLICT (article) DO UPDATE SET
+          name = EXCLUDED.name,
+          price = EXCLUDED.price
+      `;
+
+      await pool.query(queryText, values);
+
+      return res.send("OK");
+    } catch (error) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) throw err;
+      });
+      console.error("Ошибка при обработке файла:", error);
+      res.status(500).json({ error: error.message });
     }
   }
 }

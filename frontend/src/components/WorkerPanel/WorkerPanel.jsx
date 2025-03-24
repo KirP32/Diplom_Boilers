@@ -34,12 +34,12 @@ function WorkerPanel() {
         >
           <h4>Добавить пользователя</h4>
         </Button>
-        <Button
+        {/* <Button
           className={styles.worker_wrapper__sidebar__button}
           onClick={() => setActiveComponent("addDevice")}
         >
           <h4>Меню устройств</h4>
-        </Button>
+        </Button> */}
         <Button
           className={styles.worker_wrapper__sidebar__button}
           onClick={() => setActiveComponent("dataBase")}

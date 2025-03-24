@@ -109,7 +109,7 @@ export default function WorkerRequests({
       console.log("Токен не найден");
     }
   }, []);
-  const [isTableView, setIsTableView] = useState(true);
+  const [isTableView, setIsTableView] = useState(false);
 
   const navigate = useNavigate();
   return (

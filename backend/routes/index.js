@@ -5,6 +5,9 @@ const checkCookie = require("../middleware/checkCookie.js");
 
 const router = new Router();
 
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+
 // router.get('/changes', DataController.changes);
 router.get("/test", DataController.test);
 router.get("/devices", checkCookie, DataController.devices);
@@ -81,6 +84,12 @@ router.post(
 router.post("/createSystem", checkCookie, DataController.createSystem);
 router.post("/setNewWorker", checkCookie, DataController.setNewWorker);
 router.post("/addRowData", checkCookie, DataController.addRowData);
+router.post(
+  "/updatePrices",
+  checkCookie,
+  upload.single("file"),
+  DataController.updatePrices
+);
 
 router.delete(
   "/delete_device/:device_uid",

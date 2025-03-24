@@ -71,6 +71,7 @@ export default function DataBaseUsers() {
     in_transit_stage: "in_transit_stage",
     work_in_progress_stage: "work_in_progress_stage",
     services_and_prices: "services_and_prices",
+    goods: "goods",
   };
 
   const [filters, setFilters] = useState({});
@@ -82,28 +83,28 @@ export default function DataBaseUsers() {
       [colKey]: value,
     }));
   };
+  const filteredData = columnsData?.[tableName]
+    ? columnsData[tableName].filter((row) =>
+        Object.keys(filters).every((colKey) => {
+          const filterValue = filters[colKey];
+          if (!filterValue) return true;
 
-  const filteredData =
-    columnsData[tableName]?.filter((row) =>
-      Object.keys(filters).every((colKey) => {
-        const filterValue = filters[colKey];
-        if (!filterValue) return true;
+          if (colKey === "region") {
+            const selectedRegion = regionOptions.find(
+              (opt) => opt.name.toLowerCase() === filterValue.toLowerCase()
+            );
+            return selectedRegion
+              ? Number(row[colKey]) === selectedRegion.code
+              : false;
+          }
 
-        if (colKey === "region") {
-          const selectedRegion = regionOptions.find(
-            (opt) => opt.name.toLowerCase() === filterValue.toLowerCase()
-          );
-          return selectedRegion
-            ? Number(row[colKey]) === selectedRegion.code
-            : false;
-        }
-
-        return row[colKey]
-          ?.toString()
-          .toLowerCase()
-          .includes(filterValue.toLowerCase());
-      })
-    ) || [];
+          return row[colKey]
+            ?.toString()
+            .toLowerCase()
+            .includes(filterValue.toLowerCase());
+        })
+      )
+    : [];
 
   useEffect(() => {
     $api
@@ -456,6 +457,45 @@ export default function DataBaseUsers() {
       });
   };
 
+  const [drag, setDrag] = useState(false);
+
+  function dragStartHandler(e) {
+    e.preventDefault();
+    setDrag(true);
+  }
+  function dragLeaveHandler(e) {
+    e.preventDefault();
+    setDrag(false);
+  }
+  function onDropHandler(e) {
+    e.preventDefault();
+    let files = [...e.dataTransfer.files];
+    setFile(files[0]);
+    setDrag(false);
+  }
+  const [file, setFile] = useState(null);
+
+  function handleUpdatePrices() {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    $api
+      .post("/updatePrices", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((result) => {
+        fetchColumnsData();
+      })
+      .catch((error) => {
+        setErrorMessage("Ошибка обновления записи: " + error.message);
+        setSnackbarOpen(true);
+      });
+  }
+
   return (
     <div className={styles.data_table__wrapper} style={{ overflowY: "auto" }}>
       <div
@@ -498,6 +538,7 @@ export default function DataBaseUsers() {
                 Заявка - Проводятся работы
               </MenuItem>
               <MenuItem value="services_and_prices">Услуги</MenuItem>
+              <MenuItem value="goods">Запчасти</MenuItem>
             </Select>
           </FormControl>
         </section>
@@ -675,7 +716,44 @@ export default function DataBaseUsers() {
           Установить
         </Button>
       </div>
-
+      {tableName && tableName === "goods" && (
+        <div className={styles.drop_area}>
+          {drag ? (
+            <div
+              className={styles.dashed}
+              onDragStart={(e) => dragStartHandler(e)}
+              onDragLeave={(e) => dragLeaveHandler(e)}
+              onDragOver={(e) => dragStartHandler(e)}
+              onDrop={(e) => onDropHandler(e)}
+            >
+              Отпустите файл, чтобы загрузить
+            </div>
+          ) : (
+            <div
+              className={styles.dashed}
+              onDragStart={(e) => dragStartHandler(e)}
+              onDragLeave={(e) => dragLeaveHandler(e)}
+              onDragOver={(e) => dragStartHandler(e)}
+            >
+              Перетащите файл, чтобы загрузить
+            </div>
+          )}
+          {file && (
+            <>
+              <section>
+                <strong>Загружен файл:</strong> {file.name}
+              </section>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleUpdatePrices}
+              >
+                Обновить цены
+              </Button>
+            </>
+          )}
+        </div>
+      )}
       {columnsData &&
         columnsData[tableName] &&
         columnsData[tableName].length > 0 && (
@@ -691,7 +769,7 @@ export default function DataBaseUsers() {
               <Typography
                 variant="h5"
                 className={styles.data_table__header}
-                sx={{ pt: 2, textAlign: "center" }}
+                sx={{ textAlign: "center" }}
               >
                 Данные таблицы {tableName}
               </Typography>
