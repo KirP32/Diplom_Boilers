@@ -45,7 +45,10 @@ export default function WorkerContract() {
   function handleOnLoad() {
     setIsLoading(false);
   }
-  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
   alert(navigator.userAgent);
   const [data, setData] = useState();
   const [dataPrices, setDataPrices] = useState();
