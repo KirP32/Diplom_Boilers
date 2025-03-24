@@ -1,11 +1,20 @@
-import { PDFViewer } from "@react-pdf/renderer";
-import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
+import {
+  Page,
+  Text,
+  View,
+  Document,
+  StyleSheet,
+  PDFDownloadLink,
+} from "@react-pdf/renderer";
 
 export default function MobilePdfTest() {
   return (
-    <PDFViewer style={{ width: "100%", height: "100%" }}>
-      <MyDocument />
-    </PDFViewer>
+    <div>
+      Скачать PDF{" "}
+      <PDFDownloadLink document={<MyDocument />} fileName="contract.pdf">
+        <button>Скачать</button>
+      </PDFDownloadLink>
+    </div>
   );
 }
 
