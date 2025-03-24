@@ -46,7 +46,7 @@ export default function WorkerContract() {
     setIsLoading(false);
   }
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
+  alert(navigator.userAgent);
   const [data, setData] = useState();
   const [dataPrices, setDataPrices] = useState();
 
