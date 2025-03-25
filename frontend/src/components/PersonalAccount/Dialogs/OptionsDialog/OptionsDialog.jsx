@@ -13,6 +13,9 @@ import {
   Autocomplete,
   Snackbar,
   Alert,
+  Select,
+  MenuItem,
+  FormControl,
 } from "@mui/material";
 import { MyDocument } from "./WorkerContract/WorkerContract";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -61,7 +64,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
         let newValue =
           typeof editedValue === "string"
             ? editedValue.trim()
-            : key === "full_name"
+            : key === "full_name" || key === "contact_person"
             ? `${editedValue.surname} ${editedValue.name} ${editedValue.patronymic}`.trim()
             : editedValue;
 
@@ -157,7 +160,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
     }
   }, [isMobile, pdfUrl, screenWidth]);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [doc_type, setDoc_type] = useState("Устав");
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -206,49 +209,93 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       : "Нет доступа"
                     : userData[key]}
                 </Typography>
-              ) : key === "full_name" ? (
+              ) : key === "full_name" || key === "contact_person" ? (
                 editingField === key ? (
                   <Box display="flex" gap={1}>
-                    <TextField
-                      autoFocus
-                      fullWidth
-                      variant="outlined"
-                      placeholder="Фамилия"
-                      value={editedValue?.surname || ""}
-                      onChange={(e) =>
-                        setEditedValue((prev) => ({
-                          ...prev,
-                          surname: e.target.value,
-                        }))
-                      }
-                    />
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      placeholder="Имя"
-                      value={editedValue?.name || ""}
-                      onChange={(e) =>
-                        setEditedValue((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                    />
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      placeholder="Отчество"
-                      value={editedValue?.patronymic || ""}
-                      onChange={(e) =>
-                        setEditedValue((prev) => ({
-                          ...prev,
-                          patronymic: e.target.value,
-                        }))
-                      }
-                    />
+                    {key === "contact_person" ? (
+                      <>
+                        <TextField
+                          autoFocus
+                          fullWidth
+                          variant="outlined"
+                          placeholder="Фамилия"
+                          value={editedValue?.surname || ""}
+                          onChange={(e) =>
+                            setEditedValue((prev) => ({
+                              ...prev,
+                              surname: e.target.value,
+                            }))
+                          }
+                        />
+                        <TextField
+                          fullWidth
+                          variant="outlined"
+                          placeholder="Имя"
+                          value={editedValue?.name || ""}
+                          onChange={(e) =>
+                            setEditedValue((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                        />
+                        <TextField
+                          fullWidth
+                          variant="outlined"
+                          placeholder="Отчество"
+                          value={editedValue?.patronymic || ""}
+                          onChange={(e) =>
+                            setEditedValue((prev) => ({
+                              ...prev,
+                              patronymic: e.target.value,
+                            }))
+                          }
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <TextField
+                          autoFocus
+                          fullWidth
+                          variant="outlined"
+                          placeholder="Фамилия"
+                          value={editedValue?.surname || ""}
+                          onChange={(e) =>
+                            setEditedValue((prev) => ({
+                              ...prev,
+                              surname: e.target.value,
+                            }))
+                          }
+                        />
+                        <TextField
+                          fullWidth
+                          variant="outlined"
+                          placeholder="Имя"
+                          value={editedValue?.name || ""}
+                          onChange={(e) =>
+                            setEditedValue((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                        />
+                        <TextField
+                          fullWidth
+                          variant="outlined"
+                          placeholder="Отчество"
+                          value={editedValue?.patronymic || ""}
+                          onChange={(e) =>
+                            setEditedValue((prev) => ({
+                              ...prev,
+                              patronymic: e.target.value,
+                            }))
+                          }
+                        />
+                      </>
+                    )}
                     <IconButton
                       color="success"
-                      onClick={() => handleBlurOrEnter("full_name")}
+                      onClick={() => handleBlurOrEnter(key)}
                     >
                       <Add />
                     </IconButton>
@@ -295,6 +342,25 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     )}
                     freeSolo
                   />
+                ) : key === "auth_doct_type" ? (
+                  <FormControl size="medium" sx={{ width: "100%" }}>
+                    <Select
+                      value={doc_type}
+                      labelId="doc_type_label"
+                      label="Документ"
+                      onChange={(e) => {
+                        setDoc_type(e.target.value);
+                        handleSaveChanges(key, e.target.value);
+                        setEditingField(null);
+                      }}
+                      onBlur={() => handleBlurOrEnter(key)}
+                      fullWidth
+                    >
+                      <MenuItem value={"Устав"}>Устав</MenuItem>
+                      <MenuItem value={"ГПХ"}>ГПХ</MenuItem>
+                      <MenuItem value={"Договор"}>Договор</MenuItem>
+                    </Select>
+                  </FormControl>
                 ) : (
                   <TextField
                     autoFocus
