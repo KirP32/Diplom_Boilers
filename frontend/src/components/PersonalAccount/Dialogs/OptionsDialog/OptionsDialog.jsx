@@ -24,7 +24,6 @@ import { ThemeContext } from "../../../../Theme";
 import DownloadIcon from "@mui/icons-material/Download";
 import region_data from "../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 import { LoadingSpinner } from "../../../LoadingSpinner/LoadingSpinner";
-import { pdf } from "@react-pdf/renderer";
 
 export default function OptionsDialog({ open, user, setOptions }) {
   const [userData, setUserData] = useState(null);
@@ -86,14 +85,21 @@ export default function OptionsDialog({ open, user, setOptions }) {
         }
         if (key === "kpp") {
           if (editedValue.length !== 9 || /^\d+$/.test(editedValue) === false) {
-            setErrorMessage("Некорректный КПП (кпп - 9 знаков)");
+            setErrorMessage("Некорректный КПП (кпп - 9 цифр)");
             setSnackbarOpen(true);
             return;
           }
         }
-        if (key === "kpp") {
-          if (editedValue.length !== 9 || /^\d+$/.test(editedValue) === false) {
-            setErrorMessage("Некорректный КПП (кпп - 9 знаков)");
+        if (key === "current_account" || key === "correspondent_account") {
+          if (
+            editedValue.length !== 20 ||
+            /^\d+$/.test(editedValue) === false
+          ) {
+            if (key === "current_account") {
+              setErrorMessage("Некорректный Расчётный счёт (20 цифр)");
+            } else {
+              setErrorMessage("Некорректный Корреспондентский счет (20 цифр)");
+            }
             setSnackbarOpen(true);
             return;
           }
@@ -135,30 +141,16 @@ export default function OptionsDialog({ open, user, setOptions }) {
       const pricesRes = await $api.get("/getServicePrices");
       setWorkerData(workerRes.data);
       setServicePrices(pricesRes.data);
-      await downloadPdf();
     } else {
       window.open("/work_contract", "_blank");
     }
   }
 
-  const downloadPdf = async () => {
-    setIsLoading(true);
-
-    const { blob } = await pdf(
-      <MyDocument
-        data={workerData}
-        dataPrices={servicePrices}
-        handleOnLoad={() => {}}
-      />
-    ).toBlob();
-
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "GEFFEN_Contract.pdf";
-    link.click();
-
-    setIsLoading(false);
-  };
+  useEffect(() => {
+    if ((isMobile || screenWidth < 1000) && pdfUrl) {
+      window.location.href = pdfUrl;
+    }
+  }, [isMobile, pdfUrl, screenWidth]);
   const [isLoading, setIsLoading] = useState(false);
 
   return (
@@ -348,19 +340,29 @@ export default function OptionsDialog({ open, user, setOptions }) {
         </Button>
       </DialogActions>
       {(isMobile || screenWidth < 1000) && workerData && servicePrices && (
-        <div>
-          <button onClick={handleDownloadClick}>Скачать контракт</button>
-          {isLoading && (
-            <Snackbar
-              open={isLoading}
-              autoHideDuration={4000}
-              onClose={() => setIsLoading(false)}
-            >
-              <Alert severity="info" onClose={() => setIsLoading(false)}>
-                Загружается...
-              </Alert>
-            </Snackbar>
-          )}
+        <div style={{ display: "none" }}>
+          <PDFDownloadLink
+            document={
+              <MyDocument
+                data={workerData}
+                dataPrices={servicePrices}
+                handleOnLoad={() => {}}
+              />
+            }
+            fileName="contract.pdf"
+          >
+            {({ loading, url }) => {
+              if (loading) {
+                setIsLoading(true);
+              } else {
+                setIsLoading(false);
+                if (!loading && url && !pdfUrl) {
+                  setPdfUrl(url);
+                }
+              }
+              return null;
+            }}
+          </PDFDownloadLink>
         </div>
       )}
       {isLoading && <LoadingSpinner />}
