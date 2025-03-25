@@ -83,9 +83,13 @@ export default function OptionsDialog({ open, user, setOptions }) {
             return;
           }
         }
-        if (key === "kpp") {
+        if (key === "kpp" || key === "bic") {
           if (editedValue.length !== 9 || /^\d+$/.test(editedValue) === false) {
-            setErrorMessage("Некорректный КПП (кпп - 9 цифр)");
+            if (key === "kpp") {
+              setErrorMessage("Некорректный КПП (9 цифр)");
+            } else {
+              setErrorMessage("Некорректный БИК (9 цифр)");
+            }
             setSnackbarOpen(true);
             return;
           }
@@ -104,6 +108,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
             return;
           }
         }
+
         handleSaveChanges(key, newValue);
       }
       setEditingField(null);
