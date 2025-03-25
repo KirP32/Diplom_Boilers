@@ -12,6 +12,8 @@ import {
   TextField,
   Autocomplete,
 } from "@mui/material";
+import { MyDocument } from "./WorkerContract/WorkerContract";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 import { useContext, useEffect, useState } from "react";
 import $api from "../../../../http";
 import EditIcon from "@mui/icons-material/Edit";
@@ -25,6 +27,10 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [editingField, setEditingField] = useState(null);
   const [editedValue, setEditedValue] = useState(null);
   const { access_level } = useContext(ThemeContext);
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
   const handleSaveChanges = (key, newValue) => {
     $api
       .put("/updateUser", { key, newValue, access_level })
@@ -39,7 +45,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
         console.log(error);
       });
   };
-
   const handleBlurOrEnter = (key) => {
     if (editedValue !== null) {
       const newValue =
@@ -76,7 +81,24 @@ export default function OptionsDialog({ open, user, setOptions }) {
     getOptionLabel: (option) => option.name,
   };
   const [region_value, setRegion_value] = useState(null);
-
+  const [workerData, setWorkerData] = useState(null);
+  const [servicePrices, setServicePrices] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  async function handleDownloadClick() {
+    if (isMobile) {
+      const workerRes = await $api.get("/getWorkerInfo");
+      const pricesRes = await $api.get("/getServicePrices");
+      setWorkerData(workerRes.data);
+      setServicePrices(pricesRes.data);
+    } else {
+      window.open("/work_contract", "_blank");
+    }
+  }
+  useEffect(() => {
+    if (isMobile && pdfUrl) {
+      window.location.href = pdfUrl;
+    }
+  }, [isMobile, pdfUrl]);
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -100,9 +122,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
               marginLeft: "auto",
               cursor: "pointer",
             }}
-            onClick={() => {
-              window.open("/work_contract", "_blank");
-            }}
+            onClick={() => handleDownloadClick()}
           />
         )}
       </DialogTitle>
@@ -265,6 +285,27 @@ export default function OptionsDialog({ open, user, setOptions }) {
           Закрыть
         </Button>
       </DialogActions>
+      {isMobile && workerData && servicePrices && (
+        <div style={{ display: "none" }}>
+          <PDFDownloadLink
+            document={
+              <MyDocument
+                data={workerData}
+                dataPrices={servicePrices}
+                handleOnLoad={() => {}}
+              />
+            }
+            fileName="contract.pdf"
+          >
+            {({ loading, url }) => {
+              if (!loading && url && !pdfUrl) {
+                setPdfUrl(url);
+              }
+              return null;
+            }}
+          </PDFDownloadLink>
+        </div>
+      )}
     </Dialog>
   );
 }

@@ -1,13 +1,6 @@
 /* eslint-disable no-undef */
 /* eslint-disable react/prop-types */
-import {
-  Page,
-  Text,
-  View,
-  Document,
-  StyleSheet,
-  PDFDownloadLink,
-} from "@react-pdf/renderer";
+import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import { PDFViewer } from "@react-pdf/renderer";
 import { Font } from "@react-pdf/renderer";
 import RobotoRegular from "../../../../../fonts/Roboto-Regular.ttf";
@@ -45,11 +38,6 @@ export default function WorkerContract() {
   function handleOnLoad() {
     setIsLoading(false);
   }
-  const isMobile =
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
-  alert(navigator.userAgent);
   const [data, setData] = useState();
   const [dataPrices, setDataPrices] = useState();
 
@@ -82,40 +70,19 @@ export default function WorkerContract() {
         className="container"
         style={{ overflow: "hidden", height: "100dvh" }}
       >
-        {isMobile ? (
-          <PDFDownloadLink
-            document={
-              <MyDocument
-                data={data}
-                dataPrices={dataPrices}
-                handleOnLoad={() => handleOnLoad()}
-              />
-            }
-            fileName="contract.pdf"
-          >
-            {({ loading }) =>
-              loading ? (
-                <button>Загрузка...</button>
-              ) : (
-                <button>Скачать PDF</button>
-              )
-            }
-          </PDFDownloadLink>
-        ) : (
-          <PDFViewer style={{ width: "100%", height: "100%", border: 0 }}>
-            <MyDocument
-              data={data}
-              dataPrices={dataPrices}
-              handleOnLoad={() => handleOnLoad()}
-            />
-          </PDFViewer>
-        )}
+        <PDFViewer style={{ width: "100%", height: "100%", border: 0 }}>
+          <MyDocument
+            data={data}
+            dataPrices={dataPrices}
+            handleOnLoad={handleOnLoad}
+          />
+        </PDFViewer>
       </div>
     </>
   );
 }
 
-const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
+export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
   let declinedPerson = "";
   const arr_fio = data?.full_name?.split(" ");
   if (data?.full_name) {
