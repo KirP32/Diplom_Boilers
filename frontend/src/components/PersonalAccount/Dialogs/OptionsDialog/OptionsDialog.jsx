@@ -23,6 +23,7 @@ import Add from "@mui/icons-material/Add";
 import { ThemeContext } from "../../../../Theme";
 import DownloadIcon from "@mui/icons-material/Download";
 import region_data from "../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
+import { LoadingSpinner } from "../../../LoadingSpinner/LoadingSpinner";
 
 export default function OptionsDialog({ open, user, setOptions }) {
   const [userData, setUserData] = useState(null);
@@ -121,6 +122,8 @@ export default function OptionsDialog({ open, user, setOptions }) {
       window.location.href = pdfUrl;
     }
   }, [isMobile, pdfUrl, screenWidth]);
+  const [isLoading, setIsLoading] = useState(false);
+
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -320,14 +323,20 @@ export default function OptionsDialog({ open, user, setOptions }) {
             fileName="contract.pdf"
           >
             {({ loading, url }) => {
-              if (!loading && url && !pdfUrl) {
-                setPdfUrl(url);
+              if (loading) {
+                setIsLoading(true);
+              } else {
+                setIsLoading(false);
+                if (!loading && url && !pdfUrl) {
+                  setPdfUrl(url);
+                }
               }
               return null;
             }}
           </PDFDownloadLink>
         </div>
       )}
+      {isLoading && <LoadingSpinner />}
       {
         <Snackbar
           open={snackbarOpen}
