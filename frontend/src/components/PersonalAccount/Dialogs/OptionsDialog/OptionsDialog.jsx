@@ -31,6 +31,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
+  const screenWidth = window.innerWidth;
   const handleSaveChanges = (key, newValue) => {
     $api
       .put("/updateUser", { key, newValue, access_level })
@@ -85,7 +86,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [servicePrices, setServicePrices] = useState(null);
   const [pdfUrl, setPdfUrl] = useState(null);
   async function handleDownloadClick() {
-    if (isMobile) {
+    if (isMobile || screenWidth < 500) {
       const workerRes = await $api.get("/getWorkerInfo");
       const pricesRes = await $api.get("/getServicePrices");
       setWorkerData(workerRes.data);
@@ -95,10 +96,10 @@ export default function OptionsDialog({ open, user, setOptions }) {
     }
   }
   useEffect(() => {
-    if (isMobile && pdfUrl) {
+    if ((isMobile || screenWidth < 500) && pdfUrl) {
       window.location.href = pdfUrl;
     }
-  }, [isMobile, pdfUrl]);
+  }, [isMobile, pdfUrl, screenWidth]);
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -285,7 +286,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
           Закрыть
         </Button>
       </DialogActions>
-      {isMobile && workerData && servicePrices && (
+      {(isMobile || screenWidth < 500) && workerData && servicePrices && (
         <div style={{ display: "none" }}>
           <PDFDownloadLink
             document={
