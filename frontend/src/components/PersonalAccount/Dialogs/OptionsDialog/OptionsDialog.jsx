@@ -85,6 +85,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [workerData, setWorkerData] = useState(null);
   const [servicePrices, setServicePrices] = useState(null);
   const [pdfUrl, setPdfUrl] = useState(null);
+  alert(screenWidth);
   async function handleDownloadClick() {
     if (isMobile || screenWidth < 500) {
       const workerRes = await $api.get("/getWorkerInfo");
