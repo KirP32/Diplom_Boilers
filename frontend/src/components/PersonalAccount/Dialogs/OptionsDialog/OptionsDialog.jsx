@@ -11,6 +11,8 @@ import {
   IconButton,
   TextField,
   Autocomplete,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { MyDocument } from "./WorkerContract/WorkerContract";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -26,6 +28,8 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [userData, setUserData] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [editedValue, setEditedValue] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { access_level } = useContext(ThemeContext);
   const isMobile =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -46,18 +50,35 @@ export default function OptionsDialog({ open, user, setOptions }) {
         console.log(error);
       });
   };
-  const handleBlurOrEnter = (key) => {
-    if (editedValue !== null) {
-      const newValue =
-        typeof editedValue === "string"
-          ? editedValue.trim()
-          : key === "full_name"
-          ? `${editedValue.surname} ${editedValue.name} ${editedValue.patronymic}`.trim()
-          : editedValue;
 
-      handleSaveChanges(key, newValue);
-    }
-    setEditingField(null);
+  let debounceTimer;
+  const handleBlurOrEnter = (key) => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    debounceTimer = setTimeout(() => {
+      if (editedValue !== null) {
+        let newValue =
+          typeof editedValue === "string"
+            ? editedValue.trim()
+            : key === "full_name"
+            ? `${editedValue.surname} ${editedValue.name} ${editedValue.patronymic}`.trim()
+            : editedValue;
+
+        if (key === "email") {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(newValue)) {
+            if (!snackbarOpen) {
+              setErrorMessage("Некорректный email");
+              setSnackbarOpen(true);
+            }
+            return;
+          }
+        }
+
+        handleSaveChanges(key, newValue);
+      }
+      setEditingField(null);
+    }, 150);
   };
 
   useEffect(() => {
@@ -85,9 +106,8 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [workerData, setWorkerData] = useState(null);
   const [servicePrices, setServicePrices] = useState(null);
   const [pdfUrl, setPdfUrl] = useState(null);
-  alert(screenWidth);
   async function handleDownloadClick() {
-    if (isMobile || screenWidth < 500) {
+    if (isMobile || screenWidth < 1000) {
       const workerRes = await $api.get("/getWorkerInfo");
       const pricesRes = await $api.get("/getServicePrices");
       setWorkerData(workerRes.data);
@@ -97,7 +117,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
     }
   }
   useEffect(() => {
-    if ((isMobile || screenWidth < 500) && pdfUrl) {
+    if ((isMobile || screenWidth < 1000) && pdfUrl) {
       window.location.href = pdfUrl;
     }
   }, [isMobile, pdfUrl, screenWidth]);
@@ -287,7 +307,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
           Закрыть
         </Button>
       </DialogActions>
-      {(isMobile || screenWidth < 500) && workerData && servicePrices && (
+      {(isMobile || screenWidth < 1000) && workerData && servicePrices && (
         <div style={{ display: "none" }}>
           <PDFDownloadLink
             document={
@@ -308,6 +328,18 @@ export default function OptionsDialog({ open, user, setOptions }) {
           </PDFDownloadLink>
         </div>
       )}
+      {
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert severity="error" onClose={() => setSnackbarOpen(false)}>
+            {errorMessage}
+          </Alert>
+        </Snackbar>
+      }
     </Dialog>
   );
 }

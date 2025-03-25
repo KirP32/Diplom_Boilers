@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 /* eslint-disable react/prop-types */
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import { PDFViewer } from "@react-pdf/renderer";
@@ -11,6 +10,7 @@ import { useEffect, useState } from "react";
 import $api from "../../../../../http";
 import region_data from "../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 import petrovich from "petrovich";
+
 Font.registerHyphenationCallback((word) => ["", word, ""]);
 const monthGenitive = {
   январь: "января",
