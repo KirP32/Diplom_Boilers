@@ -954,7 +954,11 @@ export default function DataBaseUsers() {
                       return (
                         <TableRow key={rowKey}>
                           {Object.keys(row).map((colKey) => {
-                            if (colKey === "service_id" || colKey === "spid") {
+                            if (
+                              colKey === "service_id" ||
+                              colKey === "spid" ||
+                              colKey === "id"
+                            ) {
                               return (
                                 <TableCell key={colKey}>
                                   {row[colKey]}
@@ -962,10 +966,7 @@ export default function DataBaseUsers() {
                               );
                             }
 
-                            const column = columns.find(
-                              (item) => item.column_name === colKey
-                            );
-                            const isBoolean = column?.data_type === "boolean";
+                            const isBoolean = typeof row[colKey] === "boolean";
 
                             return (
                               <TableCell key={colKey}>
@@ -980,7 +981,7 @@ export default function DataBaseUsers() {
                                         regionOptions.find(
                                           (opt) =>
                                             opt.code ===
-                                            Number(editedRowData[colKey])
+                                            Number(editedRowData?.[colKey])
                                         ) || null
                                       }
                                       onChange={(event, newValue) =>
@@ -994,15 +995,17 @@ export default function DataBaseUsers() {
                                       renderInput={(params) => (
                                         <TextField
                                           {...params}
-                                          size="small"
+                                          size="medium"
+                                          variant="outlined"
                                           label="Регион"
+                                          sx={{ minWidth: 150 }}
                                         />
                                       )}
                                     />
                                   ) : isBoolean ? (
                                     <Checkbox
                                       checked={Boolean(
-                                        editedRowData[colKey] ?? row[colKey]
+                                        editedRowData?.[colKey] ?? row[colKey]
                                       )}
                                       onChange={(e) =>
                                         setEditedRowData((prev) => ({
@@ -1014,7 +1017,7 @@ export default function DataBaseUsers() {
                                   ) : (
                                     <TextField
                                       value={
-                                        editedRowData[colKey] ?? row[colKey]
+                                        editedRowData?.[colKey] ?? row[colKey]
                                       }
                                       onChange={(e) =>
                                         setEditedRowData((prev) => ({
@@ -1038,7 +1041,9 @@ export default function DataBaseUsers() {
                                               : e.target.value,
                                         }))
                                       }
-                                      size="small"
+                                      size="medium"
+                                      variant="outlined"
+                                      sx={{ minWidth: 150 }}
                                     />
                                   )
                                 ) : colKey === "region" ? (
