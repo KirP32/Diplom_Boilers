@@ -1,6 +1,7 @@
 import axios from "axios";
+import logout from "../components/Logout/logout";
 
-export const API_URL = `https://ads-line.pro/api/`; // старый адрес http://185.46.10.111/api
+export const API_URL = `http://localhost:8080`; // старый адрес http://185.46.10.111/api
 //http://localhost:8080 https://ads-line.pro/api/
 
 const $api = axios.create({
@@ -70,6 +71,7 @@ $api.interceptors.response.use(
         return $api.request(originalRequest);
       } catch (e) {
         console.log("Ошибка авторизации");
+        //alert("Ваш сеанс истёк, авторизуйтесь снова");
         //console.log(e);
         throw e;
       }
