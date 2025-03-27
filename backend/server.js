@@ -17,6 +17,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       "https://ads-line.pro",
+      "http://ads-line.pro",
       "http://localhost:5173",
       "http://185.46.10.111",
       "http://frontend:3000",
@@ -24,6 +25,7 @@ const io = new Server(server, {
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
+  connectionStateRecovery: {},
 });
 
 app.use(cookieParser());
