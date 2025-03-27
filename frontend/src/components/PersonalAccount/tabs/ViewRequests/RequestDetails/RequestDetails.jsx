@@ -97,9 +97,20 @@ export default function RequestDetails({
       addToItem(data);
     };
     socket.on("requestUpdated", handleRequestUpdate);
+    socket.on("connect_error", (err) => {
+      // the reason of the error, for example "xhr poll error"
+      console.log(err.message);
+
+      // some additional description, for example the status code of the initial HTTP response
+      console.log(err.description);
+
+      // some additional context, for example the XMLHttpRequest object
+      console.log(err.context);
+    });
     return () => {
       socket.emit("leaveRequest", requestId);
       socket.off("requestUpdated", handleRequestUpdate);
+      socket.off("connect_error");
     };
   }, [item.id, setItem]);
 
