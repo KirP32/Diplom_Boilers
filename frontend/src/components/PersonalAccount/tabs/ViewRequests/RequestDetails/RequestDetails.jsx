@@ -399,7 +399,8 @@ export default function RequestDetails({
             >
               <CircularProgress />
               <h4>
-                Получение заявки, пожалйуста, отключите VPN при долгой загрузке
+                Получение заявки, пожалуйста, отключите <strong>VPN</strong> при
+                долгой загрузке
               </h4>
             </div>
           </div>
