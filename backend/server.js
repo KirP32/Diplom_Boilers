@@ -22,7 +22,7 @@ const io = new Server(server, {
       "http://185.46.10.111",
       "http://frontend:3000",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "HEAD", "PATCH"],
     credentials: true,
   },
   connectionStateRecovery: {},
