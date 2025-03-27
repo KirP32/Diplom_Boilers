@@ -39,6 +39,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
+  const canTouch = navigator.maxTouchPoints > 0;
   const handleSaveChanges = (key, newValue) => {
     $api
       .put("/updateUser", { key, newValue, access_level })
@@ -143,7 +144,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [servicePrices, setServicePrices] = useState(null);
   const [pdfUrl, setPdfUrl] = useState(null);
   async function handleDownloadClick() {
-    if (isMobile || navigator.maxTouchPoints > 0) {
+    if (isMobile || canTouch) {
       const workerRes = await $api.get("/getWorkerInfo");
       const pricesRes = await $api.get("/getServicePrices");
       setWorkerData(workerRes.data);
@@ -154,10 +155,10 @@ export default function OptionsDialog({ open, user, setOptions }) {
   }
 
   useEffect(() => {
-    if ((isMobile || navigator.maxTouchPoints > 0) && pdfUrl) {
+    if ((isMobile || canTouch) && pdfUrl) {
       window.location.href = pdfUrl;
     }
-  }, [isMobile, pdfUrl]);
+  }, [isMobile, pdfUrl, canTouch]);
   const [isLoading, setIsLoading] = useState(false);
   const [doc_type, setDoc_type] = useState("Устав");
   return (
@@ -409,34 +410,32 @@ export default function OptionsDialog({ open, user, setOptions }) {
           Закрыть
         </Button>
       </DialogActions>
-      {(isMobile || navigator.maxTouchPoints > 0) &&
-        workerData &&
-        servicePrices && (
-          <div style={{ display: "none" }}>
-            <PDFDownloadLink
-              document={
-                <MyDocument
-                  data={workerData}
-                  dataPrices={servicePrices}
-                  handleOnLoad={() => {}}
-                />
-              }
-              fileName="contract.pdf"
-            >
-              {({ loading, url }) => {
-                if (loading) {
-                  setIsLoading(true);
-                } else {
-                  setIsLoading(false);
-                  if (!loading && url && !pdfUrl) {
-                    setPdfUrl(url);
-                  }
+      {(isMobile || canTouch) && workerData && servicePrices && (
+        <div style={{ display: "none" }}>
+          <PDFDownloadLink
+            document={
+              <MyDocument
+                data={workerData}
+                dataPrices={servicePrices}
+                handleOnLoad={() => {}}
+              />
+            }
+            fileName="contract.pdf"
+          >
+            {({ loading, url }) => {
+              if (loading) {
+                setIsLoading(true);
+              } else {
+                setIsLoading(false);
+                if (!loading && url && !pdfUrl) {
+                  setPdfUrl(url);
                 }
-                return null;
-              }}
-            </PDFDownloadLink>
-          </div>
-        )}
+              }
+              return null;
+            }}
+          </PDFDownloadLink>
+        </div>
+      )}
       {isLoading && <LoadingSpinner />}
       {
         <Snackbar
