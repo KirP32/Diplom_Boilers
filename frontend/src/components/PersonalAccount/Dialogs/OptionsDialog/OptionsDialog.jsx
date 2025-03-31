@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { MyDocument } from "./WorkerContract/WorkerContract";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import $api from "../../../../http";
 import EditIcon from "@mui/icons-material/Edit";
 import Add from "@mui/icons-material/Add";
@@ -27,6 +27,7 @@ import { ThemeContext } from "../../../../Theme";
 import DownloadIcon from "@mui/icons-material/Download";
 import region_data from "../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 import { LoadingSpinner } from "../../../LoadingSpinner/LoadingSpinner";
+import axios from "axios";
 
 export default function OptionsDialog({ open, user, setOptions }) {
   const [userData, setUserData] = useState(null);
@@ -61,13 +62,22 @@ export default function OptionsDialog({ open, user, setOptions }) {
 
     debounceTimer = setTimeout(() => {
       if (editedValue !== null) {
-        let newValue =
-          typeof editedValue === "string"
-            ? editedValue.trim()
-            : key === "full_name" || key === "contact_person"
-            ? `${editedValue.surname} ${editedValue.name} ${editedValue.patronymic}`.trim()
+        let newValue;
+        if (key === "legal_address") {
+          const selectedAddress = address_list.find(
+            (item) => item.label === editedValue
+          );
+          newValue = selectedAddress
+            ? selectedAddress.unrestricted_value
             : editedValue;
-
+        } else if (typeof editedValue === "string") {
+          newValue = editedValue.trim();
+        } else if (key === "full_name" || key === "contact_person") {
+          newValue =
+            `${editedValue.surname} ${editedValue.name} ${editedValue.patronymic}`.trim();
+        } else {
+          newValue = editedValue;
+        }
         if (key === "email") {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(newValue)) {
@@ -161,6 +171,54 @@ export default function OptionsDialog({ open, user, setOptions }) {
   }, [isMobile, pdfUrl, canTouch]);
   const [isLoading, setIsLoading] = useState(false);
   const [doc_type, setDoc_type] = useState("Устав");
+  const debounceRef = useRef(null);
+  const [address_list, setAddressList] = useState([]);
+  async function handleLegalAddress(query) {
+    const token = "98be28db4ed79229bc269503c6a4d868e628b318";
+
+    try {
+      const result = await axios({
+        method: "POST",
+        url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Token ${token}`,
+        },
+        data: { query, count: 7 },
+      });
+      console.log(result.data);
+      let temp_list = [];
+      result.data.suggestions.forEach((item) =>
+        temp_list.push({
+          label: item.value,
+          unrestricted_value: item.unrestricted_value,
+        })
+      );
+      setAddressList(temp_list);
+    } catch (error) {
+      console.log(error.response ? error.response.data : error);
+    }
+  }
+
+  function handleInputChange(newInputValue) {
+    if (newInputValue !== editedValue) {
+      setEditedValue(newInputValue);
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = setTimeout(() => {
+        handleLegalAddress(newInputValue);
+      }, 500);
+    }
+  }
+
+  function handleChange(event, newValue) {
+    if (newValue && typeof newValue === "string") {
+      setEditedValue(newValue);
+    }
+  }
+
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -361,6 +419,31 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <MenuItem value={"Договор"}>Договор</MenuItem>
                     </Select>
                   </FormControl>
+                ) : key === "legal_address" ? (
+                  <Autocomplete
+                    freeSolo
+                    value={editedValue}
+                    options={address_list}
+                    filterOptions={(options) => options}
+                    onInputChange={(event, newInputValue) =>
+                      handleInputChange(newInputValue)
+                    }
+                    onChange={(event, newValue) =>
+                      handleChange(event, newValue)
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        autoFocus
+                        onBlur={() => handleBlurOrEnter(key)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleBlurOrEnter(key);
+                          }
+                        }}
+                      />
+                    )}
+                  />
                 ) : (
                   <TextField
                     autoFocus
