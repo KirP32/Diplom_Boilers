@@ -187,7 +187,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
         },
         data: { query, count: 7 },
       });
-      console.log(result.data);
       let temp_list = [];
       result.data.suggestions.forEach((item) =>
         temp_list.push({
