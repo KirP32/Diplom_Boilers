@@ -229,7 +229,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
     try {
       const result = await axios({
         method: "POST",
-        url: "http://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party",
+        url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
