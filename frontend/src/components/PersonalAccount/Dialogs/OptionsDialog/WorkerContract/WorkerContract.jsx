@@ -120,7 +120,9 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
           Настоящий Договор (далее именуемый «Договор») заключен между компанией
           ООО «ГЕФФЕН» в лице Директора Орехова Алексея Сергеевича, действующего
           на основании Устава и именуемое в дальнейшем как «Заказчик», и
-          компанией {data?.company_name} в лице {data?.genitive_postion}{" "}
+          компанией {data?.company_name} в лице{" "}
+          {data?.genitive_postion.charAt(0).toUpperCase() +
+            data?.genitive_postion.slice(1).toLowerCase()}{" "}
           {declinedPerson.last +
             " " +
             declinedPerson.first +

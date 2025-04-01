@@ -93,6 +93,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
           if (!emailRegex.test(newValue)) {
             setErrorMessage("Некорректный email");
             setSnackbarOpen(true);
+            setSuccess_updated(false);
             return;
           }
         }
@@ -105,6 +106,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
           ) {
             setErrorMessage("Некорректный ИНН");
             setSnackbarOpen(true);
+            setSuccess_updated(false);
             return;
           }
         }
@@ -116,6 +118,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
               setErrorMessage("Некорректный БИК (9 цифр)");
             }
             setSnackbarOpen(true);
+            setSuccess_updated(false);
             return;
           }
         }
@@ -130,6 +133,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
               setErrorMessage("Некорректный Корреспондентский счет (20 цифр)");
             }
             setSnackbarOpen(true);
+            setSuccess_updated(false);
             return;
           }
         }
@@ -255,21 +259,18 @@ export default function OptionsDialog({ open, user, setOptions }) {
     }
   }
 
-  async function handleConfirmData() {
-    $api
-      .post("/WorkerConfirmedData", userData)
-      .then((result) => {
-        setSuccess_updated(true);
-        setSnackbarOpen(true);
-      })
-      .catch((error) => {
-        setSuccess_updated(false);
-        setErrorMessage("Ошибка подтверждения данных");
-        setSnackbarOpen(true);
-        console.log(error);
-      });
-  }
-
+  const handleConfirmData = async () => {
+    try {
+      await $api.post("/WorkerConfirmedData", userData);
+      setErrorMessage("");
+      setSnackbarOpen(true);
+      setSuccess_updated(true);
+    } catch (error) {
+      setSuccess_updated(false);
+      setErrorMessage("Ошибка подтверждения данных");
+      setSnackbarOpen(true);
+    }
+  };
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -603,7 +604,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
         autoHideDuration={4000}
         onClose={() => {
           setSnackbarOpen(false);
-          setSuccess_updated(false);
         }}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
@@ -611,7 +611,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
           severity={success_updated ? "success" : "error"}
           onClose={() => {
             setSnackbarOpen(false);
-            setSuccess_updated(false);
           }}
         >
           {success_updated ? "Данные обновлены" : errorMessage}
