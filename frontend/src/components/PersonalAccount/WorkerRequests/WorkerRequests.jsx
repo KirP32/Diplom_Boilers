@@ -188,7 +188,7 @@ export default function WorkerRequests({
               },
             }}
           >
-            Таблица
+            Карточки
           </ToggleButton>
           <ToggleButton
             value={false}
@@ -203,7 +203,7 @@ export default function WorkerRequests({
               },
             }}
           >
-            Список
+            Таблица
           </ToggleButton>
         </ToggleButtonGroup>
       </section>
