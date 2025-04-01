@@ -2103,6 +2103,23 @@ class DataController {
       res.status(500).json({ error: error.message });
     }
   }
+  async WorkerConfirmedData(req, res) {
+    try {
+      const { kpp, inn, company_name, position, full_name, legal_address, id } =
+        req.body;
+      const result = await pool.query(
+        "UPDATE worker_details SET kpp = $1, inn = $2, company_name = $3, position = $4, full_name = $5, legal_address = $6 WHERE id = $7",
+        [kpp, inn, company_name, position, full_name, legal_address, id]
+      );
+      if (result.rowCount > 0) {
+        return res.send("OK");
+      } else {
+        return res.sendStatus(400);
+      }
+    } catch (error) {
+      return res.send({ message: error });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

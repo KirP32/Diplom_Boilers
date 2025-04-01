@@ -35,12 +35,23 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [editedValue, setEditedValue] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [success_updated, setSuccess_updated] = useState(false);
   const { access_level } = useContext(ThemeContext);
+  const [isLoading, setIsLoading] = useState(false);
+  const [doc_type, setDoc_type] = useState("Устав");
+  const debounceRef = useRef(null);
+  const [address_list, setAddressList] = useState([]);
+  const [region_value, setRegion_value] = useState(null);
+  const [workerData, setWorkerData] = useState(null);
+  const [servicePrices, setServicePrices] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
+
   const isMobile =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
   const canTouch = navigator.maxTouchPoints > 0;
+
   const handleSaveChanges = (key, newValue) => {
     $api
       .put("/updateUser", { key, newValue, access_level })
@@ -59,7 +70,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
   let debounceTimer;
   const handleBlurOrEnter = (key) => {
     if (debounceTimer) clearTimeout(debounceTimer);
-
     debounceTimer = setTimeout(() => {
       if (editedValue !== null) {
         let newValue;
@@ -81,16 +91,18 @@ export default function OptionsDialog({ open, user, setOptions }) {
         if (key === "email") {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(newValue)) {
-            if (!snackbarOpen) {
-              setErrorMessage("Некорректный email");
-              setSnackbarOpen(true);
-            }
+            setErrorMessage("Некорректный email");
+            setSnackbarOpen(true);
             return;
           }
         }
 
         if (key === "inn") {
-          if (editedValue.length > 12) {
+          if (
+            editedValue.length < 10 ||
+            editedValue.length > 12 ||
+            /^\d+$/.test(editedValue) === false
+          ) {
             setErrorMessage("Некорректный ИНН");
             setSnackbarOpen(true);
             return;
@@ -149,10 +161,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
     options: region_data,
     getOptionLabel: (option) => option.name,
   };
-  const [region_value, setRegion_value] = useState(null);
-  const [workerData, setWorkerData] = useState(null);
-  const [servicePrices, setServicePrices] = useState(null);
-  const [pdfUrl, setPdfUrl] = useState(null);
+
   async function handleDownloadClick() {
     if (isMobile || canTouch) {
       const workerRes = await $api.get("/getWorkerInfo");
@@ -169,10 +178,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
       window.location.href = pdfUrl;
     }
   }, [isMobile, pdfUrl, canTouch]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [doc_type, setDoc_type] = useState("Устав");
-  const debounceRef = useRef(null);
-  const [address_list, setAddressList] = useState([]);
+
   async function handleLegalAddress(query) {
     const token = "98be28db4ed79229bc269503c6a4d868e628b318";
 
@@ -216,6 +222,52 @@ export default function OptionsDialog({ open, user, setOptions }) {
     if (newValue && typeof newValue === "string") {
       setEditedValue(newValue);
     }
+  }
+
+  async function getCompany_info() {
+    const token = "98be28db4ed79229bc269503c6a4d868e628b318";
+    try {
+      const result = await axios({
+        method: "POST",
+        url: "http://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Token ${token}`,
+        },
+        data: {
+          query: editedValue.toLowerCase().replace(/["']/g, ""),
+          count: 1,
+        },
+      });
+      setUserData({
+        ...userData,
+        company_name: result.data.suggestions[0].value,
+        position: result.data.suggestions[0].data.management.post,
+        full_name: result.data.suggestions[0].data.management.name,
+        legal_address:
+          result.data.suggestions[0].data.address.unrestricted_value,
+        inn: result.data.suggestions[0].data.inn,
+        kpp: result.data.suggestions[0].data.kpp,
+      });
+    } catch (error) {
+      console.log(error.response ? error.response.data : error);
+    }
+  }
+
+  async function handleConfirmData() {
+    $api
+      .post("/WorkerConfirmedData", userData)
+      .then((result) => {
+        setSuccess_updated(true);
+        setSnackbarOpen(true);
+      })
+      .catch((error) => {
+        setSuccess_updated(false);
+        setErrorMessage("Ошибка подтверждения данных");
+        setSnackbarOpen(true);
+        console.log(error);
+      });
   }
 
   return (
@@ -443,6 +495,25 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       />
                     )}
                   />
+                ) : key === "company_name" ? (
+                  <Box display="flex" gap={1}>
+                    <TextField
+                      fullWidth
+                      autoFocus
+                      variant="outlined"
+                      value={editedValue}
+                      onChange={(e) => setEditedValue(e.target.value)}
+                    />
+                    <IconButton
+                      color="success"
+                      onClick={() => {
+                        getCompany_info();
+                        handleBlurOrEnter(key);
+                      }}
+                    >
+                      <Add />
+                    </IconButton>
+                  </Box>
                 ) : (
                   <TextField
                     autoFocus
@@ -488,6 +559,14 @@ export default function OptionsDialog({ open, user, setOptions }) {
         )}
       </DialogContent>
       <DialogActions>
+        <Button
+          onClick={() => handleConfirmData()}
+          color="success"
+          variant="contained"
+          disabled={editingField ? true : false}
+        >
+          Подтвердить данные
+        </Button>
         <Button onClick={() => onFinish()} color="info" variant="contained">
           Закрыть
         </Button>
@@ -519,18 +598,25 @@ export default function OptionsDialog({ open, user, setOptions }) {
         </div>
       )}
       {isLoading && <LoadingSpinner />}
-      {
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={4000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => {
+          setSnackbarOpen(false);
+          setSuccess_updated(false);
+        }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          severity={success_updated ? "success" : "error"}
+          onClose={() => {
+            setSnackbarOpen(false);
+            setSuccess_updated(false);
+          }}
         >
-          <Alert severity="error" onClose={() => setSnackbarOpen(false)}>
-            {errorMessage}
-          </Alert>
-        </Snackbar>
-      }
+          {success_updated ? "Данные обновлены" : errorMessage}
+        </Alert>
+      </Snackbar>
     </Dialog>
   );
 }

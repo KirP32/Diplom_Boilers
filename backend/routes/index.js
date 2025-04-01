@@ -90,6 +90,11 @@ router.post(
   upload.single("file"),
   DataController.updatePrices
 );
+router.post(
+  "/WorkerConfirmedData",
+  checkCookie,
+  DataController.WorkerConfirmedData
+);
 
 router.delete(
   "/delete_device/:device_uid",
