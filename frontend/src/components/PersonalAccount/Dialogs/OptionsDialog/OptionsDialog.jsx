@@ -523,7 +523,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       />
                     )}
                   />
-                ) : key === "company_name" ? (
+                ) : key === "inn" ? (
                   <Box display="flex" gap={1}>
                     <TextField
                       fullWidth
