@@ -29,6 +29,8 @@ import DownloadIcon from "@mui/icons-material/Download";
 import region_data from "../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 import { LoadingSpinner } from "../../../LoadingSpinner/LoadingSpinner";
 import axios from "axios";
+import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
+import { red } from "@mui/material/colors";
 const token = "98be28db4ed79229bc269503c6a4d868e628b318";
 
 export default function OptionsDialog({ open, user, setOptions }) {
@@ -40,7 +42,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [success_updated, setSuccess_updated] = useState(false);
   const { access_level } = useContext(ThemeContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [doc_type, setDoc_type] = useState("Устав");
   const debounceRef = useRef(null);
   const [address_list, setAddressList] = useState([]);
   const [region_value, setRegion_value] = useState(null);
@@ -327,270 +328,35 @@ export default function OptionsDialog({ open, user, setOptions }) {
       </DialogTitle>
       <DialogContent>
         {userData ? (
-          Object.keys(userData).map((key) => (
-            <Box key={key} mb={2}>
+          <>
+            {/* Email */}
+            <Box mb={2}>
               <Typography variant="body2" color="textSecondary" component="div">
-                <strong>{key}:</strong>
+                <strong>Ваша почта:</strong>
               </Typography>
-              {key === "id" ||
-              key === "username" ||
-              [
-                "service_access_3_1_127_301",
-                "service_access_4_1",
-                "service_access_3_1_400_2000",
-              ].includes(key) ? (
-                <Typography variant="body1">
-                  {typeof userData[key] === "boolean"
-                    ? userData[key]
-                      ? "Есть доступ"
-                      : "Нет доступа"
-                    : userData[key]}
-                </Typography>
-              ) : key === "full_name" || key === "contact_person" ? (
-                editingField === key ? (
-                  <Box display="flex" gap={1}>
-                    {key === "contact_person" ? (
-                      <>
-                        <TextField
-                          autoFocus
-                          fullWidth
-                          variant="outlined"
-                          placeholder="Фамилия"
-                          value={editedValue?.surname || ""}
-                          onChange={(e) =>
-                            setEditedValue((prev) => ({
-                              ...prev,
-                              surname: e.target.value,
-                            }))
-                          }
-                        />
-                        <TextField
-                          fullWidth
-                          variant="outlined"
-                          placeholder="Имя"
-                          value={editedValue?.name || ""}
-                          onChange={(e) =>
-                            setEditedValue((prev) => ({
-                              ...prev,
-                              name: e.target.value,
-                            }))
-                          }
-                        />
-                        <TextField
-                          fullWidth
-                          variant="outlined"
-                          placeholder="Отчество"
-                          value={editedValue?.patronymic || ""}
-                          onChange={(e) =>
-                            setEditedValue((prev) => ({
-                              ...prev,
-                              patronymic: e.target.value,
-                            }))
-                          }
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <TextField
-                          autoFocus
-                          fullWidth
-                          variant="outlined"
-                          placeholder="Фамилия"
-                          value={editedValue?.surname || ""}
-                          onChange={(e) =>
-                            setEditedValue((prev) => ({
-                              ...prev,
-                              surname: e.target.value,
-                            }))
-                          }
-                        />
-                        <TextField
-                          fullWidth
-                          variant="outlined"
-                          placeholder="Имя"
-                          value={editedValue?.name || ""}
-                          onChange={(e) =>
-                            setEditedValue((prev) => ({
-                              ...prev,
-                              name: e.target.value,
-                            }))
-                          }
-                        />
-                        <TextField
-                          fullWidth
-                          variant="outlined"
-                          placeholder="Отчество"
-                          value={editedValue?.patronymic || ""}
-                          onChange={(e) =>
-                            setEditedValue((prev) => ({
-                              ...prev,
-                              patronymic: e.target.value,
-                            }))
-                          }
-                        />
-                      </>
-                    )}
-                    <IconButton
-                      color="success"
-                      onClick={() => handleBlurOrEnter(key)}
-                    >
-                      <Add />
-                    </IconButton>
-                  </Box>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <Typography variant="body1">
-                      {userData[key] ? userData[key] : "—"}
-                    </Typography>
-                    <IconButton
-                      onClick={() => {
-                        const [surname, name, patronymic] = userData[
-                          key
-                        ]?.split(" ") || ["", "", ""];
-                        setEditingField(key);
-                        setEditedValue({ surname, name, patronymic });
-                      }}
-                      size="small"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </div>
-                )
-              ) : editingField === key ? (
-                key === "region" ? (
-                  <Autocomplete
-                    {...defaultProps}
-                    value={region_value}
-                    onChange={(event, newValue) => {
-                      setRegion_value(newValue);
-                      setEditedValue(newValue ? newValue.code : "");
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        onBlur={() => handleBlurOrEnter(key)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleBlurOrEnter(key);
-                          }
-                        }}
-                      />
-                    )}
-                    freeSolo
-                  />
-                ) : key === "auth_doct_type" ? (
-                  <FormControl size="medium" sx={{ width: "100%" }}>
-                    <Select
-                      value={doc_type}
-                      labelId="doc_type_label"
-                      label="Документ"
-                      onChange={(e) => {
-                        setDoc_type(e.target.value);
-                        handleSaveChanges(key, e.target.value);
-                        setEditingField(null);
-                      }}
-                      onBlur={() => handleBlurOrEnter(key)}
-                      fullWidth
-                    >
-                      <MenuItem value={"Устав"}>Устав</MenuItem>
-                      <MenuItem value={"ГПХ"}>ГПХ</MenuItem>
-                      <MenuItem value={"Договор"}>Договор</MenuItem>
-                    </Select>
-                  </FormControl>
-                ) : key === "legal_address" ? (
-                  <Autocomplete
-                    freeSolo
-                    value={editedValue}
-                    options={address_list}
-                    filterOptions={(options) => options}
-                    onInputChange={(event, newInputValue) =>
-                      handleInputChange(newInputValue)
-                    }
-                    onChange={(event, newValue) =>
-                      handleChange(event, newValue)
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        autoFocus
-                        onBlur={() => handleBlurOrEnter(key)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleBlurOrEnter(key);
-                          }
-                        }}
-                      />
-                    )}
-                  />
-                ) : key === "inn" ? (
-                  <Box display="flex" gap={1}>
-                    <TextField
-                      fullWidth
-                      autoFocus
-                      variant="outlined"
-                      value={editedValue}
-                      onChange={(e) => setEditedValue(e.target.value)}
-                    />
-                    <IconButton
-                      color="success"
-                      onClick={() => {
-                        getCompany_info();
-                        handleBlurOrEnter(key);
-                      }}
-                    >
-                      <Add />
-                    </IconButton>
-                  </Box>
-                ) : key === "bank_name" ? (
-                  <Box display="flex" gap={1}>
-                    <TextField
-                      fullWidth
-                      autoFocus
-                      variant="outlined"
-                      value={editedValue}
-                      onChange={(e) => setEditedValue(e.target.value)}
-                    />
-                    <IconButton
-                      color="success"
-                      onClick={() => {
-                        getBank_info();
-                        handleBlurOrEnter(key);
-                      }}
-                    >
-                      <Add />
-                    </IconButton>
-                  </Box>
-                ) : (
+              {editingField === "email" ? (
+                <Box display="flex" gap={1}>
                   <TextField
-                    autoFocus
                     fullWidth
+                    autoFocus
                     variant="outlined"
-                    value={
-                      editedValue !== null ? editedValue : userData[key] || ""
-                    }
-                    onChange={(e) => setEditedValue(e.target.value)}
-                    onBlur={() => handleBlurOrEnter(key)}
+                    value={editedValue || ""}
+                    onBlur={() => handleBlurOrEnter("email")}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleBlurOrEnter(key);
-                      }
+                      if (e.key === "Enter") handleBlurOrEnter("email");
                     }}
+                    onChange={(e) => setEditedValue(e.target.value)}
                   />
-                )
+                </Box>
               ) : (
                 <div style={{ display: "flex" }}>
                   <Typography variant="body1">
-                    {key === "region"
-                      ? region_data.find(
-                          (r) => r.code === Number(userData[key])
-                        )?.name || userData[key]
-                      : userData[key]}
+                    {userData.email || "—"}
                   </Typography>
                   <IconButton
                     onClick={() => {
-                      setEditingField(key);
-                      setEditedValue(userData[key]);
+                      setEditingField("email");
+                      setEditedValue(userData.email);
                     }}
                     size="small"
                   >
@@ -600,11 +366,682 @@ export default function OptionsDialog({ open, user, setOptions }) {
               )}
               <Divider sx={{ my: 1 }} />
             </Box>
-          ))
+
+            {/* phone_number*/}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Номер телефона:</strong>
+              </Typography>
+              {editingField === "phone_number" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    variant="outlined"
+                    value={editedValue || ""}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleBlurOrEnter("phone_number");
+                    }}
+                    onBlur={() => handleBlurOrEnter("phone_number")}
+                    onChange={(e) => setEditedValue(e.target.value)}
+                  />
+                </Box>
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">
+                    {userData.phone_number || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("phone_number");
+                      setEditedValue(userData.phone_number);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* inn */}
+
+            <Box display="flex" alignItems="center" gap={1}>
+              <PriorityHighIcon sx={{ color: "red" }} />
+              <Typography variant="h6">
+                Введите ИНН вашей компании, постараемся заполнить данные за вас:
+              </Typography>
+            </Box>
+            <Box mb={2}>
+              {editingField === "inn" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    variant="outlined"
+                    value={editedValue || ""}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleBlurOrEnter("inn");
+                    }}
+                    onChange={(e) => setEditedValue(e.target.value)}
+                  />
+                  <IconButton
+                    color="success"
+                    onClick={() => {
+                      getCompany_info();
+                      handleBlurOrEnter("inn");
+                    }}
+                  >
+                    <Add />
+                  </IconButton>
+                </Box>
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">{userData.inn || "—"}</Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("inn");
+                      setEditedValue(userData.inn);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* company_name */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Название организации:</strong>
+              </Typography>
+              {editingField === "company_name" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    variant="outlined"
+                    value={editedValue || ""}
+                    onBlur={() => handleBlurOrEnter("company_name")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleBlurOrEnter("company_name");
+                    }}
+                    onChange={(e) => setEditedValue(e.target.value)}
+                  />
+                </Box>
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">
+                    {userData.company_name || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("company_name");
+                      setEditedValue(userData.company_name);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* Поля с ФИО */}
+            {/* full_name */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>ФИО подписанта:</strong>
+              </Typography>
+              {editingField === "full_name" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    autoFocus
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Фамилия"
+                    value={editedValue?.surname || ""}
+                    onChange={(e) =>
+                      setEditedValue((prev) => ({
+                        ...prev,
+                        surname: e.target.value,
+                      }))
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Имя"
+                    value={editedValue?.name || ""}
+                    onChange={(e) =>
+                      setEditedValue((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Отчество"
+                    value={editedValue?.patronymic || ""}
+                    onChange={(e) =>
+                      setEditedValue((prev) => ({
+                        ...prev,
+                        patronymic: e.target.value,
+                      }))
+                    }
+                  />
+                  <IconButton
+                    color="success"
+                    onClick={() => handleBlurOrEnter("full_name")}
+                  >
+                    <Add />
+                  </IconButton>
+                </Box>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <Typography variant="body1">
+                    {userData.full_name || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      const [surname, name, patronymic] =
+                        userData.full_name?.split(" ") || ["", "", ""];
+                      setEditingField("full_name");
+                      setEditedValue({ surname, name, patronymic });
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* position */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Должность подписанта:</strong>
+              </Typography>
+              {editingField === "position" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    onBlur={() => handleBlurOrEnter("position")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleBlurOrEnter("position");
+                    }}
+                    variant="outlined"
+                    value={editedValue || ""}
+                    onChange={(e) => setEditedValue(e.target.value)}
+                  />
+                </Box>
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">
+                    {userData.position || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("position");
+                      setEditedValue(userData.position);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* legal_address */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Юридический адрес:</strong>
+              </Typography>
+              {editingField === "legal_address" ? (
+                <Autocomplete
+                  freeSolo
+                  value={editedValue}
+                  options={address_list}
+                  filterOptions={(options) => options}
+                  onInputChange={(event, newInputValue) =>
+                    handleInputChange(newInputValue)
+                  }
+                  onChange={(event, newValue) => handleChange(event, newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      autoFocus
+                      onBlur={() => handleBlurOrEnter("legal_address")}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter")
+                          handleBlurOrEnter("legal_address");
+                      }}
+                    />
+                  )}
+                />
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">
+                    {userData.legal_address || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("legal_address");
+                      setEditedValue(userData.legal_address);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+            {/* kpp*/}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>КПП организации:</strong>
+              </Typography>
+              <div style={{ display: "flex" }}>
+                <Typography variant="body1">{userData.kpp || "—"}</Typography>
+                <IconButton
+                  onClick={() => {
+                    setEditingField("kpp");
+                    setEditedValue(userData.kpp);
+                  }}
+                  size="small"
+                >
+                  <EditIcon />
+                </IconButton>
+              </div>
+              <Divider sx={{ my: 1 }} />
+            </Box>
+            {/* bic */}
+
+            <Box display="flex" alignItems="center" gap={1}>
+              <PriorityHighIcon sx={{ color: "red" }} />
+              <Typography variant="h6">
+                Введите БИК вашего банка, постараемся заполнить данные за вас:
+              </Typography>
+            </Box>
+            <Box mb={2}>
+              {editingField === "bic" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    variant="outlined"
+                    value={editedValue || ""}
+                    onChange={(e) => setEditedValue(e.target.value)}
+                  />
+                  <IconButton
+                    color="success"
+                    onClick={() => {
+                      getBank_info();
+                      handleBlurOrEnter("bic");
+                    }}
+                  >
+                    <Add />
+                  </IconButton>
+                </Box>
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">{userData.bic || "—"}</Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("bic");
+                      setEditedValue(userData.bic);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* bank_name */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Название вашего банка:</strong>
+              </Typography>
+              {editingField === "bank_name" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    variant="outlined"
+                    onBlur={() => handleBlurOrEnter("bank_name")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleBlurOrEnter("bank_name");
+                    }}
+                    value={editedValue || ""}
+                    onChange={(e) => setEditedValue(e.target.value)}
+                  />
+                </Box>
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">
+                    {userData.bank_name || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("bank_name");
+                      setEditedValue(userData.bank_name);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* correspondent_account */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Корреспондентский счёт:</strong>
+              </Typography>
+              {editingField === "correspondent_account" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    variant="outlined"
+                    onBlur={() => handleBlurOrEnter("correspondent_account")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter")
+                        handleBlurOrEnter("correspondent_account");
+                    }}
+                    value={editedValue || ""}
+                    onChange={(e) => setEditedValue(e.target.value)}
+                  />
+                </Box>
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">
+                    {userData.correspondent_account || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("correspondent_account");
+                      setEditedValue(userData.correspondent_account);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+            {/* current_account */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Расчётный счёт:</strong>
+              </Typography>
+              {editingField === "current_account" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    variant="outlined"
+                    value={editedValue || ""}
+                    onBlur={() => handleBlurOrEnter("current_account")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter")
+                        handleBlurOrEnter("current_account");
+                    }}
+                    onChange={(e) => setEditedValue(e.target.value)}
+                  />
+                </Box>
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">
+                    {userData.current_account || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("current_account");
+                      setEditedValue(userData.current_account);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* contact_person */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Контактное лицо:</strong>
+              </Typography>
+              {editingField === "contact_person" ? (
+                <Box display="flex" gap={1}>
+                  <TextField
+                    autoFocus
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Фамилия"
+                    value={editedValue?.surname || ""}
+                    onChange={(e) =>
+                      setEditedValue((prev) => ({
+                        ...prev,
+                        surname: e.target.value,
+                      }))
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Имя"
+                    value={editedValue?.name || ""}
+                    onChange={(e) =>
+                      setEditedValue((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Отчество"
+                    value={editedValue?.patronymic || ""}
+                    onChange={(e) =>
+                      setEditedValue((prev) => ({
+                        ...prev,
+                        patronymic: e.target.value,
+                      }))
+                    }
+                  />
+                  <IconButton
+                    color="success"
+                    onClick={() => handleBlurOrEnter("contact_person")}
+                  >
+                    <Add />
+                  </IconButton>
+                </Box>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <Typography variant="body1">
+                    {userData.contact_person || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      const [surname, name, patronymic] =
+                        userData.contact_person?.split(" ") || ["", "", ""];
+                      setEditingField("contact_person");
+                      setEditedValue({ surname, name, patronymic });
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* auth_doct_type */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Тип документа, дающего право подписи:</strong>
+              </Typography>
+              {editingField === "auth_doct_type" ? (
+                <FormControl size="medium" sx={{ width: "100%" }}>
+                  <Select
+                    value={userData.auth_doct_type}
+                    labelId="doc_type_label"
+                    label="Документ"
+                    onChange={(e) => {
+                      handleSaveChanges("auth_doct_type", e.target.value);
+                      setEditingField(null);
+                    }}
+                    onBlur={() => handleBlurOrEnter("auth_doct_type")}
+                    fullWidth
+                  >
+                    <MenuItem value="Устав">Устав</MenuItem>
+                    <MenuItem value="ГПХ">ГПХ</MenuItem>
+                    <MenuItem value="Договор">Договор</MenuItem>
+                  </Select>
+                </FormControl>
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">
+                    {userData.auth_doct_type || "—"}
+                  </Typography>
+                  <IconButton
+                    onClick={() => setEditingField("auth_doct_type")}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* region */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Ваш регион:</strong>
+              </Typography>
+              {editingField === "region" ? (
+                <Autocomplete
+                  {...defaultProps}
+                  value={region_value}
+                  onChange={(event, newValue) => {
+                    setRegion_value(newValue);
+                    setEditedValue(newValue ? newValue.code : "");
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      onBlur={() => handleBlurOrEnter("region")}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleBlurOrEnter("region");
+                      }}
+                    />
+                  )}
+                  freeSolo
+                />
+              ) : (
+                <div style={{ display: "flex" }}>
+                  <Typography variant="body1">
+                    {region_data.find((r) => r.code === Number(userData.region))
+                      ?.name || userData.region}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      setEditingField("region");
+                      setEditedValue(userData.region);
+                    }}
+                    size="small"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </div>
+              )}
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* Остальные поля */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Номер договора:</strong>
+              </Typography>
+              <div style={{ display: "flex" }}>
+                <Typography variant="body1">
+                  {userData.contract_number || "—"}
+                </Typography>
+                <IconButton
+                  onClick={() => {
+                    setEditingField("contract_number");
+                    setEditedValue(userData.contract_number);
+                  }}
+                  size="small"
+                >
+                  <EditIcon />
+                </IconButton>
+              </div>
+              <Divider sx={{ my: 1 }} />
+            </Box>
+
+            {/* Доступы */}
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Доступ к котлам МВ 3.1 мощностью 127-301 кВт:</strong>
+              </Typography>
+              <Typography variant="body1">
+                {userData.service_access_3_1_127_301
+                  ? "Есть доступ"
+                  : "Нет доступа"}
+              </Typography>
+              <Divider sx={{ my: 1 }} />
+            </Box>
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Доступ к котлам МВ 3.1 мощностью 400-2000 кВт:</strong>
+              </Typography>
+              <Typography variant="body1">
+                {userData.service_access_3_1_400_2000
+                  ? "Есть доступ"
+                  : "Нет доступа"}
+              </Typography>
+              <Divider sx={{ my: 1 }} />
+            </Box>
+            <Box mb={2}>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <strong>Доступ к котлам МВ 4.1 мощностью 40-99 кВт</strong>
+              </Typography>
+              <Typography variant="body1">
+                {userData.service_access_4_1 ? "Есть доступ" : "Нет доступа"}
+              </Typography>
+              <Divider sx={{ my: 1 }} />
+            </Box>
+          </>
         ) : (
           <Typography variant="body2">Загрузка данных...</Typography>
         )}
       </DialogContent>
+
       <DialogActions>
         <Button
           onClick={() => handleConfirmData()}
