@@ -1002,7 +1002,9 @@ export default function DataBaseUsers() {
                                         />
                                       )}
                                     />
-                                  ) : isBoolean ? (
+                                  ) : colKey === "service_access_4_1" ||
+                                    colKey === "service_access_3_1_127_301" ||
+                                    colKey === "service_access_3_1_400_2000" ? (
                                     <Checkbox
                                       checked={Boolean(
                                         editedRowData?.[colKey] ?? row[colKey]
@@ -1017,7 +1019,9 @@ export default function DataBaseUsers() {
                                   ) : (
                                     <TextField
                                       value={
-                                        editedRowData?.[colKey] ?? row[colKey]
+                                        editedRowData?.[colKey] ??
+                                        row[colKey] ??
+                                        ""
                                       }
                                       onChange={(e) =>
                                         setEditedRowData((prev) => ({
