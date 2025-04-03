@@ -493,8 +493,8 @@ class DataController {
 
       const request = await pool.query(
         `SELECT * FROM user_systems WHERE user_id = (
-          SELECT id FROM users WHERE username = $1
-        );`,
+            SELECT id FROM users WHERE username = $1
+          );`,
         [login]
       );
 
@@ -512,7 +512,17 @@ class DataController {
                 "Content-Type": "application/json",
               },
             })
-            .then((response) => response.data)
+            .then((response) => {
+              if (!response.data) {
+                return {
+                  user_id: system.user_id,
+                  name: system.name,
+                  system_id: system.system_id,
+                  module_list: [],
+                };
+              }
+              return response.data;
+            })
             .catch((error) => {
               console.error(
                 `Ошибка при получении ${system.name}:`,
@@ -522,6 +532,7 @@ class DataController {
                 user_id: system.user_id,
                 name: system.name,
                 system_id: system.system_id,
+                module_list: [],
               };
             });
         } else {
@@ -605,7 +616,6 @@ class DataController {
           [...fetchedSystems, ...selectedSystems].map((s) => [s.name, s])
         ).values(),
       ];
-
       return res.send(uniqueSystems);
     } catch (error) {
       console.error("Ошибка при получении систем:", error);
