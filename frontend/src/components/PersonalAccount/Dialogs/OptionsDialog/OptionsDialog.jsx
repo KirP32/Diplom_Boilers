@@ -107,6 +107,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
             editedValue.length > 12 ||
             /^\d+$/.test(editedValue) === false
           ) {
+            console.log("error");
             setErrorMessage("Некорректный ИНН");
             setSnackbarOpen(true);
             setSuccess_updated(false);
@@ -123,6 +124,9 @@ export default function OptionsDialog({ open, user, setOptions }) {
             setSnackbarOpen(true);
             setSuccess_updated(false);
             return;
+          }
+          if (key === "bic") {
+            getBank_info();
           }
         }
         if (key === "current_account" || key === "correspondent_account") {
@@ -421,9 +425,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     autoFocus
                     variant="outlined"
                     value={editedValue || ""}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleBlurOrEnter("inn");
-                    }}
                     onChange={(e) => setEditedValue(e.target.value)}
                   />
                   <IconButton
@@ -687,7 +688,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   <IconButton
                     color="success"
                     onClick={() => {
-                      getBank_info();
                       handleBlurOrEnter("bic");
                     }}
                   >
