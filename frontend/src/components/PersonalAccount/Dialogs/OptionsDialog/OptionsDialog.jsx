@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 import {
   Dialog,
@@ -28,6 +29,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import region_data from "../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 import { LoadingSpinner } from "../../../LoadingSpinner/LoadingSpinner";
 import axios from "axios";
+const token = "98be28db4ed79229bc269503c6a4d868e628b318";
 
 export default function OptionsDialog({ open, user, setOptions }) {
   const [userData, setUserData] = useState(null);
@@ -165,7 +167,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
     options: region_data,
     getOptionLabel: (option) => option.name,
   };
-
   async function handleDownloadClick() {
     if (isMobile || canTouch) {
       const workerRes = await $api.get("/getWorkerInfo");
@@ -184,8 +185,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
   }, [isMobile, pdfUrl, canTouch]);
 
   async function handleLegalAddress(query) {
-    const token = "98be28db4ed79229bc269503c6a4d868e628b318";
-
     try {
       const result = await axios({
         method: "POST",
@@ -229,7 +228,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
   }
 
   async function getCompany_info() {
-    const token = "98be28db4ed79229bc269503c6a4d868e628b318";
     try {
       const result = await axios({
         method: "POST",
@@ -271,6 +269,35 @@ export default function OptionsDialog({ open, user, setOptions }) {
       setSnackbarOpen(true);
     }
   };
+
+  const getBank_info = async () => {
+    try {
+      const result = await axios({
+        method: "POST",
+        url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/bank",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Token ${token}`,
+        },
+        data: {
+          query: editedValue.toLowerCase().trim().replace("-", ""),
+          count: 1,
+        },
+      });
+
+      setUserData({
+        ...userData,
+        correspondent_account:
+          result.data.suggestions[0].data.correspondent_account,
+        bank_name: result.data.suggestions[0].unrestricted_value,
+        bic: result.data.suggestions[0].data.bic,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -509,6 +536,25 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       color="success"
                       onClick={() => {
                         getCompany_info();
+                        handleBlurOrEnter(key);
+                      }}
+                    >
+                      <Add />
+                    </IconButton>
+                  </Box>
+                ) : key === "bank_name" ? (
+                  <Box display="flex" gap={1}>
+                    <TextField
+                      fullWidth
+                      autoFocus
+                      variant="outlined"
+                      value={editedValue}
+                      onChange={(e) => setEditedValue(e.target.value)}
+                    />
+                    <IconButton
+                      color="success"
+                      onClick={() => {
+                        getBank_info();
                         handleBlurOrEnter(key);
                       }}
                     >

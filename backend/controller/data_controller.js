@@ -2105,11 +2105,32 @@ class DataController {
   }
   async WorkerConfirmedData(req, res) {
     try {
-      const { kpp, inn, company_name, position, full_name, legal_address, id } =
-        req.body;
+      const {
+        kpp,
+        inn,
+        company_name,
+        position,
+        full_name,
+        legal_address,
+        id,
+        correspondent_account,
+        bank_name,
+        bic,
+      } = req.body;
       const result = await pool.query(
-        "UPDATE worker_details SET kpp = $1, inn = $2, company_name = $3, position = $4, full_name = $5, legal_address = $6 WHERE id = $7",
-        [kpp, inn, company_name, position, full_name, legal_address, id]
+        "UPDATE worker_details SET kpp = $1, inn = $2, company_name = $3, position = $4, full_name = $5, legal_address = $6, correspondent_account = $8, bank_name = $9, bic = $10 WHERE id = $7",
+        [
+          kpp,
+          inn,
+          company_name,
+          position,
+          full_name,
+          legal_address,
+          id,
+          correspondent_account,
+          bank_name,
+          bic,
+        ]
       );
       if (result.rowCount > 0) {
         return res.send("OK");
