@@ -528,7 +528,10 @@ export default function DataBaseUsers() {
               label="Таблица"
               value={tableName}
               labelId="table_label"
-              onChange={(e) => setTableName(e.target.value)}
+              onChange={(e) => {
+                setTableName(e.target.value);
+                setFilters({});
+              }}
             >
               <MenuItem value="user_details">Клиенты</MenuItem>
               <MenuItem value="worker_details">АСЦ</MenuItem>
