@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import $api from "../../../http";
 import logout from "../../Logout/logout";
 import region_data from "./russian_regions_codes.json";
@@ -22,11 +22,12 @@ import {
   InputLabel,
   Button,
   Alert,
+  Box,
   Autocomplete,
   Checkbox,
 } from "@mui/material";
 
-import { Edit, Delete, Add, Check } from "@mui/icons-material";
+import { Edit, Delete, Add, Check, Save } from "@mui/icons-material";
 import styles from "./DataBaseUsers.module.scss";
 import { useNavigate } from "react-router-dom";
 
@@ -501,6 +502,83 @@ export default function DataBaseUsers() {
       });
   }
 
+  const worker_coefficients_arr = useMemo(() => {
+    if (!columnsData || !columnsData.worker_details) {
+      return [];
+    }
+    return columnsData.worker_details.map(({ id, username, region }) => ({
+      id,
+      username,
+      region,
+    }));
+  }, [columnsData?.worker_details]);
+
+  const [selectedWorker, setSelectedWorker] = useState(null);
+
+  const [editingRowId, setEditingRowId] = useState(null);
+  const [editingCoefficient, setEditingCoefficient] = useState("");
+
+  const handleEditCoefficient = (record, currentCoeff) => {
+    setEditingRowId(record.spid);
+    setEditingCoefficient(currentCoeff);
+  };
+
+  const handleSaveCoefficient = async (record) => {
+    let found = false;
+    const new_worker_columns = columnsData.worker_service_coefficients.map(
+      (item) => {
+        if (
+          item.worker_id === selectedWorker.id &&
+          item.service_id === record.service_id
+        ) {
+          found = true;
+          return {
+            ...item,
+            coefficient: editingCoefficient,
+          };
+        }
+        return item;
+      }
+    );
+
+    const updated_worker_columns = found
+      ? new_worker_columns
+      : [
+          ...new_worker_columns,
+          {
+            worker_id: selectedWorker.id,
+            service_id: record.service_id,
+            coefficient: editingCoefficient,
+          },
+        ];
+    await $api
+      .post("/updateCoefficient", {
+        worker_id: selectedWorker.id,
+        coefficient: editingCoefficient,
+        service_id: record.service_id,
+      })
+      .then(() => {
+        setColumnsData((prev) => ({
+          ...prev,
+          worker_service_coefficients: updated_worker_columns,
+        }));
+      })
+      .catch((error) => {
+        console.log(error);
+        setSnackbarOpen(true);
+        setErrorMessage(error.message);
+      });
+
+    setEditingRowId(null);
+  };
+
+  const filteredServices = useMemo(() => {
+    if (!selectedWorker || !columnsData || !columnsData.services_and_prices)
+      return [];
+    return columnsData.services_and_prices.filter(
+      (record) => record.region === selectedWorker.region
+    );
+  }, [selectedWorker, columnsData]);
   return (
     <div className={styles.data_table__wrapper} style={{ overflowY: "auto" }}>
       <div
@@ -790,7 +868,7 @@ export default function DataBaseUsers() {
               <Typography
                 variant="h5"
                 className={styles.data_table__header}
-                sx={{ textAlign: "center" }}
+                sx={{ textAlign: "center", mb: 2, fontWeight: "bold" }}
               >
                 Данные таблицы {tableName}
               </Typography>
@@ -1105,6 +1183,145 @@ export default function DataBaseUsers() {
                 </Table>
               </TableContainer>
             </Paper>
+            {tableName === "worker_details" && (
+              <>
+                <Typography variant="h5" sx={{ mt: 3, fontWeight: "bold" }}>
+                  Установить коэффициенты на услуги
+                </Typography>
+                <Box sx={{ p: 2 }}>
+                  <Box className={styles.worker_coefficients} sx={{ mb: 2 }}>
+                    <Autocomplete
+                      sx={{ width: 300 }}
+                      options={worker_coefficients_arr}
+                      getOptionLabel={(option) => option.username || ""}
+                      value={selectedWorker}
+                      onChange={(event, newValue) =>
+                        setSelectedWorker(newValue)
+                      }
+                      renderInput={(params) => (
+                        <TextField {...params} label="АСЦ" size="small" />
+                      )}
+                    />
+                  </Box>
+
+                  {selectedWorker && (
+                    <>
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Услуги для {selectedWorker?.username} (
+                        {
+                          regionOptions.find(
+                            (item) => item?.code === selectedWorker?.region
+                          )?.name
+                        }
+                        )
+                      </Typography>
+                      <TableContainer component={Paper}>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Услуга</TableCell>
+                              <TableCell>Описание</TableCell>
+                              <TableCell align="center">Коэффициент</TableCell>
+                              <TableCell align="right">Цена</TableCell>
+                              <TableCell align="right">Итоговая цена</TableCell>
+                              <TableCell align="center">Действия</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {filteredServices.map((record) => {
+                              const workerCoeffObj =
+                                columnsData?.worker_service_coefficients.find(
+                                  (wsc) =>
+                                    wsc.worker_id === selectedWorker.id &&
+                                    wsc.service_id === record.service_id
+                                );
+                              const initialCoefficient = workerCoeffObj
+                                ? workerCoeffObj.coefficient
+                                : 1.0;
+
+                              const isEditing = editingRowId === record.spid;
+                              const currentCoefficient = isEditing
+                                ? parseFloat(editingCoefficient) ||
+                                  initialCoefficient
+                                : initialCoefficient;
+
+                              const basePrice = parseFloat(record.price);
+                              const finalPrice = basePrice * currentCoefficient;
+                              return (
+                                <TableRow key={record.spid}>
+                                  <TableCell>{record.service_name}</TableCell>
+                                  <TableCell>{record.description}</TableCell>
+
+                                  <TableCell align="center">
+                                    {isEditing ? (
+                                      <TextField
+                                        value={editingCoefficient}
+                                        onChange={(e) => {
+                                          setEditingCoefficient(e.target.value);
+                                          const newValue = parseFloat(
+                                            e.target.value
+                                          );
+                                          if (!isNaN(newValue)) {
+                                            record.finalPrice =
+                                              basePrice * newValue;
+                                          }
+                                        }}
+                                        size="small"
+                                        type="number"
+                                        slotProps={{
+                                          htmlInput: { step: 0.01 },
+                                        }}
+                                        sx={{ width: "80px" }}
+                                      />
+                                    ) : (
+                                      currentCoefficient
+                                    )}
+                                  </TableCell>
+
+                                  <TableCell align="right">
+                                    {basePrice.toFixed(2)}
+                                  </TableCell>
+
+                                  <TableCell align="right">
+                                    {finalPrice.toFixed(2)}
+                                  </TableCell>
+
+                                  <TableCell align="center">
+                                    {isEditing ? (
+                                      <IconButton
+                                        color="success"
+                                        onClick={() =>
+                                          handleSaveCoefficient(record)
+                                        }
+                                      >
+                                        <Save />
+                                      </IconButton>
+                                    ) : (
+                                      <IconButton
+                                        color="primary"
+                                        onClick={() =>
+                                          handleEditCoefficient(
+                                            record,
+                                            currentCoefficient
+                                          )
+                                        }
+                                      >
+                                        <Edit />
+                                      </IconButton>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </>
+                  )}
+                </Box>
+              </>
+            )}
+
             <Snackbar
               open={snackbarOpen}
               autoHideDuration={4000}

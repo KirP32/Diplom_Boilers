@@ -1457,6 +1457,9 @@ class DataController {
         JOIN service_prices sp ON s.id = sp.service_id;
       `);
       const result_goods = await pool.query(`SELECT * FROM goods;`);
+      const result_worker_service_coefficients = await pool.query(
+        "SELECT * FROM worker_service_coefficients"
+      );
       if (
         result_workers.rowCount > 0 &&
         result_users.rowCount > 0 &&
@@ -1475,6 +1478,7 @@ class DataController {
           work_in_progress_stage: result_work_in_progress_stage.rows,
           services_and_prices: result_services_and_prices.rows,
           goods: result_goods.rows,
+          worker_service_coefficients: result_worker_service_coefficients.rows,
         });
       }
       return res.sendStatus(400);
@@ -2149,6 +2153,38 @@ class DataController {
       }
     } catch (error) {
       return res.send({ message: error });
+    }
+  }
+  async updateCoefficient(req, res) {
+    try {
+      const { service_id, worker_id, coefficient } = req.body;
+
+      const existingRecord = await pool.query(
+        `SELECT * FROM worker_service_coefficients WHERE service_id = $1 AND worker_id = $2`,
+        [service_id, worker_id]
+      );
+
+      if (existingRecord.rows.length > 0) {
+        await pool.query(
+          `UPDATE worker_service_coefficients
+           SET coefficient = $1
+           WHERE service_id = $2 AND worker_id = $3`,
+          [coefficient, service_id, worker_id]
+        );
+        return res.status(200).json({ message: "Коэффициент обновлён" });
+      } else {
+        await pool.query(
+          `INSERT INTO worker_service_coefficients (service_id, worker_id, coefficient)
+           VALUES ($1, $2, $3)`,
+          [service_id, worker_id, coefficient]
+        );
+        return res.status(201).json({ message: "Коэффициент добавлен" });
+      }
+    } catch (error) {
+      console.error("Ошибка при обновлении коэффициента:", error);
+      return res
+        .status(500)
+        .json({ error: "Ошибка при обновлении коэффициента" });
     }
   }
 }

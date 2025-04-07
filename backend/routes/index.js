@@ -95,7 +95,11 @@ router.post(
   checkCookie,
   DataController.WorkerConfirmedData
 );
-
+router.post(
+  "/updateCoefficient",
+  checkCookie,
+  DataController.updateCoefficient
+);
 router.delete(
   "/delete_device/:device_uid",
   checkCookie,
