@@ -62,7 +62,7 @@ export default function WorkerContract() {
         console.log(error);
       });
   }, []);
-  /// ПАДЕЖИ
+
   return (
     <>
       {isLoading && <LoadingSpinner />}
@@ -866,7 +866,9 @@ const MyTable = ({ data }) => (
         <Text style={[styles.tableCol, styles.colLarge]}>
           {item?.service_name}
         </Text>
-        <Text style={[styles.tableCol, styles.colMedium]}>{item?.price} ₽</Text>
+        <Text style={[styles.tableCol, styles.colMedium]}>
+          {item?.price * item.coefficient} ₽
+        </Text>
       </View>
     ))}
   </View>

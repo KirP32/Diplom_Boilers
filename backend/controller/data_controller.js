@@ -2016,24 +2016,29 @@ class DataController {
     try {
       const login = decodeJWT(req.cookies.refreshToken).login;
 
-      const user_region_result = await pool.query(
-        "SELECT region FROM worker_details WHERE username = $1",
+      const userResult = await pool.query(
+        "SELECT id, region FROM worker_details WHERE username = $1",
         [login]
       );
 
-      if (user_region_result.rows.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "Регион пользователя не найден" });
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ message: "Пользователь не найден" });
       }
 
-      const user_region = user_region_result.rows[0].region;
+      const { id: worker_id, region: user_region } = userResult.rows[0];
+
       const dataPrices = await pool.query(
-        `SELECT s.id AS service_id, s.name AS service_name, sp.price
+        `SELECT 
+            s.id AS service_id,
+            s.name AS service_name,
+            sp.price,
+            COALESCE(wsc.coefficient, 1) AS coefficient
          FROM services s
          JOIN service_prices sp ON s.id = sp.service_id
-         WHERE sp.region = $1`,
-        [user_region]
+         LEFT JOIN worker_service_coefficients wsc 
+           ON s.id = wsc.service_id AND wsc.worker_id = $1
+         WHERE sp.region = $2`,
+        [worker_id, user_region]
       );
 
       res.json(dataPrices.rows);
@@ -2042,6 +2047,7 @@ class DataController {
       res.status(500).json({ message: "Ошибка сервера" });
     }
   }
+
   async updatePrices(req, res) {
     try {
       if (!req.file) {

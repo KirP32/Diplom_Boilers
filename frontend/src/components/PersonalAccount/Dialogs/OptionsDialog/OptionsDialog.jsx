@@ -142,6 +142,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
             return;
           }
         }
+        if (
+          (key === "phone_number" && editedValue.length < 11) ||
+          editedValue.length > 12 ||
+          /^[+]?[0-9]*$/.test(editedValue) === false
+        ) {
+          setErrorMessage(
+            "Неправильный номер телефона: (прим. 89001112233 или +79001112233)"
+          );
+          setSnackbarOpen(true);
+          return;
+        }
         if (key === "kpp" || key === "bic") {
           if (editedValue.length !== 9 || /^\d+$/.test(editedValue) === false) {
             if (key === "kpp") {
@@ -356,7 +367,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
               alignSelf: "center",
               marginLeft: "auto",
               cursor: can_download ? "pointer" : "default",
-              color: can_download ? "default" : "gray",
+              color: can_download ? "black" : "gray",
             }}
             onClick={() => handleDownloadClick()}
           />
