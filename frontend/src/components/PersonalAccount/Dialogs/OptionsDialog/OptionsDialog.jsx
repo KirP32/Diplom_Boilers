@@ -105,6 +105,15 @@ export default function OptionsDialog({ open, user, setOptions }) {
         } else if (typeof editedValue === "string") {
           newValue = editedValue.trim();
         } else if (key === "full_name" || key === "contact_person") {
+          if (
+            !editedValue.surname ||
+            !editedValue.name ||
+            !editedValue.patronymic
+          ) {
+            setErrorMessage("Заполните ФИО!");
+            setSnackbarOpen(true);
+            return;
+          }
           newValue =
             `${editedValue.surname} ${editedValue.name} ${editedValue.patronymic}`.trim();
         } else {
