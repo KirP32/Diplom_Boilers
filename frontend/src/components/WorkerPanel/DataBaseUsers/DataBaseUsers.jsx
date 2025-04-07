@@ -550,7 +550,6 @@ export default function DataBaseUsers() {
             </Select>
           </FormControl>
         </section>
-
         <IconButton color="success" onClick={handleAdd}>
           <Add />
         </IconButton>

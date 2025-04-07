@@ -69,10 +69,8 @@ export default function LogIn() {
           switch (error.response.status) {
             case 400:
               if (error.response.data.error === "User not found") {
-                console.log("Неверный логин");
                 setErrorFlag({ login: true, password: false });
               } else if (error.response.data.error === "Invalid credentials") {
-                console.log("Неверный пароль");
                 setErrorFlag({ login: false, password: true });
               } else {
                 console.log("Ошибка валидации:", error.response.data);

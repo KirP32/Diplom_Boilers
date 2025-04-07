@@ -2202,7 +2202,6 @@ async function deleteCookieDB(refreshToken, UUID4) {
     console.log(error);
   }
 }
-
 async function log_history(data) {
   try {
     //console.log(data);
