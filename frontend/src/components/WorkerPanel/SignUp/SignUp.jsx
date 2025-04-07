@@ -114,15 +114,16 @@ export default function SignUp({ updateRegFlag, ...props }) {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
+          {errors.email && (
+            <h5 className={styles.error}>Неправильный формат почты</h5>
+          )}
           <Select value={value} labelId="table_label" onChange={handleChange}>
             <MenuItem value={0}>Клиенты</MenuItem>
             <MenuItem value={1}>АСЦ</MenuItem>
             <MenuItem value={2}>WATTSON</MenuItem>
             <MenuItem value={3}>GEFFEN</MenuItem>
           </Select>
-          {errors.email && (
-            <h5 className={styles.error}>Неправильный формат почты</h5>
-          )}
+
           <Input
             type="email"
             placeholder="Номер договора"

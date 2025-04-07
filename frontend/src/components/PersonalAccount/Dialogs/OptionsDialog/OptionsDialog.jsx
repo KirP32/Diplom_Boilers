@@ -32,6 +32,21 @@ import axios from "axios";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import { red } from "@mui/material/colors";
 const token = "98be28db4ed79229bc269503c6a4d868e628b318";
+const requiredFields = [
+  "company_name",
+  "position",
+  "full_name",
+  "region",
+  "legal_address",
+  "inn",
+  "kpp",
+  "bic",
+  "correspondent_account",
+  "bank_name",
+  "current_account",
+  "contact_person",
+  "phone_number",
+];
 
 export default function OptionsDialog({ open, user, setOptions }) {
   const [userData, setUserData] = useState(null);
@@ -69,7 +84,11 @@ export default function OptionsDialog({ open, user, setOptions }) {
         console.log(error);
       });
   };
-
+  const can_download =
+    userData &&
+    requiredFields.every(
+      (field) => userData[field] !== null && userData[field] !== ""
+    );
   let debounceTimer;
   const handleBlurOrEnter = (key) => {
     if (debounceTimer) clearTimeout(debounceTimer);
@@ -178,8 +197,11 @@ export default function OptionsDialog({ open, user, setOptions }) {
       const pricesRes = await $api.get("/getServicePrices");
       setWorkerData(workerRes.data);
       setServicePrices(pricesRes.data);
-    } else {
+    } else if (can_download) {
       window.open("/work_contract", "_blank");
+    } else {
+      setErrorMessage("Заполните данные профиля");
+      setSnackbarOpen(true);
     }
   }
 
@@ -324,7 +346,8 @@ export default function OptionsDialog({ open, user, setOptions }) {
             style={{
               alignSelf: "center",
               marginLeft: "auto",
-              cursor: "pointer",
+              cursor: can_download ? "pointer" : "default",
+              color: can_download ? "default" : "gray",
             }}
             onClick={() => handleDownloadClick()}
           />
