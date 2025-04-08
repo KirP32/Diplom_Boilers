@@ -159,8 +159,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
           }
         }
         if (key === "current_account" || key === "correspondent_account") {
-          console.log("Рассчётный счёт");
-          console.log(editedValue, editedValue.length);
           if (
             editedValue.length !== 20 ||
             /^\d+$/.test(editedValue) === false
