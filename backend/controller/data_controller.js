@@ -485,10 +485,8 @@ class DataController {
       res.sendStatus(500);
     }
   }
-
   async getSystems(req, res) {
     try {
-      const api = req.headers["authorization"];
       const login = decodeJWT(req.cookies.refreshToken).login;
 
       const request = await pool.query(
@@ -503,50 +501,13 @@ class DataController {
         return res.send([]);
       }
 
-      const apiRequests = systems.map((system) => {
-        if (system.name === "ADS-Line") {
-          return axios
-            .get(`http://185.113.139.204:8000/module/get/${system.name}`, {
-              headers: {
-                Authorization: api,
-                "Content-Type": "application/json",
-              },
-            })
-            .then((response) => {
-              if (!response.data) {
-                return {
-                  user_id: system.user_id,
-                  name: system.name,
-                  system_id: system.system_id,
-                  module_list: [],
-                };
-              }
-              return response.data;
-            })
-            .catch((error) => {
-              console.error(
-                `Ошибка при получении ${system.name}:`,
-                error.message
-              );
-              return {
-                user_id: system.user_id,
-                name: system.name,
-                system_id: system.system_id,
-                module_list: [],
-              };
-            });
-        } else {
-          // Заглушка для систем, не являющихся "ADS-Line"
-          return Promise.resolve({
-            user_id: system.user_id,
-            name: system.name,
-            system_id: system.system_id,
-            module_list: [],
-          });
-        }
-      });
-
-      const fetchedSystems = await Promise.all(apiRequests);
+      // Для тестового режима возвращаем шаблонный объект для каждой системы
+      const fetchedSystems = systems.map((system) => ({
+        user_id: system.user_id,
+        name: system.name,
+        system_id: system.system_id,
+        module_list: [],
+      }));
 
       const fooArray = [
         {
@@ -616,6 +577,7 @@ class DataController {
           [...fetchedSystems, ...selectedSystems].map((s) => [s.name, s])
         ).values(),
       ];
+
       return res.send(uniqueSystems);
     } catch (error) {
       console.error("Ошибка при получении систем:", error);
