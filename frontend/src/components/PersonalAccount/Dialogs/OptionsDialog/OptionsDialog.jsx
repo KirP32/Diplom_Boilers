@@ -348,7 +348,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
       console.log(error);
     }
   };
-  console.log(userData);
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
