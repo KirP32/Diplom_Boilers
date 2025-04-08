@@ -16,41 +16,32 @@ const getTheme = () => {
 
 const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(getTheme);
-  const [access_level, setAccesslevel] = useState(0);
+  const [access_level, setAccesslevel] = useState(null);
 
   useEffect(() => {
     const getAccessLevel = async () => {
-      await $api
-        .get("/getUserAccessLevel")
-        .then((result) => {
-          setAccesslevel(result.data.accesslevel);
-        })
-        .catch((error) => {
-          console.error(error);
-          setAccesslevel(0);
-        });
+      try {
+        const result = await $api.get("/getUserAccessLevel");
+        setAccesslevel(result.data.accesslevel);
+      } catch (error) {
+        console.error(error);
+        setAccesslevel(0);
+      }
     };
     getAccessLevel();
   }, []);
-  // когда приходит значение access_level, не синхронизированно
-  function refreshAccess(access_level) {
-    setAccesslevel(access_level);
-  }
 
+  function refreshAccess(newAccessLevel) {
+    setAccesslevel(newAccessLevel);
+  }
   function toggleTheme() {
-    if (theme === "dark-theme") {
-      setTheme("light-theme");
-    } else {
-      setTheme("dark-theme");
-    }
+    setTheme((prevTheme) =>
+      prevTheme === "dark-theme" ? "light-theme" : "dark-theme"
+    );
   }
 
   useEffect(() => {
-    const refreshTheme = () => {
-      localStorage.setItem("theme", theme);
-    };
-
-    refreshTheme();
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
   return (

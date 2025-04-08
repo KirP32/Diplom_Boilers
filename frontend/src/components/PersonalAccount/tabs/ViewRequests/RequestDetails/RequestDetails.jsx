@@ -5,8 +5,6 @@
 import { useContext, useEffect, useState } from "react";
 import styles from "./RequestDetails.module.scss";
 import { ThemeContext } from "../../../../../Theme";
-import A_SearchWorker from "./additionalComponents/Admin/A_SearchWorker/A_SearchWorker";
-import U_SearchWorker from "./additionalComponents/User/U_SearchWorker/U_SearchWorker";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepButton from "@mui/material/StepButton";
@@ -25,6 +23,8 @@ import { socket } from "../../../../../socket";
 import { IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DataBaseColums from "./DataBaseColums/DataBaseColums";
+import SearchWorker from "./additionalComponents/SearchWorker/SearchWorker";
+import Materials from "./additionalComponents/Materials/Materials";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -261,62 +261,35 @@ export default function RequestDetails({
   };
 
   const react_functional_components = {
-    "Поиск специалиста": {
-      0: <U_SearchWorker item={fullItem} />,
-      1: <A_SearchWorker />,
-    },
-    Материалы: {
-      0: (
-        <DataBaseColums
-          stageName={stageMapping[stepKey]}
-          requestID={fullItem?.id}
-        />
-      ),
-      1: (
-        <DataBaseColums
-          stageName={stageMapping[stepKey]}
-          requestID={fullItem?.id}
-        />
-      ),
-    },
-    "В пути": {
-      0: (
-        <DataBaseColums
-          stageName={stageMapping[stepKey]}
-          requestID={fullItem?.id}
-        />
-      ),
-      1: (
-        <DataBaseColums
-          stageName={stageMapping[stepKey]}
-          requestID={fullItem?.id}
-        />
-      ),
-    },
-    "Проводятся работы": {
-      0: (
-        <DataBaseColums
-          stageName={stageMapping[stepKey]}
-          requestID={fullItem?.id}
-        />
-      ),
-      1: (
-        <DataBaseColums
-          stageName={stageMapping[stepKey]}
-          requestID={fullItem?.id}
-        />
-      ),
-    },
-    Завершенно: {
-      0: <></>,
-      1: <></>,
-    },
+    "Поиск специалиста": (
+      <SearchWorker
+        item={{
+          worker_username: fullItem?.worker_username,
+          uri_worker_confirmed: fullItem?.uri_worker_confirmed,
+        }}
+        access_level={access_level}
+      />
+    ),
+    Материалы: (
+      <Materials
+        requestID={fullItem?.id}
+        access_level={access_level}
+        worker_username={fullItem?.worker_username}
+      />
+    ),
+    "В пути": (
+      <DataBaseColums requestID={fullItem?.id} access_level={access_level} />
+    ),
+    "Проводятся работы": (
+      <DataBaseColums requestID={fullItem?.id} access_level={access_level} />
+    ),
+    Завершенно: (
+      // <CompletedWorks access_level={access_level} />
+      <>Завершенно</>
+    ),
   };
 
-  const component =
-    react_functional_components[stepKey]?.[access_level] ||
-    Object.values(react_functional_components[stepKey] || {})[0] ||
-    null;
+  const component = react_functional_components[stepKey] || null;
 
   const userConfirmed =
     (access_level === 0 && fullItem?.user_confirmed) ||

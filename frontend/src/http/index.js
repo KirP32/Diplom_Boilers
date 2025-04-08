@@ -49,20 +49,9 @@ $api.interceptors.response.use(
           withCredentials: true,
         });
 
-        if (localStorage.getItem("stay_logged") === "false") {
-          sessionStorage.setItem("accessToken", response.data.accessToken);
-          // console.log(
-          //   "Токен обновлён в sessionStorage:",
-          //   response.data.accessToken
-          // );
-        } else {
+        if (localStorage.getItem("stay_logged") === "true") {
           localStorage.setItem("accessToken", response.data.accessToken);
-          // console.log(
-          //   "Токен обновлён в localStorage:",
-          //   response.data.accessToken
-          // );
         }
-        // console.log(localStorage.getItem("stay_logged"));
         originalRequest.headers.accessToken = response.data.accessToken;
 
         // console.log("Выдал авторизацию");

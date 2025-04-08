@@ -1,11 +1,9 @@
 import { Navigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
-import { ThemeContext } from "../../Theme";
 import { useContext } from "react";
+import { ThemeContext } from "../../Theme";
+import { jwtDecode } from "jwt-decode";
+
 const ContractGuard = ({ children }) => {
-  const { access_level } = useContext(ThemeContext);
-  console.log(access_level);
-  // читает access_level до получения значения с сервера
   const token =
     sessionStorage.getItem("accessToken") ||
     localStorage.getItem("accessToken") ||
