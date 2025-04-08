@@ -142,17 +142,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
             return;
           }
         }
-        if (
-          (key === "phone_number" && editedValue.length < 11) ||
-          editedValue.length > 12 ||
-          /^[+]?[0-9]*$/.test(editedValue) === false
-        ) {
-          setErrorMessage(
-            "Неправильный номер телефона: (прим. 89001112233 или +79001112233)"
-          );
-          setSnackbarOpen(true);
-          return;
-        }
+
         if (key === "kpp" || key === "bic") {
           if (editedValue.length !== 9 || /^\d+$/.test(editedValue) === false) {
             if (key === "kpp") {
@@ -169,6 +159,8 @@ export default function OptionsDialog({ open, user, setOptions }) {
           }
         }
         if (key === "current_account" || key === "correspondent_account") {
+          console.log("Рассчётный счёт");
+          console.log(editedValue, editedValue.length);
           if (
             editedValue.length !== 20 ||
             /^\d+$/.test(editedValue) === false
@@ -183,7 +175,21 @@ export default function OptionsDialog({ open, user, setOptions }) {
             return;
           }
         }
-
+        if (
+          key === "phone_number" &&
+          (editedValue.length < 11 ||
+            editedValue.length > 12 ||
+            /^[+]?[0-9]*$/.test(editedValue) === false)
+        ) {
+          console.log("phone_number");
+          console.log(editedValue);
+          console.log(key);
+          setErrorMessage(
+            "Неправильный номер телефона: (прим. 89001112233 или +79001112233)"
+          );
+          setSnackbarOpen(true);
+          return;
+        }
         handleSaveChanges(key, newValue);
       }
       setEditingField(null);

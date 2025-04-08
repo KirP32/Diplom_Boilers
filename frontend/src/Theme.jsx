@@ -17,18 +17,22 @@ const getTheme = () => {
 const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(getTheme);
   const [access_level, setAccesslevel] = useState(0);
-  useEffect(() => {
-    $api
-      .get("/getUserAccessLevel")
-      .then((result) => {
-        setAccesslevel(result.data.accesslevel);
-      })
-      .catch((error) => {
-        console.error(error);
-        setAccesslevel(0);
-      });
-  }, []);
 
+  useEffect(() => {
+    const getAccessLevel = async () => {
+      await $api
+        .get("/getUserAccessLevel")
+        .then((result) => {
+          setAccesslevel(result.data.accesslevel);
+        })
+        .catch((error) => {
+          console.error(error);
+          setAccesslevel(0);
+        });
+    };
+    getAccessLevel();
+  }, []);
+  // когда приходит значение access_level, не синхронизированно
   function refreshAccess(access_level) {
     setAccesslevel(access_level);
   }
