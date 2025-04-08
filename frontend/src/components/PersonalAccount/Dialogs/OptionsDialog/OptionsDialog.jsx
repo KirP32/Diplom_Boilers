@@ -348,7 +348,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
       console.log(error);
     }
   };
-
+  console.log(userData);
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -1106,20 +1106,37 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   >
                     <strong>Номер договора:</strong>
                   </Typography>
-                  <div style={{ display: "flex" }}>
-                    <Typography variant="body1">
-                      {userData.contract_number || "—"}
-                    </Typography>
-                    <IconButton
-                      onClick={() => {
-                        setEditingField("contract_number");
-                        setEditedValue(userData.contract_number);
-                      }}
-                      size="small"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </div>
+                  {editingField === "contract_number" ? (
+                    <Box display="flex" gap={1}>
+                      <TextField
+                        fullWidth
+                        autoFocus
+                        variant="outlined"
+                        value={editedValue || ""}
+                        onBlur={() => handleBlurOrEnter("contract_number")}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter")
+                            handleBlurOrEnter("contract_number");
+                        }}
+                        onChange={(e) => setEditedValue(e.target.value)}
+                      />
+                    </Box>
+                  ) : (
+                    <div style={{ display: "flex" }}>
+                      <Typography variant="body1">
+                        {userData.contract_number || "—"}
+                      </Typography>
+                      <IconButton
+                        onClick={() => {
+                          setEditingField("contract_number");
+                          setEditedValue(userData.contract_number);
+                        }}
+                        size="small"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </div>
+                  )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
 
