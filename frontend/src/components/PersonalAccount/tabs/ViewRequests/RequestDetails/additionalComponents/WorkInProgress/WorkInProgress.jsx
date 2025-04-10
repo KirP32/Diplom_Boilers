@@ -63,12 +63,12 @@ export default function WorkInProgress({
 
   useEffect(() => {
     getActualGoodsAndServices();
-    const intervalId = setInterval(() => getActualGoodsAndServices(), 120000);
+    const intervalId = setInterval(() => getActualGoodsAndServices(), 60000);
     return () => clearInterval(intervalId);
   }, [requestID, worker_region]);
 
   const handleServiceSelect = (event, value) => {
-    if (access_level !== 3 || !value) return;
+    if (!value) return;
     const alreadySelected =
       actualGoodsAndServices.services.some(
         (s) => s.service_id === value.service_id
@@ -79,7 +79,7 @@ export default function WorkInProgress({
   };
 
   const handleGoodsSelect = (event, value) => {
-    if (access_level !== 3 || !value) return;
+    if (!value) return;
     const alreadySelected =
       actualGoodsAndServices.goods.some((g) => g.id === value.id) ||
       pendingGoods.some((g) => g.id === value.id);
@@ -167,7 +167,7 @@ export default function WorkInProgress({
             <Typography variant="h6" gutterBottom>
               Услуги
             </Typography>
-            {isEditing && access_level === 3 && (
+            {isEditing && (
               <Autocomplete
                 options={servicesCatalog}
                 getOptionLabel={(option) => option.service_name || ""}
@@ -195,7 +195,6 @@ export default function WorkInProgress({
                     <ListItem
                       key={service.service_id}
                       secondaryAction={
-                        access_level === 3 &&
                         isEditing && (
                           <>
                             {isConfirmed && (
@@ -254,7 +253,7 @@ export default function WorkInProgress({
             <Typography variant="h6" gutterBottom>
               Запчасти
             </Typography>
-            {isEditing && access_level === 3 && (
+            {isEditing && (
               <Autocomplete
                 options={goodsCatalog}
                 getOptionLabel={(option) => option.name || ""}
@@ -280,7 +279,6 @@ export default function WorkInProgress({
                     <ListItem
                       key={good.id}
                       secondaryAction={
-                        access_level === 3 &&
                         isEditing && (
                           <>
                             {isConfirmed && (
@@ -318,17 +316,43 @@ export default function WorkInProgress({
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 2, textAlign: "center" }}>
-        {access_level === 3 && !isEditing && (
-          <Button variant="contained" onClick={() => setIsEditing(true)}>
-            Отредактируйте
-          </Button>
+      <Box
+        sx={{
+          mt: 2,
+          textAlign: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 3,
+        }}
+      >
+        {!isEditing && (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Typography variant="h5" sx={{ margin: 0 }}>
+              Есть уточнения?
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => setIsEditing(true)}
+              sx={{ width: "auto" }}
+            >
+              Отредактируйте
+            </Button>
+          </Box>
         )}
-        {access_level === 3 && isEditing && (
+        {isEditing && (
           <Button
             variant="contained"
             color="success"
             onClick={handleConfirmChanges}
+            sx={{ width: "auto" }}
           >
             Подтвердить
           </Button>

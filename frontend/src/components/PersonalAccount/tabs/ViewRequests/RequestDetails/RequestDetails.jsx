@@ -123,7 +123,7 @@ export default function RequestDetails({
       socket.off("requestUpdated", handleRequestUpdate);
       socket.off("connect_error", handleConnectError);
     };
-  }, []);
+  }, [item.id]);
 
   function addToItem(data) {
     if (data.status === 1) {

@@ -13,7 +13,7 @@ const port = 8080;
 const server = http.createServer(app);
 const io = new Server(server, {
   path: "/api/socket.io",
-  transports: ["websocket"],
+  transports: ["polling", "websocket"],
   cors: {
     origin: [
       "https://ads-line.pro",
@@ -22,6 +22,8 @@ const io = new Server(server, {
       "http://185.46.10.111",
       "http://frontend:3000",
     ],
+    pingInterval: 10000,
+    pingTimeout: 5000,
     methods: ["GET", "POST", "PUT", "DELETE", "HEAD", "PATCH"],
     credentials: true,
   },

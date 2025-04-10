@@ -63,7 +63,7 @@ export default function Materials({
     getActualGoodsAndServices();
     const intervalId = setInterval(() => {
       getActualGoodsAndServices();
-    }, 120000);
+    }, 60000);
     return () => clearInterval(intervalId);
   }, [requestID, worker_region]);
 
