@@ -143,6 +143,16 @@ router.delete(
   checkCookie,
   DataController.handleDeleteRow
 );
+router.delete(
+  `/deleteRequestService/:requestID/:service_id`,
+  checkCookie,
+  DataController.handleDeleteService
+);
+router.delete(
+  `/deleteRequestGood/:requestID/:good_id`,
+  checkCookie,
+  DataController.handleDeleteGood
+);
 
 router.put("/off_esp", checkCookie, DataController.off_esp);
 router.put("/updateUser", checkCookie, DataController.updateUser);

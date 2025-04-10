@@ -22,9 +22,10 @@ import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
 import { IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import DataBaseColums from "./DataBaseColums/DataBaseColums";
 import SearchWorker from "./additionalComponents/SearchWorker/SearchWorker";
 import Materials from "./additionalComponents/Materials/Materials";
+import OnWay from "./additionalComponents/OnWay/OnWay";
+import WorkInProgress from "./additionalComponents/WorkInProgress/WorkInProgress";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -91,6 +92,10 @@ export default function RequestDetails({
   useEffect(() => {
     const requestId = item.id;
 
+    if (socket.connected) {
+      setSocketLoading(false);
+    }
+
     const handleConnect = () => {
       setSocketLoading(false);
       socket.emit("joinRequest", requestId, (response) => {
@@ -110,7 +115,10 @@ export default function RequestDetails({
       console.error("Контекст ошибки:", err.context);
     };
 
-    socket.connect();
+    if (!socket.connected) {
+      socket.connect();
+    }
+
     socket.on("connect", handleConnect);
     socket.on("requestUpdated", handleRequestUpdate);
     socket.on("connect_error", handleConnectError);
@@ -272,11 +280,9 @@ export default function RequestDetails({
         worker_region={fullItem?.worker_region}
       />
     ),
-    "В пути": (
-      <DataBaseColums requestID={fullItem?.id} access_level={access_level} />
-    ),
+    "В пути": <OnWay />,
     "Проводятся работы": (
-      <DataBaseColums requestID={fullItem?.id} access_level={access_level} />
+      <WorkInProgress requestID={fullItem?.id} access_level={access_level} />
     ),
     Завершенно: (
       // <CompletedWorks access_level={access_level} />

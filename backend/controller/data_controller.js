@@ -2208,11 +2208,19 @@ class DataController {
       return res.status(500).send({ message: error });
     }
   }
+
   async InsertGoodsServices(req, res) {
     const { requestID, services, goods } = req.body;
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+
+      await client.query("DELETE FROM request_services WHERE request_id = $1", [
+        requestID,
+      ]);
+      await client.query("DELETE FROM request_goods WHERE request_id = $1", [
+        requestID,
+      ]);
 
       if (services && services.length > 0) {
         for (let service of services) {
@@ -2233,15 +2241,38 @@ class DataController {
       }
 
       await client.query("COMMIT");
-      return res.status(200).json({ message: "Данные успешно сохранены." });
+      return res.status(200).json({ message: "Данные успешно обновлены." });
     } catch (error) {
       await client.query("ROLLBACK");
-      console.error("Ошибка при сохранении данных:", error);
       return res
         .status(500)
         .json({ message: "Ошибка сервера при сохранении данных." });
     } finally {
       client.release();
+    }
+  }
+  async handleDeleteService(req, res) {
+    try {
+      const { requestID, service_id } = req.params;
+      await pool.query(
+        "DELETE FROM request_services WHERE request_id = $1 AND service_id = $2",
+        [requestID, service_id]
+      );
+      res.status(200).json({ message: "Услуга успешно удалена" });
+    } catch (error) {
+      res.status(500).json({ message: "Ошибка сервера при удалении услуги" });
+    }
+  }
+  async handleDeleteGood(req, res) {
+    try {
+      const { requestID, good_id } = req.params;
+      await pool.query(
+        "DELETE FROM request_goods WHERE request_id = $1 AND good_id = $2",
+        [requestID, good_id]
+      );
+      res.status(200).json({ message: "Товар успешно удалена" });
+    } catch (error) {
+      res.status(500).json({ message: "Ошибка сервера при удалении услуги" });
     }
   }
 }

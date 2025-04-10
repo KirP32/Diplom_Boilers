@@ -12,6 +12,8 @@ import {
   Typography,
   TextField,
   Autocomplete,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import $api from "../../../../../../../http";
@@ -33,33 +35,26 @@ export default function Materials({
   const [pendingServices, setPendingServices] = useState([]);
   const [pendingGoods, setPendingGoods] = useState([]);
 
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
   useEffect(() => {
     $api
       .get(`/getServicePrices/${worker_username}`)
-      .then((result) => {
-        setServices(result.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+      .then((result) => setServices(result.data))
+      .catch((error) => console.error(error));
   }, [worker_username]);
 
   useEffect(() => {
     $api
       .get(`/getGoods`)
-      .then((result) => {
-        setGoods(result.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+      .then((result) => setGoods(result.data))
+      .catch((error) => console.error(error));
   }, []);
 
   async function getActualGoodsAndServices() {
     await $api
       .get(`/getActualGoodsAndServices/${requestID}/${worker_region}`)
       .then((result) => {
-        console.log(result.data);
         setActualGoodsAndServices({
           services: result.data?.services || [],
           goods: result.data?.goods || [],
@@ -70,17 +65,14 @@ export default function Materials({
 
   useEffect(() => {
     getActualGoodsAndServices();
-
     const intervalId = setInterval(() => {
       getActualGoodsAndServices();
     }, 120000);
-
     return () => clearInterval(intervalId);
-  }, [requestID]);
+  }, [requestID, worker_region]);
 
   const handleServiceSelect = (event, value) => {
-    if (access_level !== 3) return;
-    if (!value) return;
+    if (access_level !== 3 || !value) return;
     const alreadySelected =
       actualGoodsAndServices.services.some(
         (s) => s.service_id === value.service_id
@@ -91,8 +83,7 @@ export default function Materials({
   };
 
   const handleGoodsSelect = (event, value) => {
-    if (access_level !== 3) return;
-    if (!value) return;
+    if (access_level !== 3 || !value) return;
     const alreadySelected =
       actualGoodsAndServices.goods.some((g) => g.id === value.id) ||
       pendingGoods.some((g) => g.id === value.id);
@@ -109,6 +100,16 @@ export default function Materials({
 
   const handleRemoveGoods = (id) => {
     setPendingGoods((prev) => prev.filter((g) => g.id !== id));
+  };
+
+  const handleDeleteConfirmedService = async (service_id) => {
+    await $api.delete(`/deleteRequestService/${requestID}/${service_id}`);
+    getActualGoodsAndServices();
+  };
+
+  const handleDeleteConfirmedGoods = async (good_id) => {
+    await $api.delete(`/deleteRequestGood/${requestID}/${good_id}`);
+    getActualGoodsAndServices();
   };
 
   const unionServices = [
@@ -135,23 +136,28 @@ export default function Materials({
     };
     await $api
       .post("/InsertGoodsServices", data)
-      .then((result) => {
-        console.log("Сохранено!");
-        setPendingServices([]);
-        setPendingGoods([]);
+      .then(() => {
+        setSnackbarOpen(true);
       })
-      .catch((error) => console.log(error));
+      .catch(() => setSnackbarOpen(false));
   };
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box>
       <Typography variant="h5" align="center" gutterBottom>
         Выберите услуги и запчасти
       </Typography>
       <Grid container spacing={2}>
         {/* Блок услуг */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, minHeight: 300 }}>
+          <Paper
+            sx={{
+              p: 2,
+              height: "400px",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Typography variant="h6" gutterBottom>
               Услуги
             </Typography>
@@ -170,37 +176,73 @@ export default function Materials({
                 sx={{ mb: 2 }}
               />
             )}
-            <List>
-              {unionServices.map((service) => (
-                <ListItem
-                  key={service.service_id}
-                  secondaryAction={
-                    access_level === 3 &&
-                    pendingServices.some(
-                      (s) => s.service_id === service.service_id
-                    ) && (
-                      <IconButton
-                        edge="end"
-                        onClick={() => handleRemoveService(service.service_id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    )
-                  }
-                >
-                  <ListItemText
-                    primary={service.service_name}
-                    secondary={`Цена: ${service.price}, Коэффициент: ${service.coefficient}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
+            <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+              <List>
+                {unionServices.map((service) => {
+                  const isConfirmed = actualGoodsAndServices.services.some(
+                    (s) => s.service_id === service.service_id
+                  );
+                  const isPending = pendingServices.some(
+                    (s) => s.service_id === service.service_id
+                  );
+                  return (
+                    <ListItem
+                      key={service.service_id}
+                      secondaryAction={
+                        access_level === 3 && (
+                          <>
+                            {isConfirmed && (
+                              <IconButton
+                                edge="end"
+                                onClick={() =>
+                                  handleDeleteConfirmedService(
+                                    service.service_id
+                                  )
+                                }
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
+                            {isPending && (
+                              <IconButton
+                                edge="end"
+                                onClick={() =>
+                                  handleRemoveService(service.service_id)
+                                }
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
+                          </>
+                        )
+                      }
+                    >
+                      <ListItemText
+                        primary={service.service_name}
+                        secondary={
+                          access_level === 3
+                            ? `Цена: ${service.price}, Коэффициент: ${service.coefficient}`
+                            : `Цена: ${service.price}`
+                        }
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
+            </Box>
           </Paper>
         </Grid>
 
         {/* Блок запчастей */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, minHeight: 300 }}>
+          <Paper
+            sx={{
+              p: 2,
+              height: "400px",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Typography variant="h6" gutterBottom>
               Запчасти
             </Typography>
@@ -219,32 +261,54 @@ export default function Materials({
                 sx={{ mb: 2 }}
               />
             )}
-            <List>
-              {unionGoods.map((good) => (
-                <ListItem
-                  key={good.id}
-                  secondaryAction={
-                    access_level === 3 &&
-                    pendingGoods.some((g) => g.id === good.id) && (
-                      <IconButton
-                        edge="end"
-                        onClick={() => handleRemoveGoods(good.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    )
-                  }
-                >
-                  <ListItemText
-                    primary={good.name}
-                    secondary={`Артикул: ${good.article}, Цена: ${good.price}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
+            <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+              <List>
+                {unionGoods.map((good) => {
+                  const isConfirmed = actualGoodsAndServices.goods.some(
+                    (g) => g.id === good.id
+                  );
+                  const isPending = pendingGoods.some((g) => g.id === good.id);
+                  return (
+                    <ListItem
+                      key={good.id}
+                      secondaryAction={
+                        access_level === 3 && (
+                          <>
+                            {isConfirmed && (
+                              <IconButton
+                                edge="end"
+                                onClick={() =>
+                                  handleDeleteConfirmedGoods(good.id)
+                                }
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
+                            {isPending && (
+                              <IconButton
+                                edge="end"
+                                onClick={() => handleRemoveGoods(good.id)}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
+                          </>
+                        )
+                      }
+                    >
+                      <ListItemText
+                        primary={good.name}
+                        secondary={`Артикул: ${good.article}, Цена: ${good.price}`}
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
+            </Box>
           </Paper>
         </Grid>
       </Grid>
+
       {access_level === 3 && (
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Button variant="contained" color="success" onClick={handleConfirm}>
@@ -252,6 +316,23 @@ export default function Materials({
           </Button>
         </Box>
       )}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => {
+          setSnackbarOpen(false);
+        }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          severity={"success"}
+          onClose={() => {
+            setSnackbarOpen(false);
+          }}
+        >
+          {"Данные обновлены"}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
