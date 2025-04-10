@@ -58,7 +58,17 @@ router.get(
   DataController.getUserAccessLevel
 );
 router.get("/getWorkerInfo", checkCookie, DataController.getWorkerInfo);
-router.get("/getServicePrices", checkCookie, DataController.getServicePrices);
+router.get(
+  "/getServicePrices/:login",
+  checkCookie,
+  DataController.getServicePrices
+);
+router.get("/getGoods", checkCookie, DataController.getGoods);
+router.get(
+  "/getActualGoodsAndServices/:request_id/:worker_region",
+  checkCookie,
+  DataController.getActualGoodsAndServices
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
@@ -100,6 +110,12 @@ router.post(
   checkCookie,
   DataController.updateCoefficient
 );
+router.post(
+  "/InsertGoodsServices",
+  checkCookie,
+  DataController.InsertGoodsServices
+);
+
 router.delete(
   "/delete_device/:device_uid",
   checkCookie,

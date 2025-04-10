@@ -275,6 +275,7 @@ export default function RequestDetails({
         requestID={fullItem?.id}
         access_level={access_level}
         worker_username={fullItem?.worker_username}
+        worker_region={fullItem?.worker_region}
       />
     ),
     "В пути": (

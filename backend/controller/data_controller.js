@@ -1457,6 +1457,7 @@ class DataController {
           ur.*, 
           u.username AS worker_username,
           wd.phone_number AS worker_phone,
+          wd.region AS worker_region,
           w.username AS wattson_username,
           cd.phone_number AS wattson_phone,
           rc.user_confirmed,
@@ -1976,7 +1977,7 @@ class DataController {
   }
   async getServicePrices(req, res) {
     try {
-      const login = decodeJWT(req.cookies.refreshToken).login;
+      const { login } = req.params;
 
       const userResult = await pool.query(
         "SELECT id, region FROM worker_details WHERE username = $1",
@@ -2153,6 +2154,84 @@ class DataController {
       return res
         .status(500)
         .json({ error: "Ошибка при обновлении коэффициента" });
+    }
+  }
+  async getGoods(req, res) {
+    try {
+      const result = await pool.query("SELECT * from goods");
+      if (result.rowCount > 0) {
+        return res.send(result.rows);
+      }
+    } catch (error) {
+      return res.status(500).send({ message: error });
+    }
+  }
+  async getActualGoodsAndServices(req, res) {
+    try {
+      const { request_id, worker_region } = req.params;
+      const data_goods = await pool.query(
+        `SELECT g.id, g.article, g.name, g.price
+        FROM request_goods rg
+        JOIN goods g ON rg.good_id = g.id
+        WHERE rg.request_id = $1`,
+        [request_id]
+      );
+
+      const data_services = await pool.query(
+        `SELECT 
+            s.id AS service_id,
+            s.name AS service_name,
+            sp.price,
+            COALESCE(wsc.coefficient, 1) AS coefficient
+         FROM request_services rs
+         JOIN services s ON rs.service_id = s.id
+         JOIN service_prices sp ON s.id = sp.service_id
+         LEFT JOIN worker_service_coefficients wsc 
+           ON s.id = wsc.service_id AND wsc.worker_id = $1
+         WHERE rs.request_id = $2 AND sp.region = $3`,
+        [worker_id, request_id, worker_region]
+      );
+
+      return res.send({ goods: data_goods.rows, services: data_services.rows });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error });
+    }
+  }
+  async InsertGoodsServices(req, res) {
+    const { requestID, services, goods } = req.body;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      if (services && services.length > 0) {
+        for (let service of services) {
+          await client.query(
+            "INSERT INTO request_services (request_id, service_id) VALUES ($1, $2)",
+            [requestID, service.service_id]
+          );
+        }
+      }
+
+      if (goods && goods.length > 0) {
+        for (let good of goods) {
+          await client.query(
+            "INSERT INTO request_goods (request_id, good_id) VALUES ($1, $2)",
+            [requestID, good.id]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      return res.status(200).json({ message: "Данные успешно сохранены." });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Ошибка при сохранении данных:", error);
+      return res
+        .status(500)
+        .json({ message: "Ошибка сервера при сохранении данных." });
+    } finally {
+      client.release();
     }
   }
 }

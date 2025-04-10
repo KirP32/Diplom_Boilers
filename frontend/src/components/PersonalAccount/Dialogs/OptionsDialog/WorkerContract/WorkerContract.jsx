@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import $api from "../../../../../http";
 import region_data from "../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 import petrovich from "petrovich";
+import { jwtDecode } from "jwt-decode";
 
 Font.registerHyphenationCallback((word) => ["", word, ""]);
 const monthGenitive = {
@@ -40,10 +41,13 @@ export default function WorkerContract() {
   }
   const [data, setData] = useState();
   const [dataPrices, setDataPrices] = useState();
+  const token =
+    sessionStorage.getItem("accessToken") ||
+    localStorage.getItem("accessToken");
 
   useEffect(() => {
     $api
-      .get("/getWorkerInfo")
+      .get(`/getWorkerInfo`)
       .then((result) => {
         setData(result.data);
       })
@@ -54,7 +58,7 @@ export default function WorkerContract() {
 
   useEffect(() => {
     $api
-      .get("/getServicePrices")
+      .get(`/getServicePrices/${jwtDecode(token).login}`)
       .then((result) => {
         setDataPrices(result.data);
       })
