@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -59,6 +59,7 @@ export default function Materials({
     await $api
       .get(`/getActualGoodsAndServices/${requestID}/${worker_region}`)
       .then((result) => {
+        console.log(result.data);
         setActualGoodsAndServices({
           services: result.data?.services || [],
           goods: result.data?.goods || [],

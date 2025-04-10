@@ -64,6 +64,7 @@ router.get(
   DataController.getServicePrices
 );
 router.get("/getGoods", checkCookie, DataController.getGoods);
+
 router.get(
   "/getActualGoodsAndServices/:request_id/:worker_region",
   checkCookie,

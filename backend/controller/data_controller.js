@@ -1975,6 +1975,7 @@ class DataController {
       return res.status(500).send({ message: error });
     }
   }
+
   async getServicePrices(req, res) {
     try {
       const { login } = req.params;
@@ -2169,11 +2170,20 @@ class DataController {
   async getActualGoodsAndServices(req, res) {
     try {
       const { request_id, worker_region } = req.params;
+      const workerRes = await pool.query(
+        "select id from worker_details where username = (select username from users where id = (select assigned_to from user_requests where id = $1))",
+        [request_id]
+      );
+      if (workerRes.rowCount === 0) {
+        return res.status(404).send({ message: "Работник не найден" });
+      }
+      const worker_id = workerRes.rows[0].id;
+
       const data_goods = await pool.query(
         `SELECT g.id, g.article, g.name, g.price
-        FROM request_goods rg
-        JOIN goods g ON rg.good_id = g.id
-        WHERE rg.request_id = $1`,
+         FROM request_goods rg
+         JOIN goods g ON rg.good_id = g.id
+         WHERE rg.request_id = $1`,
         [request_id]
       );
 
@@ -2194,7 +2204,7 @@ class DataController {
 
       return res.send({ goods: data_goods.rows, services: data_services.rows });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return res.status(500).send({ message: error });
     }
   }

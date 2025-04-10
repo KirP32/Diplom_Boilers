@@ -254,12 +254,6 @@ export default function RequestDetails({
   const stepKey =
     data_type_1[fullItem?.status === 0 ? fullItem?.stage : itemStage];
 
-  const stageMapping = {
-    Материалы: "materials",
-    "В пути": "in_transit",
-    "Проводятся работы": "work_in_progress",
-  };
-
   const react_functional_components = {
     "Поиск специалиста": (
       <SearchWorker
