@@ -59,12 +59,8 @@ io.engine.on("connection_error", (err) => {
 
 io.on("connection", (socket) => {
   socket.on("joinRequest", (requestId, callback) => {
-    try {
-      socket.join(requestId);
-      callback({ status: "success" });
-    } catch (error) {
-      callback({ status: "error", message: error.message });
-    }
+    socket.join(requestId.toString());
+    callback({ status: "success" });
   });
 
   socket.on("nextStage", async (data, callback) => {
@@ -80,17 +76,13 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("leaveRequest", (requestId) => {
-    socket.leave(requestId);
-  });
-
-  socket.on("disconnect", () => {
+  socket.on("disconnecting", () => {
     socket.rooms.forEach((room) => {
-      if (room !== socket.id) {
-        socket.leave(room);
-      }
+      socket.leave(room);
     });
   });
+
+  socket.on("disconnect", () => {});
 });
 
 app.use("/", router);

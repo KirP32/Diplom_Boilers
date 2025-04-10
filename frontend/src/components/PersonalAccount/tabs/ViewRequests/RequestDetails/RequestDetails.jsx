@@ -22,6 +22,7 @@ import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
 import { IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import DataBaseColums from "./DataBaseColums/DataBaseColums";
 import SearchWorker from "./additionalComponents/SearchWorker/SearchWorker";
 import Materials from "./additionalComponents/Materials/Materials";
 import OnWay from "./additionalComponents/OnWay/OnWay";
@@ -92,10 +93,6 @@ export default function RequestDetails({
   useEffect(() => {
     const requestId = item.id;
 
-    if (socket.connected) {
-      setSocketLoading(false);
-    }
-
     const handleConnect = () => {
       setSocketLoading(false);
       socket.emit("joinRequest", requestId, (response) => {
@@ -115,10 +112,7 @@ export default function RequestDetails({
       console.error("Контекст ошибки:", err.context);
     };
 
-    if (!socket.connected) {
-      socket.connect();
-    }
-
+    socket.connect();
     socket.on("connect", handleConnect);
     socket.on("requestUpdated", handleRequestUpdate);
     socket.on("connect_error", handleConnectError);
@@ -129,7 +123,7 @@ export default function RequestDetails({
       socket.off("requestUpdated", handleRequestUpdate);
       socket.off("connect_error", handleConnectError);
     };
-  }, [item.id, setItem]);
+  }, []);
 
   function addToItem(data) {
     if (data.status === 1) {
@@ -223,6 +217,7 @@ export default function RequestDetails({
   }
 
   const closePanel = () => {
+    socket.emit("leaveRequest", item.id);
     socket.disconnect();
     setFullItem(null);
     setItem(null);
@@ -255,7 +250,6 @@ export default function RequestDetails({
 
   const isBackDisabled =
     fullItem?.stage === 0 || (anyConfirmed && fullItem?.action !== "prev");
-
   const isForwardDisabled = anyConfirmed && fullItem?.action !== "next";
 
   const isLastStage = data_type_1.length - 1 === fullItem?.stage;
@@ -282,7 +276,12 @@ export default function RequestDetails({
     ),
     "В пути": <OnWay />,
     "Проводятся работы": (
-      <WorkInProgress requestID={fullItem?.id} access_level={access_level} />
+      <WorkInProgress
+        requestID={fullItem?.id}
+        access_level={access_level}
+        worker_username={fullItem?.worker_username}
+        worker_region={fullItem?.worker_region}
+      />
     ),
     Завершенно: (
       // <CompletedWorks access_level={access_level} />

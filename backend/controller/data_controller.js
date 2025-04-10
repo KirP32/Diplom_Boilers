@@ -1553,6 +1553,10 @@ class DataController {
             `UPDATE user_requests_info SET worker_confirmed = FALSE WHERE request_id = $1`,
             [requestID]
           );
+          await pool.query(
+            `UPDATE request_confirmations SET worker_confirmed = FALSE WHERE request_id = $1`,
+            [requestID]
+          );
         } else if (access_level === 1) {
           await pool.query(
             `UPDATE user_requests SET region_assigned_to = NULL WHERE id = $1`,
@@ -1560,6 +1564,10 @@ class DataController {
           );
           await pool.query(
             `UPDATE user_requests_info SET wattson_confirmed = FALSE WHERE request_id = $1`,
+            [requestID]
+          );
+          await pool.query(
+            `UPDATE request_confirmations SET regional_confirmed = FALSE WHERE request_id = $1`,
             [requestID]
           );
         }

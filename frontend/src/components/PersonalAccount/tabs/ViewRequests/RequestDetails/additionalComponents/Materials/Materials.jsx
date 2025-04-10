@@ -12,8 +12,6 @@ import {
   Typography,
   TextField,
   Autocomplete,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import $api from "../../../../../../../http";
@@ -34,8 +32,6 @@ export default function Materials({
 
   const [pendingServices, setPendingServices] = useState([]);
   const [pendingGoods, setPendingGoods] = useState([]);
-
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     $api
@@ -136,10 +132,8 @@ export default function Materials({
     };
     await $api
       .post("/InsertGoodsServices", data)
-      .then(() => {
-        setSnackbarOpen(true);
-      })
-      .catch(() => setSnackbarOpen(false));
+      .then(() => {})
+      .catch(() => {});
   };
 
   return (
@@ -316,23 +310,6 @@ export default function Materials({
           </Button>
         </Box>
       )}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={4000}
-        onClose={() => {
-          setSnackbarOpen(false);
-        }}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          severity={"success"}
-          onClose={() => {
-            setSnackbarOpen(false);
-          }}
-        >
-          {"Данные обновлены"}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }
