@@ -1054,7 +1054,6 @@ class DataController {
            AND id != $3`,
         [workerId, system_name, requestId]
       );
-
       if (Number(activeRequests.rows[0].count) === 0) {
         await pool.query(
           `DELETE FROM user_systems 

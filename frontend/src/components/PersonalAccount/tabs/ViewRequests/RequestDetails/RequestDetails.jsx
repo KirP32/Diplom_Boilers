@@ -27,6 +27,7 @@ import SearchWorker from "./additionalComponents/SearchWorker/SearchWorker";
 import Materials from "./additionalComponents/Materials/Materials";
 import OnWay from "./additionalComponents/OnWay/OnWay";
 import WorkInProgress from "./additionalComponents/WorkInProgress/WorkInProgress";
+import Complete from "./additionalComponents/Complete/Complete";
 
 const data_type_1 = [
   "Поиск специалиста",
@@ -274,7 +275,7 @@ export default function RequestDetails({
         worker_region={fullItem?.worker_region}
       />
     ),
-    "В пути": <OnWay />,
+    "В пути": <OnWay access_level={access_level} />,
     "Проводятся работы": (
       <WorkInProgress
         requestID={fullItem?.id}
@@ -285,7 +286,10 @@ export default function RequestDetails({
     ),
     Завершенно: (
       // <CompletedWorks access_level={access_level} />
-      <>Завершенно</>
+      <Complete
+        requestID={fullItem?.id}
+        worker_region={fullItem?.worker_region}
+      />
     ),
   };
 

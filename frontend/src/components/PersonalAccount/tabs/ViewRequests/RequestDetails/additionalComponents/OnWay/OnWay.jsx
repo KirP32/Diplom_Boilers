@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 
-export default function OnWay() {
+export default function OnWay({ access_level }) {
   return (
     <Box
       display="flex"
@@ -15,12 +15,25 @@ export default function OnWay() {
       minHeight="200px"
     >
       <DirectionsCarIcon sx={{ fontSize: 48, color: "#1976d2" }} />
-      <Typography variant="h6" mt={2}>
-        Специалист в пути
-      </Typography>
-      <Typography variant="body2" color="text.secondary" mt={1}>
-        Ожидайте прибытия в ближайшее время.
-      </Typography>
+      {access_level === 1 ? (
+        <>
+          <Typography variant="h6" mt={2}>
+            Когда приедете на место, подтвердите выполнение этапа
+          </Typography>
+          <Typography variant="body2" color="text.secondary" mt={1}>
+            Система уведомит клиента о вашем прибытии
+          </Typography>
+        </>
+      ) : (
+        <>
+          <Typography variant="h6" mt={2}>
+            Специалист в пути
+          </Typography>
+          <Typography variant="body2" color="text.secondary" mt={1}>
+            Ожидайте прибытия в ближайшее время.
+          </Typography>
+        </>
+      )}
     </Box>
   );
 }

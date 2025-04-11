@@ -100,7 +100,17 @@ export default function PersonalAccount() {
           />
           <hr />
         </div>
-        <div className={styles.lk__wrapper__sidebar__devices}>
+        <div
+          className={styles.lk__wrapper__sidebar__devices}
+          style={{
+            maxHeight:
+              access_level === 3
+                ? "465px"
+                : access_level === 0
+                ? "600px"
+                : "604px",
+          }}
+        >
           {devicesArray && (
             <>
               {devicesArray
