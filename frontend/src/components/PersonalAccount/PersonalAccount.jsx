@@ -108,7 +108,7 @@ export default function PersonalAccount() {
                 ? "465px"
                 : access_level === 0
                 ? "600px"
-                : "604px",
+                : "700px",
           }}
         >
           <></>
