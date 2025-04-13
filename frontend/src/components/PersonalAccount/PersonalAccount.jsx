@@ -111,6 +111,7 @@ export default function PersonalAccount() {
                 : "604px",
           }}
         >
+          <></>
           <img></img>
           {devicesArray && (
             <>
