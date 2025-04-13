@@ -111,6 +111,7 @@ export default function PersonalAccount() {
                 : "604px",
           }}
         >
+          <img></img>
           {devicesArray && (
             <>
               {devicesArray
@@ -155,7 +156,6 @@ export default function PersonalAccount() {
             </>
           )}
         </div>
-
         <div className={styles.lk__wrapper__sidebar__options}>
           {access_level >= 1 && (
             <Button
