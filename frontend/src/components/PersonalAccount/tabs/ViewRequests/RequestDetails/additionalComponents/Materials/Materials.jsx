@@ -139,7 +139,7 @@ export default function Materials({
   return (
     <Box>
       <Typography variant="h5" align="center" gutterBottom>
-        Выберите услуги и запчасти
+        Услуги и запчасти
       </Typography>
       <Grid container spacing={2}>
         {/* Блок услуг */}
