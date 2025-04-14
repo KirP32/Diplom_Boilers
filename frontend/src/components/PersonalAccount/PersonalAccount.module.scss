@@ -57,6 +57,47 @@
                 }
             }
         }
+        &__devices {
+            display: flex;
+            gap: 20px;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: var(--backgorund-color-on-surface);
+            .devices_container {
+                position: relative;
+                isolation: isolate;
+                display: grid;
+                grid-template-columns: 19px 1fr 25px;
+                padding: 15px;
+                justify-content: center;
+                align-items: center;
+                border-radius: 20px;
+                background-color: antiquewhite;
+                cursor: pointer;
+
+                &::before {
+                    content: " ";
+                    position: absolute;
+                    z-index: -1;
+                    background: yellow;
+                    inset: 0;
+                    opacity: var(--state-layer-opacity, 0);
+                    border-radius: 20px;
+                }
+                &:hover {
+                    --state-layer-opacity: 0.35;
+                }
+                .device__text {
+                    font-size: 17px;
+                    text-align: center;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    max-width: 100%;
+                    overflow: hidden;
+                }
+            }
+        }
     }
     &__main {
         &__content {
@@ -87,48 +128,6 @@
             display: grid;
             grid-template-rows: 170px 1fr 170px;
             grid-template-areas: "header" "main" "footer";
-        }
-    }
-}
-
-.lk__wrapper__sidebar__devices {
-    display: flex;
-    gap: 20px;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: 15px;
-    background-color: var(--backgorund-color-on-surface);
-    .devices_container {
-        position: relative;
-        isolation: isolate;
-        display: grid;
-        grid-template-columns: 19px 1fr 25px;
-        padding: 15px;
-        justify-content: center;
-        align-items: center;
-        border-radius: 20px;
-        background-color: antiquewhite;
-        cursor: pointer;
-
-        &::before {
-            content: " ";
-            position: absolute;
-            z-index: -1;
-            background: yellow;
-            inset: 0;
-            opacity: var(--state-layer-opacity, 0);
-            border-radius: 20px;
-        }
-        &:hover {
-            --state-layer-opacity: 0.35;
-        }
-        .device__text {
-            font-size: 17px;
-            text-align: center;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            max-width: 100%;
-            overflow: hidden;
         }
     }
 }
