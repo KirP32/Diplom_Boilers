@@ -8,9 +8,23 @@ const ContractGuard = ({ children }) => {
     sessionStorage.getItem("accessToken") ||
     localStorage.getItem("accessToken") ||
     "";
-  if (token !== "" && jwtDecode(token).access_level === 1) {
-    return children;
+
+  if (token !== "") {
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      if (
+        decoded.exp &&
+        decoded.exp > currentTime &&
+        decoded.access_level === 1
+      ) {
+        return children;
+      }
+    } catch (error) {
+      console.error("Ошибка при декодировании токена", error);
+    }
   }
+
   return <Navigate to={"/"} />;
 };
 
