@@ -224,9 +224,9 @@ export default function RequestDetails({
   };
 
   const confirmations = [
-    ...(!fullItem?.created_by_worker
-      ? [{ name: "Пользователь", confirmed: fullItem?.user_confirmed }]
-      : []),
+    // ...(!fullItem?.created_by_worker
+    //   ? [{ name: "Пользователь", confirmed: fullItem?.user_confirmed }]
+    //   : []),
     {
       name: "АСЦ",
       confirmed: fullItem?.worker_confirmed,
@@ -234,13 +234,13 @@ export default function RequestDetails({
         ? { username: fullItem.worker_username, phone: fullItem.worker_phone }
         : null,
     },
-    {
-      name: "WATTSON",
-      confirmed: fullItem?.regional_confirmed,
-      info: fullItem
-        ? { username: fullItem.wattson_username, phone: fullItem.wattson_phone }
-        : null,
-    },
+    // {
+    //   name: "WATTSON",
+    //   confirmed: fullItem?.regional_confirmed,
+    //   info: fullItem
+    //     ? { username: fullItem.wattson_username, phone: fullItem.wattson_phone }
+    //     : null,
+    // },
     { name: "GEFFEN", confirmed: fullItem?.service_engineer_confirmed },
   ];
 
