@@ -293,16 +293,29 @@ export default function OptionsDialog({ open, user, setOptions }) {
           count: 1,
         },
       });
-      setUserData({
-        ...userData,
-        company_name: result.data.suggestions[0].value,
-        position: result.data.suggestions[0].data.management.post,
-        full_name: result.data.suggestions[0].data.management.name,
-        legal_address:
-          result.data.suggestions[0].data.address.unrestricted_value,
-        inn: result.data.suggestions[0].data.inn,
-        kpp: result.data.suggestions[0].data.kpp,
-      });
+      if (result.data.suggestions[0].data.type === "INDIVIDUAL") {
+        setUserData({
+          ...userData,
+          company_name: result.data.suggestions[0].value,
+          position: result.data.suggestions[0].data.opf.full,
+          full_name: result.data.suggestions[0].data.name.full,
+          legal_address:
+            result.data.suggestions[0].data.address.unrestricted_value,
+          inn: result.data.suggestions[0].data.inn,
+          kpp: "",
+        });
+      } else {
+        setUserData({
+          ...userData,
+          company_name: result.data.suggestions[0].value,
+          position: result.data.suggestions[0].data.management.post,
+          full_name: result.data.suggestions[0].data.management.name,
+          legal_address:
+            result.data.suggestions[0].data.address.unrestricted_value,
+          inn: result.data.suggestions[0].data.inn,
+          kpp: result.data.suggestions[0].data.kpp,
+        });
+      }
     } catch (error) {
       console.log(error.response ? error.response.data : error);
     }
