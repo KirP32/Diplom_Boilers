@@ -22,7 +22,6 @@ import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
 import { IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import DataBaseColums from "./DataBaseColums/DataBaseColums";
 import SearchWorker from "./additionalComponents/SearchWorker/SearchWorker";
 import Materials from "./additionalComponents/Materials/Materials";
 import OnWay from "./additionalComponents/OnWay/OnWay";
@@ -532,7 +531,7 @@ export default function RequestDetails({
                                 ? `${conf.info.username} (${
                                     conf.info.phone
                                       ? conf.info.phone
-                                      : "телефон не известен"
+                                      : "Телефон неизвестен"
                                   })`
                                 : "Нет информации"
                             }

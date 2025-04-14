@@ -68,7 +68,7 @@ export default function Complete({ requestID, worker_region }) {
             <ListItem key={service.service_id} disableGutters>
               <ListItemText
                 primary={service.service_name}
-                secondary={`Цена: ${service.price}`}
+                secondary={`Цена: ${service.price * service.coefficient}`}
               />
             </ListItem>
           ))}

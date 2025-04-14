@@ -48,15 +48,22 @@ export default function Materials({
   }, []);
 
   async function getActualGoodsAndServices() {
-    await $api
-      .get(`/getActualGoodsAndServices/${requestID}/${worker_region}`)
-      .then((result) => {
-        setActualGoodsAndServices({
-          services: result.data?.services || [],
-          goods: result.data?.goods || [],
-        });
-      })
-      .catch((error) => console.log(error));
+    if (worker_region !== null) {
+      await $api
+        .get(`/getActualGoodsAndServices/${requestID}/${worker_region}`)
+        .then((result) => {
+          setActualGoodsAndServices({
+            services: result.data?.services || [],
+            goods: result.data?.goods || [],
+          });
+        })
+        .catch((error) => console.log(error));
+    } else {
+      setActualGoodsAndServices({
+        services: [],
+        goods: [],
+      });
+    }
   }
 
   useEffect(() => {
@@ -167,6 +174,7 @@ export default function Materials({
                     variant="outlined"
                   />
                 )}
+                noOptionsText="Нет услуг"
                 sx={{ mb: 2 }}
               />
             )}
@@ -215,8 +223,10 @@ export default function Materials({
                         primary={service.service_name}
                         secondary={
                           access_level === 3
-                            ? `Цена: ${service.price}, Коэффициент: ${service.coefficient}`
-                            : `Цена: ${service.price}`
+                            ? `Цена: ${
+                                service.price * service.coefficient
+                              }, Коэффициент: ${service.coefficient}`
+                            : `Цена: ${service.price * service.coefficient}`
                         }
                       />
                     </ListItem>
@@ -252,6 +262,7 @@ export default function Materials({
                     variant="outlined"
                   />
                 )}
+                noOptionsText="Нет запчастей"
                 sx={{ mb: 2 }}
               />
             )}
