@@ -32,13 +32,12 @@ import region_data from "../../../WorkerPanel/DataBaseUsers/russian_regions_code
 import { LoadingSpinner } from "../../../LoadingSpinner/LoadingSpinner";
 import axios from "axios";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
-import { red } from "@mui/material/colors";
 const token = "98be28db4ed79229bc269503c6a4d868e628b318";
 const requiredFields = [
   "company_name",
   "email",
   "contract_number",
-  "",
+  "id",
   "position",
   "full_name",
   "region",
@@ -69,8 +68,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [workerData, setWorkerData] = useState(null);
   const [servicePrices, setServicePrices] = useState(null);
   const [pdfUrl, setPdfUrl] = useState(null);
-  const [agreed, setAgreed] = useState(false);
-
+  const [agreed, setAgreed] = useState(userData?.profile_status !== 0);
   const isMobile =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
@@ -186,9 +184,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
             editedValue.length > 12 ||
             /^[+]?[0-9]*$/.test(editedValue) === false)
         ) {
-          console.log("phone_number");
-          console.log(editedValue);
-          console.log(key);
           setErrorMessage(
             "Неправильный номер телефона: (прим. 89001112233 или +79001112233)"
           );
@@ -222,16 +217,19 @@ export default function OptionsDialog({ open, user, setOptions }) {
     options: region_data,
     getOptionLabel: (option) => option.name,
   };
+
   async function handleDownloadClick() {
     if (isMobile || canTouch) {
       const workerRes = await $api.get("/getWorkerInfo");
       const pricesRes = await $api.get("/getServicePrices");
       setWorkerData(workerRes.data);
       setServicePrices(pricesRes.data);
-    } else if (can_download) {
+    } else if (can_download && userData?.profile_status === 3) {
       window.open("/work_contract", "_blank");
     } else {
-      setErrorMessage("Заполните данные профиля");
+      setErrorMessage(
+        can_download ? "Профиль на проверке" : "Заполните данные профиля"
+      );
       setSnackbarOpen(true);
     }
   }
@@ -328,13 +326,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
       console.log(error.response ? error.response.data : error);
     }
   }
-
   const handleConfirmData = async () => {
     try {
-      await $api.post("/WorkerConfirmedData", userData);
+      const data = { ...userData, profile_status: 1, access_level };
+      await $api.post("/WorkerConfirmedData", data);
       setErrorMessage("");
       setSnackbarOpen(true);
       setSuccess_updated(true);
+      setUserData((prev) => ({
+        ...prev,
+        profile_status: 1,
+      }));
     } catch (error) {
       setSuccess_updated(false);
       setErrorMessage("Ошибка подтверждения данных");
@@ -369,12 +371,68 @@ export default function OptionsDialog({ open, user, setOptions }) {
       console.log(error);
     }
   };
+  const baseFields = ["full_name", "legal_address"];
+  let filledCount = 0;
+
+  if (userData?.access_level === 1) {
+    filledCount = requiredFields.filter((field) => {
+      const value = userData?.[field];
+      return (
+        value !== null && value !== undefined && value.toString().trim() !== ""
+      );
+    }).length;
+  } else {
+    filledCount = baseFields.filter((field) => {
+      const value = userData?.[field];
+      return (
+        value !== null && value !== undefined && value.toString().trim() !== ""
+      );
+    }).length;
+  }
+
+  const totalRequired =
+    userData?.access_level === 1 ? requiredFields.length : baseFields.length;
+
+  const complete_status =
+    filledCount === 0
+      ? "none"
+      : filledCount === totalRequired
+      ? "all"
+      : "partial";
 
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}
       >
+        {
+          <Typography
+            variant="body1"
+            sx={{
+              color:
+                userData?.profile_status === 2
+                  ? "green"
+                  : userData?.profile_status === 1
+                  ? "blue"
+                  : complete_status === "none"
+                  ? "red"
+                  : complete_status === "all"
+                  ? "green"
+                  : "orange",
+              fontWeight: 500,
+            }}
+          >
+            {userData?.profile_status === 2
+              ? "Профиль подтверждён"
+              : userData?.profile_status === 1
+              ? "Профиль проверяется"
+              : complete_status === "none"
+              ? "Профиль не заполнен"
+              : complete_status === "all"
+              ? "Профиль полностью заполнен"
+              : "Профиль заполнен частично"}
+          </Typography>
+        }
         <span
           style={{
             gridColumn: 2,
@@ -436,15 +494,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.email || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("email");
-                          setEditedValue(userData.email);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("email");
+                            setEditedValue(userData.email);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -481,15 +541,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.phone_number || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("phone_number");
-                          setEditedValue(userData.phone_number);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("phone_number");
+                            setEditedValue(userData.phone_number);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -548,15 +610,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.inn || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("inn");
-                          setEditedValue(userData.inn);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("inn");
+                            setEditedValue(userData.inn);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -597,15 +661,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.company_name || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("company_name");
-                          setEditedValue(userData.company_name);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("company_name");
+                            setEditedValue(userData.company_name);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -677,17 +743,19 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.full_name || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          const [surname, name, patronymic] =
-                            userData.full_name?.split(" ") || ["", "", ""];
-                          setEditingField("full_name");
-                          setEditedValue({ surname, name, patronymic });
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            const [surname, name, patronymic] =
+                              userData.full_name?.split(" ") || ["", "", ""];
+                            setEditingField("full_name");
+                            setEditedValue({ surname, name, patronymic });
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -726,15 +794,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.position || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("position");
-                          setEditedValue(userData.position);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("position");
+                            setEditedValue(userData.position);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -784,15 +854,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.legal_address || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("legal_address");
-                          setEditedValue(userData.legal_address);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("legal_address");
+                            setEditedValue(userData.legal_address);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -816,15 +888,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     <Typography variant="body1">
                       {userData.kpp || "—"}
                     </Typography>
-                    <IconButton
-                      onClick={() => {
-                        setEditingField("kpp");
-                        setEditedValue(userData.kpp);
-                      }}
-                      size="small"
-                    >
-                      <EditIcon />
-                    </IconButton>
+                    {userData.profile_status === 0 && (
+                      <IconButton
+                        onClick={() => {
+                          setEditingField("kpp");
+                          setEditedValue(userData.kpp);
+                        }}
+                        size="small"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    )}
                   </div>
                   <Divider sx={{ my: 1 }} />
                 </Box>
@@ -881,15 +955,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.bic || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("bic");
-                          setEditedValue(userData.bic);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("bic");
+                            setEditedValue(userData.bic);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -928,15 +1004,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.bank_name || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("bank_name");
-                          setEditedValue(userData.bank_name);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("bank_name");
+                            setEditedValue(userData.bank_name);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -979,15 +1057,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.correspondent_account || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("correspondent_account");
-                          setEditedValue(userData.correspondent_account);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("correspondent_account");
+                            setEditedValue(userData.correspondent_account);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -1028,15 +1108,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.current_account || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("current_account");
-                          setEditedValue(userData.current_account);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("current_account");
+                            setEditedValue(userData.current_account);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -1108,17 +1190,23 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.contact_person || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          const [surname, name, patronymic] =
-                            userData.contact_person?.split(" ") || ["", "", ""];
-                          setEditingField("contact_person");
-                          setEditedValue({ surname, name, patronymic });
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            const [surname, name, patronymic] =
+                              userData.contact_person?.split(" ") || [
+                                "",
+                                "",
+                                "",
+                              ];
+                            setEditingField("contact_person");
+                            setEditedValue({ surname, name, patronymic });
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -1162,12 +1250,14 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.auth_doct_type || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => setEditingField("auth_doct_type")}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => setEditingField("auth_doct_type")}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -1214,15 +1304,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                           (r) => r.code === Number(userData.region)
                         )?.name || userData.region}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("region");
-                          setEditedValue(userData.region);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("region");
+                            setEditedValue(userData.region);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -1263,26 +1355,24 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.contract_number || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("contract_number");
-                          setEditedValue(userData.contract_number);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("contract_number");
+                            setEditedValue(userData.contract_number);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
                 {/* Доступы */}
                 <Box mb={2}>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    component="div"
-                  >
+                  <Typography variant="body2" color="inherit" component="div">
                     <strong>
                       18. Доступ к котлам МВ 3.1 мощностью 127-301 кВт:
                     </strong>
@@ -1295,11 +1385,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   <Divider sx={{ my: 1 }} />
                 </Box>
                 <Box mb={2}>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    component="div"
-                  >
+                  <Typography variant="body2" color="inherit" component="div">
                     <strong>
                       19. Доступ к котлам МВ 3.1 мощностью 400-2000 кВт:
                     </strong>
@@ -1312,11 +1398,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   <Divider sx={{ my: 1 }} />
                 </Box>
                 <Box mb={2}>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    component="div"
-                  >
+                  <Typography variant="body2" color="black" component="div">
                     <strong>
                       20. Доступ к котлам МВ 4.1 мощностью 40-99 кВт
                     </strong>
@@ -1327,18 +1409,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       : "Нет доступа"}
                   </Typography>
                   <Divider sx={{ my: 1 }} />
-                </Box>
-                <Box>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={agreed}
-                        onChange={(e) => setAgreed(e.target.checked)}
-                        color="primary"
-                      />
-                    }
-                    label="Согласие на обработку персональных данных"
-                  />
                 </Box>
               </>
             ) : access_level === 0 || access_level === 2 ? (
@@ -1409,17 +1479,19 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.full_name || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          const [surname, name, patronymic] =
-                            userData.full_name?.split(" ") || ["", "", ""];
-                          setEditingField("full_name");
-                          setEditedValue({ surname, name, patronymic });
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            const [surname, name, patronymic] =
+                              userData.full_name?.split(" ") || ["", "", ""];
+                            setEditingField("full_name");
+                            setEditedValue({ surname, name, patronymic });
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -1468,15 +1540,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.legal_address || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("legal_address");
-                          setEditedValue(userData.legal_address);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("legal_address");
+                            setEditedValue(userData.legal_address);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -1549,17 +1623,19 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.full_name || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          const [surname, name, patronymic] =
-                            userData.full_name?.split(" ") || ["", "", ""];
-                          setEditingField("full_name");
-                          setEditedValue({ surname, name, patronymic });
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            const [surname, name, patronymic] =
+                              userData.full_name?.split(" ") || ["", "", ""];
+                            setEditingField("full_name");
+                            setEditedValue({ surname, name, patronymic });
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -1608,15 +1684,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       <Typography variant="body1">
                         {userData.legal_address || "—"}
                       </Typography>
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("legal_address");
-                          setEditedValue(userData.legal_address);
-                        }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("legal_address");
+                            setEditedValue(userData.legal_address);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />
@@ -1629,19 +1707,43 @@ export default function OptionsDialog({ open, user, setOptions }) {
         )}
       </DialogContent>
 
-      <DialogActions>
-        <Button
-          onClick={() => handleConfirmData()}
-          color="success"
-          variant="contained"
-          disabled={editingField || !agreed || !can_download ? true : false}
-        >
-          Подтвердить данные
-        </Button>
-        <Button onClick={() => onFinish()} color="info" variant="contained">
-          Закрыть
-        </Button>
+      <DialogActions sx={{ justifyContent: "space-between" }}>
+        <Box>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                color="primary"
+                disabled={userData?.profile_status !== 0}
+              />
+            }
+            label="Согласие на обработку персональных данных"
+          />
+        </Box>
+
+        <Box display="flex" gap={3}>
+          <Button
+            onClick={() => handleConfirmData()}
+            color="success"
+            variant="contained"
+            disabled={
+              userData?.profile_status === 1 ||
+              editingField ||
+              !agreed ||
+              !can_download
+                ? true
+                : false
+            }
+          >
+            Подтвердить данные
+          </Button>
+          <Button onClick={() => onFinish()} color="info" variant="contained">
+            Закрыть
+          </Button>
+        </Box>
       </DialogActions>
+
       {(isMobile || canTouch) && workerData && servicePrices && (
         <div style={{ display: "none" }}>
           <PDFDownloadLink

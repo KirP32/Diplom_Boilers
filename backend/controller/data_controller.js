@@ -1784,12 +1784,42 @@ class DataController {
           service_access_3_1_127_301,
           service_access_4_1,
           service_access_3_1_400_2000,
+          legal_address,
+          inn,
+          kpp,
+          current_account,
+          bank_name,
+          correspondent_account,
+          bic,
+          contact_person,
+          auth_doct_type,
+          ogrn,
+          profile_status,
         } = req.body;
 
         await pool.query(
           `UPDATE worker_details 
-           SET region = $1, company_name = $2, position = $3, full_name = $4, contract_number = $5, phone_number = $6, service_access_3_1_127_301 = $7, service_access_4_1 = $8, service_access_3_1_400_2000 = $9
-           WHERE id = $10`,
+           SET region = $1,
+               company_name = $2,
+               position = $3,
+               full_name = $4,
+               contract_number = $5,
+               phone_number = $6,
+               service_access_3_1_127_301 = $7,
+               service_access_4_1 = $8,
+               service_access_3_1_400_2000 = $9,
+               legal_address = $10,
+               inn = $11,
+               kpp = $12,
+               current_account = $13,
+               bank_name = $14,
+               correspondent_account = $15,
+               bic = $16,
+               contact_person = $17,
+               auth_doct_type = $18,
+               ogrn = $19,
+               profile_status = $20
+           WHERE id = $21`,
           [
             region,
             company_name,
@@ -1800,6 +1830,17 @@ class DataController {
             service_access_3_1_127_301,
             service_access_4_1,
             service_access_3_1_400_2000,
+            legal_address,
+            inn,
+            kpp,
+            current_account,
+            bank_name,
+            correspondent_account,
+            bic,
+            contact_person,
+            auth_doct_type,
+            ogrn,
+            profile_status,
             id,
           ]
         );
@@ -2108,32 +2149,80 @@ class DataController {
         bank_name,
         bic,
         ogrn,
+        profile_status,
+        access_level,
       } = req.body;
-      const result = await pool.query(
-        "UPDATE worker_details SET kpp = $1, inn = $2, company_name = $3, position = $4, full_name = $5, legal_address = $6, correspondent_account = $8, bank_name = $9, bic = $10, ogrn = $11 WHERE id = $7",
-        [
-          kpp,
-          inn,
-          company_name,
-          position,
-          full_name,
-          legal_address,
-          id,
-          correspondent_account,
-          bank_name,
-          bic,
-          ogrn,
-        ]
-      );
+
+      if (!id) {
+        return res
+          .status(400)
+          .json({ message: "Отсутствует идентификатор пользователя" });
+      }
+
+      let result;
+
+      switch (access_level) {
+        case 1:
+          result = await pool.query(
+            `UPDATE worker_details 
+             SET kpp = $1, inn = $2, company_name = $3, position = $4, full_name = $5, legal_address = $6,
+                 correspondent_account = $7, bank_name = $8, bic = $9, ogrn = $10, profile_status = $11 
+             WHERE id = $12`,
+            [
+              kpp,
+              inn,
+              company_name,
+              position,
+              full_name,
+              legal_address,
+              correspondent_account,
+              bank_name,
+              bic,
+              ogrn,
+              profile_status,
+              id,
+            ]
+          );
+          break;
+
+        case 0:
+          result = await pool.query(
+            "UPDATE user_details SET profile_status = $1 WHERE id = $2",
+            [profile_status, id]
+          );
+          break;
+
+        case 2:
+          result = await pool.query(
+            "UPDATE cgs_details SET profile_status = $1 WHERE id = $2",
+            [profile_status, id]
+          );
+          break;
+
+        case 3:
+          result = await pool.query(
+            "UPDATE gef_details SET profile_status = $1 WHERE id = $2",
+            [profile_status, id]
+          );
+          break;
+
+        default:
+          return res
+            .status(400)
+            .json({ message: "Некорректный уровень доступа" });
+      }
+
       if (result.rowCount > 0) {
-        return res.send("OK");
+        return res.json({ message: "OK" });
       } else {
-        return res.sendStatus(400);
+        return res.status(400).json({ message: "Обновление не выполнено" });
       }
     } catch (error) {
-      return res.send({ message: error });
+      console.error("Ошибка при обновлении данных:", error);
+      return res.status(500).json({ message: error.message || error });
     }
   }
+
   async updateCoefficient(req, res) {
     try {
       const { service_id, worker_id, coefficient } = req.body;

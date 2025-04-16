@@ -579,6 +579,12 @@ export default function DataBaseUsers() {
       (record) => record.region === selectedWorker.region
     );
   }, [selectedWorker, columnsData]);
+
+  const profileStatusOptions = [
+    { value: 0, label: "Не подтверждён" },
+    { value: 1, label: "На проверке" },
+    { value: 2, label: "Подтверждён" },
+  ];
   return (
     <div className={styles.data_table__wrapper} style={{ overflowY: "auto" }}>
       <div
@@ -1096,6 +1102,38 @@ export default function DataBaseUsers() {
                                         }))
                                       }
                                     />
+                                  ) : colKey === "profile_status" ? (
+                                    <Autocomplete
+                                      options={profileStatusOptions}
+                                      getOptionLabel={(option) => option.label}
+                                      value={
+                                        profileStatusOptions.find(
+                                          (opt) =>
+                                            opt.value ===
+                                            Number(
+                                              editedRowData?.[colKey] ??
+                                                row[colKey]
+                                            )
+                                        ) || null
+                                      }
+                                      onChange={(event, newValue) =>
+                                        setEditedRowData((prev) => ({
+                                          ...prev,
+                                          [colKey]: newValue
+                                            ? newValue.value
+                                            : "",
+                                        }))
+                                      }
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          size="medium"
+                                          variant="outlined"
+                                          label="Статус профиля"
+                                          sx={{ minWidth: 150 }}
+                                        />
+                                      )}
+                                    />
                                   ) : (
                                     <TextField
                                       value={
@@ -1130,6 +1168,10 @@ export default function DataBaseUsers() {
                                       sx={{ minWidth: 150 }}
                                     />
                                   )
+                                ) : colKey === "profile_status" ? (
+                                  profileStatusOptions.find(
+                                    (opt) => Number(row[colKey]) === opt.value
+                                  )?.label || row[colKey]
                                 ) : colKey === "region" ? (
                                   regionOptions.find(
                                     (opt) => opt.code === Number(row[colKey])
