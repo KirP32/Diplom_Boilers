@@ -17,6 +17,8 @@ import {
   Select,
   MenuItem,
   FormControl,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import { MyDocument } from "./WorkerContract/WorkerContract";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -34,6 +36,9 @@ import { red } from "@mui/material/colors";
 const token = "98be28db4ed79229bc269503c6a4d868e628b318";
 const requiredFields = [
   "company_name",
+  "email",
+  "contract_number",
+  "",
   "position",
   "full_name",
   "region",
@@ -45,6 +50,7 @@ const requiredFields = [
   "bank_name",
   "current_account",
   "contact_person",
+  "auth_doct_type",
   "phone_number",
 ];
 
@@ -63,6 +69,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const [workerData, setWorkerData] = useState(null);
   const [servicePrices, setServicePrices] = useState(null);
   const [pdfUrl, setPdfUrl] = useState(null);
+  const [agreed, setAgreed] = useState(false);
 
   const isMobile =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -303,6 +310,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
             result.data.suggestions[0].data.address.unrestricted_value,
           inn: result.data.suggestions[0].data.inn,
           kpp: "",
+          ogrn: result.data.suggestions[0].data.ogrn,
         });
       } else {
         setUserData({
@@ -361,6 +369,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
       console.log(error);
     }
   };
+
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -399,8 +408,14 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.email && userData.email.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Ваша почта:</strong>
+                    <strong>1. Ваша почта:</strong>
                   </Typography>
                   {editingField === "email" ? (
                     <Box display="flex" gap={1}>
@@ -434,15 +449,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* phone_number*/}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color: userData.phone_number ? "inherit" : "error.main",
+                    }}
                   >
-                    <strong>Номер телефона:</strong>
+                    <strong>2. Номер телефона:</strong>
                   </Typography>
                   {editingField === "phone_number" ? (
                     <Box display="flex" gap={1}>
@@ -477,12 +494,31 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* inn */}
-
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box display="flex" alignItems="center">
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    component="div"
+                    sx={{
+                      color:
+                        userData.inn && userData.inn.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
+                  >
+                    <strong>3. </strong>
+                  </Typography>
                   <PriorityHighIcon sx={{ color: "red" }} />
-                  <Typography variant="h6">
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color:
+                        userData.inn && userData.inn.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
+                  >
                     Введите ИНН вашей компании, постараемся заполнить данные за
                     вас:
                   </Typography>
@@ -525,15 +561,21 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* company_name */}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.company_name &&
+                        userData.company_name.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Название организации:</strong>
+                    <strong>4. Название организации:</strong>
                   </Typography>
                   {editingField === "company_name" ? (
                     <Box display="flex" gap={1}>
@@ -568,7 +610,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* Поля с ФИО */}
                 {/* full_name */}
                 <Box mb={2}>
@@ -576,8 +617,14 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.full_name && userData.full_name.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>ФИО подписанта:</strong>
+                    <strong>5. ФИО подписанта:</strong>
                   </Typography>
                   {editingField === "full_name" ? (
                     <Box display="flex" gap={1}>
@@ -645,15 +692,20 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* position */}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.position && userData.position.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Должность подписанта:</strong>
+                    <strong>6. Должность подписанта:</strong>
                   </Typography>
                   {editingField === "position" ? (
                     <Box display="flex" gap={1}>
@@ -687,15 +739,21 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* legal_address */}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.legal_address &&
+                        userData.legal_address.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Юридический адрес:</strong>
+                    <strong>7. Юридический адрес:</strong>
                   </Typography>
                   {editingField === "legal_address" ? (
                     <Autocomplete
@@ -745,8 +803,14 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.kpp && userData.kpp.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>КПП организации:</strong>
+                    <strong>8. КПП организации:</strong>
                   </Typography>
                   <div style={{ display: "flex" }}>
                     <Typography variant="body1">
@@ -765,10 +829,30 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   <Divider sx={{ my: 1 }} />
                 </Box>
                 {/* bic */}
-
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box display="flex" alignItems="center">
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    component="div"
+                    sx={{
+                      color:
+                        userData.bic && userData.bic.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
+                  >
+                    <strong>10. </strong>
+                  </Typography>
                   <PriorityHighIcon sx={{ color: "red" }} />
-                  <Typography variant="h6">
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color:
+                        userData.bic && userData.bic.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
+                  >
                     Введите БИК вашего банка, постараемся заполнить данные за
                     вас:
                   </Typography>
@@ -810,15 +894,20 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* bank_name */}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.bank_name && userData.bank_name.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Название вашего банка:</strong>
+                    <strong>11. Название вашего банка:</strong>
                   </Typography>
                   {editingField === "bank_name" ? (
                     <Box display="flex" gap={1}>
@@ -852,15 +941,21 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* correspondent_account */}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.correspondent_account &&
+                        userData.correspondent_account.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Корреспондентский счёт:</strong>
+                    <strong>12. Корреспондентский счёт:</strong>
                   </Typography>
                   {editingField === "correspondent_account" ? (
                     <Box display="flex" gap={1}>
@@ -903,8 +998,15 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.current_account &&
+                        userData.current_account.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Расчётный счёт:</strong>
+                    <strong>13. Расчётный счёт:</strong>
                   </Typography>
                   {editingField === "current_account" ? (
                     <Box display="flex" gap={1}>
@@ -939,15 +1041,21 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* contact_person */}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.contact_person &&
+                        userData.contact_person.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Контактное лицо:</strong>
+                    <strong>14. Контактное лицо:</strong>
                   </Typography>
                   {editingField === "contact_person" ? (
                     <Box display="flex" gap={1}>
@@ -1015,15 +1123,21 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* auth_doct_type */}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.auth_doct_type &&
+                        userData.auth_doct_type.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Тип документа, дающего право подписи:</strong>
+                    <strong>15. Тип документа, дающего право подписи:</strong>
                   </Typography>
                   {editingField === "auth_doct_type" ? (
                     <FormControl size="medium" sx={{ width: "100%" }}>
@@ -1058,15 +1172,20 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* region */}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.region && userData.region !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Ваш регион:</strong>
+                    <strong>16. Ваш регион:</strong>
                   </Typography>
                   {editingField === "region" ? (
                     <Autocomplete
@@ -1108,15 +1227,21 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* Остальные поля */}
                 <Box mb={2}>
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.contract_number &&
+                        userData.contract_number.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Номер договора:</strong>
+                    <strong>17. Номер договора:</strong>
                   </Typography>
                   {editingField === "contract_number" ? (
                     <Box display="flex" gap={1}>
@@ -1151,7 +1276,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
-
                 {/* Доступы */}
                 <Box mb={2}>
                   <Typography
@@ -1160,7 +1284,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     component="div"
                   >
                     <strong>
-                      Доступ к котлам МВ 3.1 мощностью 127-301 кВт:
+                      18. Доступ к котлам МВ 3.1 мощностью 127-301 кВт:
                     </strong>
                   </Typography>
                   <Typography variant="body1">
@@ -1177,7 +1301,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     component="div"
                   >
                     <strong>
-                      Доступ к котлам МВ 3.1 мощностью 400-2000 кВт:
+                      19. Доступ к котлам МВ 3.1 мощностью 400-2000 кВт:
                     </strong>
                   </Typography>
                   <Typography variant="body1">
@@ -1193,7 +1317,9 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     color="textSecondary"
                     component="div"
                   >
-                    <strong>Доступ к котлам МВ 4.1 мощностью 40-99 кВт</strong>
+                    <strong>
+                      20. Доступ к котлам МВ 4.1 мощностью 40-99 кВт
+                    </strong>
                   </Typography>
                   <Typography variant="body1">
                     {userData.service_access_4_1
@@ -1201,6 +1327,18 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       : "Нет доступа"}
                   </Typography>
                   <Divider sx={{ my: 1 }} />
+                </Box>
+                <Box>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={agreed}
+                        onChange={(e) => setAgreed(e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Согласие на обработку персональных данных"
+                  />
                 </Box>
               </>
             ) : access_level === 0 || access_level === 2 ? (
@@ -1211,8 +1349,14 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.full_name && userData.full_name.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Ваше ФИО:</strong>
+                    <strong>1. Ваше ФИО:</strong>
                   </Typography>
                   {editingField === "full_name" ? (
                     <Box display="flex" gap={1}>
@@ -1285,8 +1429,15 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.legal_address &&
+                        userData.legal_address.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Ваш адрес:</strong>
+                    <strong>2. Ваш адрес:</strong>
                   </Typography>
                   {editingField === "legal_address" ? (
                     <Autocomplete
@@ -1338,8 +1489,14 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.full_name && userData.full_name.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Ваше ФИО:</strong>
+                    <strong>1. Ваше ФИО:</strong>
                   </Typography>
                   {editingField === "full_name" ? (
                     <Box display="flex" gap={1}>
@@ -1412,8 +1569,15 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     variant="body2"
                     color="textSecondary"
                     component="div"
+                    sx={{
+                      color:
+                        userData.legal_address &&
+                        userData.legal_address.trim() !== ""
+                          ? "inherit"
+                          : "error.main",
+                    }}
                   >
-                    <strong>Ваш адрес:</strong>
+                    <strong>2. Ваш адрес:</strong>
                   </Typography>
                   {editingField === "legal_address" ? (
                     <Autocomplete
@@ -1470,7 +1634,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
           onClick={() => handleConfirmData()}
           color="success"
           variant="contained"
-          disabled={editingField ? true : false}
+          disabled={editingField || !agreed || !can_download ? true : false}
         >
           Подтвердить данные
         </Button>

@@ -97,7 +97,7 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
     };
     declinedPerson = petrovich(person, "genitive");
   }
-
+  const ogrn = data?.ogrn;
   return (
     <Document onRender={handleOnLoad}>
       <Page size="A4" style={styles.page}>
