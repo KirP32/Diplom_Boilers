@@ -227,7 +227,6 @@ export default function OptionsDialog({ open, user, setOptions }) {
     } else if (can_download && userData?.profile_status === 2) {
       window.open("/work_contract", "_blank");
     } else {
-      console.log(userData?.profile_status);
       setErrorMessage(
         can_download ? "Профиль на проверке" : "Заполните данные профиля"
       );

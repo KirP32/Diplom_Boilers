@@ -28,12 +28,6 @@ const monthGenitive = {
   декабрь: "декабря",
 };
 
-const date = new Date();
-const day = date.getDate();
-const year = date.getFullYear();
-const monthName = date.toLocaleString("ru", { month: "long" });
-const formattedDate = `«${day}» ${monthGenitive[monthName]} ${year} г.`;
-
 export default function WorkerContract() {
   const [isLoading, setIsLoading] = useState(true);
   function handleOnLoad() {
@@ -98,6 +92,11 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
     declinedPerson = petrovich(person, "genitive");
   }
   const ogrn = data?.ogrn;
+  const date = new Date(data?.profile_finished_at);
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const monthName = date.toLocaleString("ru", { month: "long" });
+  const formattedDate = `«${day}» ${monthGenitive[monthName]} ${year} г.`;
   return (
     <Document onRender={handleOnLoad}>
       <Page size="A4" style={styles.page}>

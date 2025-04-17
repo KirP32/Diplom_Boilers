@@ -183,7 +183,6 @@ export default function DataBaseUsers() {
       setEditingColumn(null);
       return;
     }
-    console.log("handleSave");
     $api
       .post("/updateDatabaseColumn", {
         oldName: editingColumn.column_name,
@@ -349,7 +348,11 @@ export default function DataBaseUsers() {
   const handleSaveRow = (rowKey) => {
     const rowToUpdate = editedRowData;
     $api
-      .put("/updateRowData", { ...rowToUpdate, tableName: tableName })
+      .put("/updateRowData", {
+        ...rowToUpdate,
+        tableName: tableName,
+        // profile_finished_at: new Date(),
+      })
       .then(() => {
         setColumnsData((prev) => {
           const updatedRows = prev[tableName].map((item) => {
@@ -1134,6 +1137,52 @@ export default function DataBaseUsers() {
                                         />
                                       )}
                                     />
+                                  ) : colKey === "profile_finished_at" ? (
+                                    (() => {
+                                      const raw =
+                                        editedRowData?.profile_finished_at ??
+                                        row.profile_finished_at;
+                                      const isoLocal = raw
+                                        ? (() => {
+                                            const d = new Date(raw);
+                                            const pad = (n) =>
+                                              String(n).padStart(2, "0");
+                                            return (
+                                              d.getFullYear() +
+                                              "-" +
+                                              pad(d.getMonth() + 1) +
+                                              "-" +
+                                              pad(d.getDate()) +
+                                              "T" +
+                                              pad(d.getHours()) +
+                                              ":" +
+                                              pad(d.getMinutes())
+                                            );
+                                          })()
+                                        : "";
+
+                                      return (
+                                        <TextField
+                                          type="datetime-local"
+                                          size="medium"
+                                          variant="outlined"
+                                          sx={{ minWidth: 200 }}
+                                          slotProps={{
+                                            htmlInput: {
+                                              sx: { mr: 2 },
+                                            },
+                                          }}
+                                          value={isoLocal}
+                                          onChange={(e) =>
+                                            setEditedRowData((prev) => ({
+                                              ...prev,
+                                              profile_finished_at:
+                                                e.target.value,
+                                            }))
+                                          }
+                                        />
+                                      );
+                                    })()
                                   ) : (
                                     <TextField
                                       value={
@@ -1176,6 +1225,12 @@ export default function DataBaseUsers() {
                                   regionOptions.find(
                                     (opt) => opt.code === Number(row[colKey])
                                   )?.name || row[colKey]
+                                ) : colKey === "profile_finished_at" ? (
+                                  row[colKey] !== null ? (
+                                    new Date(row[colKey]).toLocaleString()
+                                  ) : (
+                                    ""
+                                  )
                                 ) : isBoolean ? (
                                   row[colKey] ? (
                                     "true"

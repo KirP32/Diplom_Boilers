@@ -1763,6 +1763,7 @@ class DataController {
       if (tableName === "services_and_prices") {
         const { service_id, service_name, region, description, price, spid } =
           req.body;
+
         await pool.query(
           "UPDATE services SET name = $1, description = $2 WHERE id = $3",
           [service_name, description, service_id]
@@ -1795,31 +1796,40 @@ class DataController {
           auth_doct_type,
           ogrn,
           profile_status,
+          profile_finished_at,
         } = req.body;
 
         await pool.query(
-          `UPDATE worker_details 
-           SET region = $1,
-               company_name = $2,
-               position = $3,
-               full_name = $4,
-               contract_number = $5,
-               phone_number = $6,
-               service_access_3_1_127_301 = $7,
-               service_access_4_1 = $8,
-               service_access_3_1_400_2000 = $9,
-               legal_address = $10,
-               inn = $11,
-               kpp = $12,
-               current_account = $13,
-               bank_name = $14,
-               correspondent_account = $15,
-               bic = $16,
-               contact_person = $17,
-               auth_doct_type = $18,
-               ogrn = $19,
-               profile_status = $20
-           WHERE id = $21`,
+          `UPDATE worker_details
+             SET region                   = $1,
+                 company_name             = $2,
+                 position                 = $3,
+                 full_name                = $4,
+                 contract_number          = $5,
+                 phone_number             = $6,
+                 service_access_3_1_127_301 = $7,
+                 service_access_4_1        = $8,
+                 service_access_3_1_400_2000 = $9,
+                 legal_address            = $10,
+                 inn                      = $11,
+                 kpp                      = $12,
+                 current_account          = $13,
+                 bank_name                = $14,
+                 correspondent_account     = $15,
+                 bic                      = $16,
+                 contact_person           = $17,
+                 auth_doct_type           = $18,
+                 ogrn                     = $19,
+                 profile_status           = $20::smallint,
+                 profile_finished_at      = CASE
+                                              WHEN $20::smallint = 2
+                                              THEN COALESCE(
+                                                NULLIF($21, '')::timestamptz,
+                                                NOW()
+                                              )
+                                              ELSE profile_finished_at
+                                            END
+           WHERE id = $22`,
           [
             region,
             company_name,
@@ -1841,6 +1851,7 @@ class DataController {
             auth_doct_type,
             ogrn,
             profile_status,
+            profile_finished_at,
             id,
           ]
         );
@@ -2000,7 +2011,7 @@ class DataController {
     try {
       const login = decodeJWT(req.cookies.refreshToken).login;
       const result_data = await pool.query(
-        "SELECT region, company_name, position, full_name, contract_number, phone_number, legal_address, inn, kpp, current_account, bank_name, correspondent_account, bic, contact_person, service_access_3_1_127_301, service_access_4_1, service_access_3_1_400_2000 FROM worker_details WHERE username = $1",
+        "SELECT region, company_name, position, full_name, contract_number, phone_number, legal_address, inn, kpp, current_account, bank_name, correspondent_account, bic, contact_person, service_access_3_1_127_301, service_access_4_1, service_access_3_1_400_2000, profile_finished_at FROM worker_details WHERE username = $1",
         [login]
       );
       let genitive_postion = result_data.rows[0].position || "";
