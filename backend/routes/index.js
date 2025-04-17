@@ -70,6 +70,11 @@ router.get(
   checkCookie,
   DataController.getActualGoodsAndServices
 );
+router.get(
+  "/getFreeContractNumber",
+  checkCookie,
+  DataController.getFreeContractNumber
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

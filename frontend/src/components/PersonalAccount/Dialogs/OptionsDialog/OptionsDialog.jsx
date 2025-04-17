@@ -399,7 +399,17 @@ export default function OptionsDialog({ open, user, setOptions }) {
       : filledCount === totalRequired
       ? "all"
       : "partial";
-
+  async function generateContract() {
+    await $api
+      .get("/getFreeContractNumber")
+      .then((result) => {
+        setUserData({ ...userData, contract_number: result.data });
+      })
+      .catch((error) => {
+        setErrorMessage("Проблема с генерацией, попробуйте ещё раз");
+        setSnackbarOpen(true);
+      });
+  }
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
@@ -1367,21 +1377,38 @@ export default function OptionsDialog({ open, user, setOptions }) {
                       />
                     </Box>
                   ) : (
-                    <div style={{ display: "flex" }}>
-                      <Typography variant="body1">
-                        {userData.contract_number || "—"}
-                      </Typography>
-                      {userData.profile_status === 0 && (
-                        <IconButton
-                          onClick={() => {
-                            setEditingField("contract_number");
-                            setEditedValue(userData.contract_number);
-                          }}
-                          size="small"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      )}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", flexDirection: "row" }}>
+                        <Typography variant="body1">
+                          {userData.contract_number || "—"}
+                        </Typography>
+                        {userData.profile_status === 0 && (
+                          <IconButton
+                            onClick={() => {
+                              setEditingField("contract_number");
+                              setEditedValue(userData.contract_number);
+                            }}
+                            size="small"
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        )}
+                      </Box>
+
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        onClick={generateContract}
+                        disabled={userData?.profile_status !== 0}
+                      >
+                        Получить номер договора
+                      </Button>
                     </div>
                   )}
                   <Divider sx={{ my: 1 }} />

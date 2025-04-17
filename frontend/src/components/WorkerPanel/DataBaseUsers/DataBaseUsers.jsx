@@ -88,7 +88,12 @@ export default function DataBaseUsers() {
     ? columnsData[tableName].filter((row) =>
         Object.keys(filters).every((colKey) => {
           const filterValue = filters[colKey];
-          if (!filterValue) return true;
+          if (
+            filterValue === "" ||
+            filterValue === null ||
+            filterValue === undefined
+          )
+            return true;
 
           if (colKey === "region") {
             const selectedRegion = regionOptions.find(
@@ -99,10 +104,14 @@ export default function DataBaseUsers() {
               : false;
           }
 
+          if (colKey === "profile_status") {
+            return Number(row[colKey]) === Number(filterValue);
+          }
+
           return row[colKey]
             ?.toString()
             .toLowerCase()
-            .includes(filterValue.toLowerCase());
+            .includes(filterValue.toString().toLowerCase());
         })
       )
     : [];
@@ -934,7 +943,31 @@ export default function DataBaseUsers() {
                           return <TableCell key={`filter-${colKey}`} />;
                         return (
                           <TableCell key={`filter-${colKey}`}>
-                            {colKey === "region" ? (
+                            {colKey === "profile_status" ? (
+                              <Autocomplete
+                                options={profileStatusOptions}
+                                getOptionLabel={(option) => option.label}
+                                value={
+                                  profileStatusOptions.find(
+                                    (opt) => opt.value === filters[colKey]
+                                  ) || null
+                                }
+                                onChange={(event, newValue) =>
+                                  handleFilterChange(
+                                    colKey,
+                                    newValue ? newValue.value : ""
+                                  )
+                                }
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    size="small"
+                                    placeholder="Фильтр"
+                                  />
+                                )}
+                                isClearable
+                              />
+                            ) : colKey === "region" ? (
                               <Autocomplete
                                 options={regionOptions}
                                 getOptionLabel={(option) => option.name}

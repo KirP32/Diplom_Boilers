@@ -2162,6 +2162,7 @@ class DataController {
         ogrn,
         profile_status,
         access_level,
+        contract_number,
       } = req.body;
 
       if (!id) {
@@ -2177,7 +2178,7 @@ class DataController {
           result = await pool.query(
             `UPDATE worker_details 
              SET kpp = $1, inn = $2, company_name = $3, position = $4, full_name = $5, legal_address = $6,
-                 correspondent_account = $7, bank_name = $8, bic = $9, ogrn = $10, profile_status = $11 
+                 correspondent_account = $7, bank_name = $8, bic = $9, ogrn = $10, profile_status = $11, contract_number = $13
              WHERE id = $12`,
             [
               kpp,
@@ -2192,6 +2193,7 @@ class DataController {
               ogrn,
               profile_status,
               id,
+              contract_number,
             ]
           );
           break;
@@ -2382,6 +2384,38 @@ class DataController {
       res.status(200).json({ message: "Товар успешно удалена" });
     } catch (error) {
       res.status(500).json({ message: "Ошибка сервера при удалении услуги" });
+    }
+  }
+  async getFreeContractNumber(req, res) {
+    const MAX_ATTEMPTS = 30;
+    const LENGTH = 12;
+    const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+    try {
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        const contract_number = Array.from({ length: LENGTH }, () =>
+          CHARS.charAt(Math.floor(Math.random() * CHARS.length))
+        ).join("");
+
+        const result = await pool.query(
+          "SELECT COUNT(1) FROM worker_details WHERE contract_number = $1",
+          [contract_number]
+        );
+
+        if (Number(result.rows[0].count) === 0) {
+          return res.send(contract_number);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
+      throw new Error("Не удалось сгенерировать уникальный номер контракта");
+    } catch (error) {
+      console.error("Ошибка генерации номера контракта:", error);
+      return res.status(500).json({
+        message: error.message || "Ошибка сервера",
+        error: error.message,
+      });
     }
   }
 }
