@@ -369,6 +369,7 @@ export default function DataBaseUsers() {
 
         setEditingRowIndex(null);
         setEditedRowData({});
+        fetchColumnsData();
       })
       .catch((error) => {
         console.error("Ошибка обновления записи:", error);
