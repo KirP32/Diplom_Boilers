@@ -25,9 +25,13 @@ import {
   Box,
   Autocomplete,
   Checkbox,
+  Collapse,
 } from "@mui/material";
 
 import { Edit, Delete, Add, Check, Save } from "@mui/icons-material";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+
 import styles from "./DataBaseUsers.module.scss";
 import { useNavigate } from "react-router-dom";
 
@@ -598,6 +602,7 @@ export default function DataBaseUsers() {
     { value: 1, label: "На проверке" },
     { value: 2, label: "Подтверждён" },
   ];
+  const [open, setOpen] = useState(false);
   return (
     <div className={styles.data_table__wrapper} style={{ overflowY: "auto" }}>
       <div
@@ -646,129 +651,141 @@ export default function DataBaseUsers() {
               <MenuItem value="goods">Запчасти</MenuItem>
             </Select>
           </FormControl>
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={() => setOpen(!open)}
+            sx={{ background: "lightgrey" }}
+          >
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
         </section>
-        <IconButton color="success" onClick={handleAdd}>
-          <Add />
-        </IconButton>
+        {open && (
+          <IconButton color="success" onClick={handleAdd}>
+            <Add />
+          </IconButton>
+        )}
       </div>
 
       {columns.length > 0 ? (
-        <TableContainer
-          component={Paper}
-          className={styles.data_table__container}
-        >
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <strong>Название столбца</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Тип данных</strong>
-                </TableCell>
-                <TableCell align="right">
-                  <strong>Действия</strong>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {isAdding && (
+        <Collapse in={open} timeout="auto" unmountOnExit>
+          <TableContainer
+            component={Paper}
+            className={styles.data_table__container}
+          >
+            <Table>
+              <TableHead>
                 <TableRow>
                   <TableCell>
-                    <TextField
-                      value={newColumnName}
-                      onChange={(e) => setNewColumnName(e.target.value)}
-                      autoFocus
-                      size="small"
-                      placeholder="Введите имя столбца"
-                    />
+                    <strong>Название столбца</strong>
                   </TableCell>
                   <TableCell>
-                    <FormControl size="small" fullWidth>
-                      <InputLabel id="add-select-type-label">
-                        Тип данных
-                      </InputLabel>
-                      <Select
-                        labelId="add-select-type-label"
-                        value={newColumnType}
-                        label="Тип данных"
-                        onChange={(e) => setNewColumnType(e.target.value)}
-                      >
-                        <MenuItem value="bigint">bigint</MenuItem>
-                        <MenuItem value="character varying">
-                          character varying
-                        </MenuItem>
-                        <MenuItem value="timestamp without time zone">
-                          timestamp without time zone
-                        </MenuItem>
-                        <MenuItem value="integer">integer</MenuItem>
-                        <MenuItem value="text">text</MenuItem>
-                        <MenuItem value="boolean">boolean</MenuItem>
-                        <MenuItem value="date">date</MenuItem>
-                        <MenuItem value="numeric">numeric</MenuItem>
-                      </Select>
-                    </FormControl>
+                    <strong>Тип данных</strong>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton color="success" onClick={handleAddSave}>
-                      <Add />
-                    </IconButton>
+                    <strong>Действия</strong>
                   </TableCell>
                 </TableRow>
-              )}
+              </TableHead>
+              <TableBody>
+                {isAdding && (
+                  <TableRow>
+                    <TableCell>
+                      <TextField
+                        value={newColumnName}
+                        onChange={(e) => setNewColumnName(e.target.value)}
+                        autoFocus
+                        size="small"
+                        placeholder="Введите имя столбца"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <FormControl size="small" fullWidth>
+                        <InputLabel id="add-select-type-label">
+                          Тип данных
+                        </InputLabel>
+                        <Select
+                          labelId="add-select-type-label"
+                          value={newColumnType}
+                          label="Тип данных"
+                          onChange={(e) => setNewColumnType(e.target.value)}
+                        >
+                          <MenuItem value="bigint">bigint</MenuItem>
+                          <MenuItem value="character varying">
+                            character varying
+                          </MenuItem>
+                          <MenuItem value="timestamp without time zone">
+                            timestamp without time zone
+                          </MenuItem>
+                          <MenuItem value="integer">integer</MenuItem>
+                          <MenuItem value="text">text</MenuItem>
+                          <MenuItem value="boolean">boolean</MenuItem>
+                          <MenuItem value="date">date</MenuItem>
+                          <MenuItem value="numeric">numeric</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton color="success" onClick={handleAddSave}>
+                        <Add />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                )}
 
-              {columns.map(
-                (col) =>
-                  col.column_name !== "id" &&
-                  col.column_name !== "username" &&
-                  !(
-                    col.column_name === "request_id" &&
-                    tableName === "user_requests_info"
-                  ) && (
-                    <TableRow key={col.column_name}>
-                      <TableCell>
-                        {editingColumn &&
-                        editingColumn.column_name === col.column_name ? (
-                          <TextField
-                            value={editedValue}
-                            onChange={(e) => setEditedValue(e.target.value)}
-                            size="small"
-                            placeholder="Введите имя столбца"
-                          />
-                        ) : (
-                          col.column_name
-                        )}
-                      </TableCell>
-                      <TableCell>{col.data_type}</TableCell>
-                      <TableCell align="right">
-                        {editingColumn &&
-                        editingColumn.column_name === col.column_name ? (
-                          <IconButton color="success" onClick={handleSave}>
-                            <Check />
-                          </IconButton>
-                        ) : (
-                          <>
-                            <IconButton
-                              color="primary"
-                              onClick={() => handleEdit(col)}
-                            >
-                              <Edit />
+                {columns.map(
+                  (col) =>
+                    col.column_name !== "id" &&
+                    col.column_name !== "username" &&
+                    !(
+                      col.column_name === "request_id" &&
+                      tableName === "user_requests_info"
+                    ) && (
+                      <TableRow key={col.column_name}>
+                        <TableCell>
+                          {editingColumn &&
+                          editingColumn.column_name === col.column_name ? (
+                            <TextField
+                              value={editedValue}
+                              onChange={(e) => setEditedValue(e.target.value)}
+                              size="small"
+                              placeholder="Введите имя столбца"
+                            />
+                          ) : (
+                            col.column_name
+                          )}
+                        </TableCell>
+                        <TableCell>{col.data_type}</TableCell>
+                        <TableCell align="right">
+                          {editingColumn &&
+                          editingColumn.column_name === col.column_name ? (
+                            <IconButton color="success" onClick={handleSave}>
+                              <Check />
                             </IconButton>
-                            <IconButton
-                              color="secondary"
-                              onClick={() => handleDelete(col.column_name)}
-                            >
-                              <Delete />
-                            </IconButton>
-                          </>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                          ) : (
+                            <>
+                              <IconButton
+                                color="primary"
+                                onClick={() => handleEdit(col)}
+                              >
+                                <Edit />
+                              </IconButton>
+                              <IconButton
+                                color="secondary"
+                                onClick={() => handleDelete(col.column_name)}
+                              >
+                                <Delete />
+                              </IconButton>
+                            </>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Collapse>
       ) : (
         <Typography variant="body1">Идёт загрузка таблицы...</Typography>
       )}
@@ -965,7 +982,6 @@ export default function DataBaseUsers() {
                                     placeholder="Фильтр"
                                   />
                                 )}
-                                isClearable
                               />
                             ) : colKey === "region" ? (
                               <Autocomplete
