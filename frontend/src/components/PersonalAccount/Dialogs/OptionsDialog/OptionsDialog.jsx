@@ -224,9 +224,10 @@ export default function OptionsDialog({ open, user, setOptions }) {
       const pricesRes = await $api.get("/getServicePrices");
       setWorkerData(workerRes.data);
       setServicePrices(pricesRes.data);
-    } else if (can_download && userData?.profile_status === 3) {
+    } else if (can_download && userData?.profile_status === 2) {
       window.open("/work_contract", "_blank");
     } else {
+      console.log(userData?.profile_status);
       setErrorMessage(
         can_download ? "Профиль на проверке" : "Заполните данные профиля"
       );
@@ -1728,7 +1729,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
             color="success"
             variant="contained"
             disabled={
-              userData?.profile_status === 1 ||
+              userData?.profile_status !== 0 ||
               editingField ||
               !agreed ||
               !can_download
