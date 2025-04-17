@@ -374,7 +374,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
   const baseFields = ["full_name", "legal_address"];
   let filledCount = 0;
 
-  if (userData?.access_level === 1) {
+  if (access_level === 1) {
     filledCount = requiredFields.filter((field) => {
       const value = userData?.[field];
       return (
@@ -389,9 +389,8 @@ export default function OptionsDialog({ open, user, setOptions }) {
       );
     }).length;
   }
-
   const totalRequired =
-    userData?.access_level === 1 ? requiredFields.length : baseFields.length;
+    access_level === 1 ? requiredFields.length : baseFields.length;
 
   const complete_status =
     filledCount === 0
