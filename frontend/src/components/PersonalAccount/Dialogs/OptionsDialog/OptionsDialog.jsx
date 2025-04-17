@@ -193,6 +193,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
         handleSaveChanges(key, newValue);
       }
       setEditingField(null);
+      setEditedValue(null);
     }, 150);
   };
 
@@ -883,22 +884,38 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   >
                     <strong>8. КПП организации:</strong>
                   </Typography>
-                  <div style={{ display: "flex" }}>
-                    <Typography variant="body1">
-                      {userData.kpp || "—"}
-                    </Typography>
-                    {userData.profile_status === 0 && (
-                      <IconButton
-                        onClick={() => {
-                          setEditingField("kpp");
-                          setEditedValue(userData.kpp);
+                  {editingField === "kpp" ? (
+                    <Box display="flex" gap={1}>
+                      <TextField
+                        fullWidth
+                        autoFocus
+                        onBlur={() => handleBlurOrEnter("kpp")}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleBlurOrEnter("kpp");
                         }}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    )}
-                  </div>
+                        variant="outlined"
+                        value={editedValue || ""}
+                        onChange={(e) => setEditedValue(e.target.value)}
+                      />
+                    </Box>
+                  ) : (
+                    <div style={{ display: "flex" }}>
+                      <Typography variant="body1">
+                        {userData.kpp || "—"}
+                      </Typography>
+                      {userData.profile_status === 0 && (
+                        <IconButton
+                          onClick={() => {
+                            setEditingField("kpp");
+                            setEditedValue(userData.kpp);
+                          }}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
+                    </div>
+                  )}
                   <Divider sx={{ my: 1 }} />
                 </Box>
                 {/* bic */}
@@ -1219,7 +1236,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
                     sx={{
                       color:
                         userData.auth_doct_type &&
-                        userData.auth_doct_type.trim() !== ""
+                        userData.auth_doct_type !== ""
                           ? "inherit"
                           : "error.main",
                     }}

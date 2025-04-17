@@ -1117,14 +1117,14 @@ export default function DataBaseUsers() {
                                               editedRowData?.[colKey] ??
                                                 row[colKey]
                                             )
-                                        ) || null
+                                        ) || 0
                                       }
                                       onChange={(event, newValue) =>
                                         setEditedRowData((prev) => ({
                                           ...prev,
                                           [colKey]: newValue
                                             ? newValue.value
-                                            : "",
+                                            : 0,
                                         }))
                                       }
                                       renderInput={(params) => (
