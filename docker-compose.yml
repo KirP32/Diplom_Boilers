@@ -1,4 +1,4 @@
-# version: '3'
+version: '3'
 
 networks:
   dev:
@@ -22,10 +22,12 @@ services:
 
   backend:
     build: ./backend
-    networks:
-      - dev
     ports:
       - "8080:8080"
+    networks:
+      - dev
+    volumes:
+      - ./photo:/app/photos
 
   frontend:
     build: ./frontend
