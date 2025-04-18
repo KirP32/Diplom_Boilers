@@ -1,8 +1,5 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react/jsx-key */
 /* eslint-disable react/prop-types */
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import styles from "./RequestDetails.module.scss";
 import { ThemeContext } from "../../../../../Theme";
 import Stepper from "@mui/material/Stepper";
@@ -42,16 +39,49 @@ export default function RequestDetails({
   getAllDevices, // если завершена, чтобы убрать доступ к системе у работника
 }) {
   const [fullItem, setFullItem] = useState(null);
-
   const [keyEditing, setKeyEditing] = useState("");
   const [editingName, setEditingName] = useState("");
-
+  const { access_level } = useContext(ThemeContext);
+  const [itemStage, setItemStage] = useState(fullItem?.stage);
   const [nameList, setNameList] = useState({
     worker_name: [],
     wattson_name: [],
   });
   const [socketLoading, setSocketLoading] = useState(true);
+  const [lockedAction, setLockedAction] = useState(null);
+  const [lastActionUser, setLastActionUser] = useState(null);
 
+  const addToItem = useCallback(
+    (data) => {
+      if (data.status === 1) {
+        setFullItem((prev) => ({
+          ...prev,
+          user_confirmed: data.user_confirmed,
+          worker_confirmed: data.worker_confirmed,
+          regional_confirmed: data.regional_confirmed,
+          service_engineer_confirmed: data.service_engineer_confirmed,
+          stage: data.stage,
+          status: 1,
+          action: data.action,
+        }));
+
+        if (access_level >= 1) {
+          getAllDevices();
+        }
+      } else {
+        setFullItem((prev) => ({
+          ...prev,
+          user_confirmed: data.user_confirmed,
+          worker_confirmed: data.worker_confirmed,
+          regional_confirmed: data.regional_confirmed,
+          service_engineer_confirmed: data.service_engineer_confirmed,
+          stage: data.stage,
+          action: data.action,
+        }));
+      }
+    },
+    [access_level, getAllDevices]
+  );
   useEffect(() => {
     $api
       .get("/workersNameList")
@@ -76,9 +106,6 @@ export default function RequestDetails({
       fetchFullItem();
     }
   }, [item.id]);
-
-  const { access_level } = useContext(ThemeContext);
-  const [itemStage, setItemStage] = useState(fullItem?.stage);
 
   useEffect(() => {
     if (fullItem?.stage !== undefined) {
@@ -123,39 +150,7 @@ export default function RequestDetails({
       socket.off("requestUpdated", handleRequestUpdate);
       socket.off("connect_error", handleConnectError);
     };
-  }, [item.id]);
-
-  function addToItem(data) {
-    if (data.status === 1) {
-      setFullItem((prev) => ({
-        ...prev,
-        user_confirmed: data.user_confirmed,
-        worker_confirmed: data.worker_confirmed,
-        regional_confirmed: data.regional_confirmed,
-        service_engineer_confirmed: data.service_engineer_confirmed,
-        stage: data.stage,
-        status: 1,
-        action: data.action,
-      }));
-
-      if (access_level >= 1) {
-        getAllDevices();
-      }
-    } else {
-      setFullItem((prev) => ({
-        ...prev,
-        user_confirmed: data.user_confirmed,
-        worker_confirmed: data.worker_confirmed,
-        regional_confirmed: data.regional_confirmed,
-        service_engineer_confirmed: data.service_engineer_confirmed,
-        stage: data.stage,
-        action: data.action,
-      }));
-    }
-  }
-
-  const [lockedAction, setLockedAction] = useState(null);
-  const [lastActionUser, setLastActionUser] = useState(null);
+  }, [addToItem, item.id]);
 
   async function handleNextStage() {
     try {

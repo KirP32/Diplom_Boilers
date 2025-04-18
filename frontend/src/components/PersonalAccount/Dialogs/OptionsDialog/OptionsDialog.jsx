@@ -208,7 +208,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
           console.log(error);
         });
     }
-  }, [open]);
+  }, [access_level, open]);
 
   function onFinish() {
     setOptions(false);

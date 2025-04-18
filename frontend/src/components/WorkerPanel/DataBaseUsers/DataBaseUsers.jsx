@@ -34,6 +34,18 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 import styles from "./DataBaseUsers.module.scss";
 import { useNavigate } from "react-router-dom";
+const tableMapping = {
+  user_details: "user_details",
+  worker_details: "worker_details",
+  cgs_details: "cgs_details",
+  gef_details: "gef_details",
+  user_requests_info: "user_requests_info",
+  materials_stage: "materials_stage",
+  in_transit_stage: "in_transit_stage",
+  work_in_progress_stage: "work_in_progress_stage",
+  services_and_prices: "services_and_prices",
+  goods: "goods",
+};
 
 export default function DataBaseUsers() {
   const navigate = useNavigate();
@@ -65,19 +77,6 @@ export default function DataBaseUsers() {
   const flag_logout = useRef(false);
 
   const regionOptions = region_data;
-
-  const tableMapping = {
-    user_details: "user_details",
-    worker_details: "worker_details",
-    cgs_details: "cgs_details",
-    gef_details: "gef_details",
-    user_requests_info: "user_requests_info",
-    materials_stage: "materials_stage",
-    in_transit_stage: "in_transit_stage",
-    work_in_progress_stage: "work_in_progress_stage",
-    services_and_prices: "services_and_prices",
-    goods: "goods",
-  };
 
   const [filters, setFilters] = useState({});
 
@@ -528,7 +527,7 @@ export default function DataBaseUsers() {
       username,
       region,
     }));
-  }, [columnsData?.worker_details]);
+  }, [columnsData]);
 
   const [selectedWorker, setSelectedWorker] = useState(null);
 
@@ -1350,7 +1349,6 @@ export default function DataBaseUsers() {
                       )}
                     />
                   </Box>
-
                   {selectedWorker && (
                     <>
                       <Typography variant="h6" sx={{ mb: 2 }}>
