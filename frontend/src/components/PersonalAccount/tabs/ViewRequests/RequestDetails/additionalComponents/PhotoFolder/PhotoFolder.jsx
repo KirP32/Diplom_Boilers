@@ -91,8 +91,8 @@ export default function PhotoFolder({ requestID }) {
     // formData.append("category", category);
 
     try {
-      const result = await $api.post("/uploadPhoto", formData);
-      console.log("Ответ сервера:", result.data);
+      await $api.post("/uploadPhoto", formData);
+      setFiles({});
     } catch (error) {
       console.error("Ошибка при отправке фото:", error);
     }
