@@ -121,6 +121,7 @@ router.post(
   checkCookie,
   DataController.InsertGoodsServices
 );
+router.post("/uploadPhoto", checkCookie, DataController.uploadPhoto);
 
 router.delete(
   "/delete_device/:device_uid",

@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import styles from "./RequestDetails.module.scss";
 import { ThemeContext } from "../../../../../Theme";
 import Stepper from "@mui/material/Stepper";
@@ -24,7 +24,7 @@ import Materials from "./additionalComponents/Materials/Materials";
 import OnWay from "./additionalComponents/OnWay/OnWay";
 import WorkInProgress from "./additionalComponents/WorkInProgress/WorkInProgress";
 import Complete from "./additionalComponents/Complete/Complete";
-
+import PhotoFolder from "./additionalComponents/PhotoFolder/PhotoFolder";
 const data_type_1 = [
   "Поиск специалиста",
   "Материалы",
@@ -51,37 +51,34 @@ export default function RequestDetails({
   const [lockedAction, setLockedAction] = useState(null);
   const [lastActionUser, setLastActionUser] = useState(null);
 
-  const addToItem = useCallback(
-    (data) => {
-      if (data.status === 1) {
-        setFullItem((prev) => ({
-          ...prev,
-          user_confirmed: data.user_confirmed,
-          worker_confirmed: data.worker_confirmed,
-          regional_confirmed: data.regional_confirmed,
-          service_engineer_confirmed: data.service_engineer_confirmed,
-          stage: data.stage,
-          status: 1,
-          action: data.action,
-        }));
+  function addToItem(data) {
+    if (data.status === 1) {
+      setFullItem((prev) => ({
+        ...prev,
+        user_confirmed: data.user_confirmed,
+        worker_confirmed: data.worker_confirmed,
+        regional_confirmed: data.regional_confirmed,
+        service_engineer_confirmed: data.service_engineer_confirmed,
+        stage: data.stage,
+        status: 1,
+        action: data.action,
+      }));
 
-        if (access_level >= 1) {
-          getAllDevices();
-        }
-      } else {
-        setFullItem((prev) => ({
-          ...prev,
-          user_confirmed: data.user_confirmed,
-          worker_confirmed: data.worker_confirmed,
-          regional_confirmed: data.regional_confirmed,
-          service_engineer_confirmed: data.service_engineer_confirmed,
-          stage: data.stage,
-          action: data.action,
-        }));
+      if (access_level >= 1) {
+        getAllDevices();
       }
-    },
-    [access_level, getAllDevices]
-  );
+    } else {
+      setFullItem((prev) => ({
+        ...prev,
+        user_confirmed: data.user_confirmed,
+        worker_confirmed: data.worker_confirmed,
+        regional_confirmed: data.regional_confirmed,
+        service_engineer_confirmed: data.service_engineer_confirmed,
+        stage: data.stage,
+        action: data.action,
+      }));
+    }
+  }
   useEffect(() => {
     $api
       .get("/workersNameList")
@@ -116,18 +113,19 @@ export default function RequestDetails({
   const handleStep = (step) => () => {
     setItemStage(step);
   };
-
   useEffect(() => {
     const requestId = item.id;
 
-    const handleConnect = () => {
+    function handleConnect() {
+      console.log("Сокет УСПЕШНО ПОДКЛЮЧЕН");
+
       setSocketLoading(false);
       socket.emit("joinRequest", requestId, (response) => {
         if (response.status === "error") {
           console.error("Не удалось подключиться к комнате");
         }
       });
-    };
+    }
 
     const handleRequestUpdate = (data) => {
       addToItem(data);
@@ -138,20 +136,21 @@ export default function RequestDetails({
       console.error("Описание ошибки:", err.description);
       console.error("Контекст ошибки:", err.context);
     };
-
+    console.log("Начинаю подключение к сокету");
     socket.connect();
     socket.on("connect", handleConnect);
     socket.on("requestUpdated", handleRequestUpdate);
     socket.on("connect_error", handleConnectError);
 
     return () => {
+      console.log("Закрытие подключения");
       socket.emit("leaveRequest", requestId);
       socket.off("connect", handleConnect);
       socket.off("requestUpdated", handleRequestUpdate);
       socket.off("connect_error", handleConnectError);
     };
-  }, [addToItem, item.id]);
-
+  }, []);
+  console.log("Текущее состояние socketLoading:", socketLoading);
   async function handleNextStage() {
     try {
       if (access_level > 0) {
@@ -466,146 +465,159 @@ export default function RequestDetails({
                 gap: 2,
               }}
             >
-              <Box
-                sx={{
-                  width: "50%",
-                  mt: 2,
-                  mb: 2,
-                  p: 1,
-                  border: "1px solid #ccc",
-                  borderRadius: "8px",
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                }}
-              >
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                  Подтверждения:
-                </Typography>
-                {confirmations.map((conf) => (
-                  <Box
-                    key={conf.name}
-                    sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
-                  >
-                    {conf.name === keyEditing ? (
-                      <Autocomplete
-                        sx={{ width: "300px" }}
-                        options={
-                          conf.name === "АСЦ"
-                            ? [
-                                { id: null, username: "Нет", access_level: 0 },
-                                ...nameList.worker_name,
-                              ]
-                            : [
-                                { id: null, username: "Нет", access_level: 1 },
-                                ...nameList.wattson_name,
-                              ]
-                        }
-                        value={editingName}
-                        onChange={(event, newValue) =>
-                          setEditingName(newValue || "")
-                        }
-                        getOptionLabel={(option) => option.username || ""}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            autoFocus
-                            label="Введите имя пользователя"
-                            size="small"
-                            onBlur={() => handleFieldBlur()}
-                            onKeyDown={(event) => handleKeyDown(event)}
-                          />
-                        )}
-                        freeSolo
-                      />
-                    ) : (
-                      <>
-                        {access_level === 3 && conf.name !== "GEFFEN" ? (
-                          <Tooltip
-                            title={
-                              conf.info && conf.info.username
-                                ? `${conf.info.username} (${
-                                    conf.info.phone
-                                      ? conf.info.phone
-                                      : "Телефон неизвестен"
-                                  })`
-                                : "Нет информации"
-                            }
-                            arrow
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{ mr: 1, cursor: "default" }}
-                            >
-                              {conf.name}:
-                            </Typography>
-                          </Tooltip>
-                        ) : (
-                          <Typography
-                            variant="body2"
-                            sx={{ mr: 1, cursor: "default" }}
-                          >
-                            {conf.name}:
-                          </Typography>
-                        )}
-                        <Typography
-                          variant="body2"
-                          color={conf.confirmed ? "green" : "error"}
+              {[confirmations, fullItem].map((content, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    width: "50%",
+                    mt: 2,
+                    mb: 2,
+                    p: 1,
+                    border: "1px solid #ccc",
+                    borderRadius: "8px",
+                    maxHeight: "200px",
+                    overflowY: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  {index === 0 ? (
+                    <>
+                      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                        Подтверждения:
+                      </Typography>
+                      {confirmations.map((conf) => (
+                        <Box
+                          key={conf.name}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            mb: 0.5,
+                          }}
                         >
-                          {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
-                        </Typography>
-                        {access_level === 3 &&
-                          conf.name !== "GEFFEN" &&
-                          conf.name !== "Пользователь" && (
-                            <IconButton
-                              onClick={() => {
-                                setEditingName(null);
-                                setKeyEditing(conf.name);
-                              }}
-                              size="small"
-                            >
-                              <EditIcon />
-                            </IconButton>
+                          {conf.name === keyEditing ? (
+                            <Autocomplete
+                              sx={{ width: "300px" }}
+                              options={
+                                conf.name === "АСЦ"
+                                  ? [
+                                      {
+                                        id: null,
+                                        username: "Нет",
+                                        access_level: 0,
+                                      },
+                                      ...nameList.worker_name,
+                                    ]
+                                  : [
+                                      {
+                                        id: null,
+                                        username: "Нет",
+                                        access_level: 1,
+                                      },
+                                      ...nameList.wattson_name,
+                                    ]
+                              }
+                              value={editingName}
+                              onChange={(event, newValue) =>
+                                setEditingName(newValue || "")
+                              }
+                              getOptionLabel={(option) => option.username || ""}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  autoFocus
+                                  label="Введите имя пользователя"
+                                  size="small"
+                                  onBlur={() => handleFieldBlur()}
+                                  onKeyDown={(event) => handleKeyDown(event)}
+                                />
+                              )}
+                              freeSolo
+                            />
+                          ) : (
+                            <>
+                              {access_level === 3 && conf.name !== "GEFFEN" ? (
+                                <Tooltip
+                                  title={
+                                    conf.info && conf.info.username
+                                      ? `${conf.info.username} (${
+                                          conf.info.phone
+                                            ? conf.info.phone
+                                            : "Телефон неизвестен"
+                                        })`
+                                      : "Нет информации"
+                                  }
+                                  arrow
+                                >
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ mr: 1, cursor: "default" }}
+                                  >
+                                    {conf.name}:
+                                  </Typography>
+                                </Tooltip>
+                              ) : (
+                                <Typography
+                                  variant="body2"
+                                  sx={{ mr: 1, cursor: "default" }}
+                                >
+                                  {conf.name}:
+                                </Typography>
+                              )}
+                              <Typography
+                                variant="body2"
+                                color={conf.confirmed ? "green" : "error"}
+                              >
+                                {conf.confirmed
+                                  ? "Подтвержден"
+                                  : "Не подтвержден"}
+                              </Typography>
+                              {access_level === 3 &&
+                                conf.name !== "GEFFEN" &&
+                                conf.name !== "Пользователь" && (
+                                  <IconButton
+                                    onClick={() => {
+                                      setEditingName(null);
+                                      setKeyEditing(conf.name);
+                                    }}
+                                    size="small"
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
+                                )}
+                            </>
                           )}
-                      </>
-                    )}
-                  </Box>
-                ))}
-              </Box>
-
-              <Box
-                sx={{
-                  width: "50%",
-                  mt: 2,
-                  mb: 2,
-                  p: 1,
-                  border: "1px solid #ccc",
-                  borderRadius: "8px",
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                }}
-              >
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <b>Система:</b> {fullItem?.system_name}
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <b>Создана:</b>{" "}
-                  {fullItem ? formatDate(fullItem.created_at) : ""}
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <b>Проблема:</b> {fullItem?.problem_name}
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <b>Описание:</b> {fullItem?.description}
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <b>Проблема с модулем:</b> {fullItem?.module}
-                </Typography>
-                <Typography variant="body1">
-                  <b>Контактный номер:</b> {fullItem?.phone_number}
-                </Typography>
-              </Box>
+                        </Box>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        <b>Система:</b> {fullItem?.system_name}
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        <b>Создана:</b>{" "}
+                        {fullItem ? formatDate(fullItem.created_at) : ""}
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        <b>Проблема:</b> {fullItem?.problem_name}
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        <b>Описание:</b> {fullItem?.description}
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        <b>Проблема с модулем:</b> {fullItem?.module}
+                      </Typography>
+                      <Typography variant="body1">
+                        <b>Контактный номер:</b> {fullItem?.phone_number}
+                      </Typography>
+                    </>
+                  )}
+                </Box>
+              ))}
             </Box>
-
+            {<PhotoFolder />}
             {component}
             {fullItem?.status !== 1 && (
               <section className={styles.request_buttons}>

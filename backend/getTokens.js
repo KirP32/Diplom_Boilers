@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const getTokens = (login, access_level, RememberMe, token, userID) => {
-  const accessTokenAge = 60 * 30;
+  const accessTokenAge = 60 * 60;
   let refreshTokenAge = RememberMe ? 60 * 60 * 24 * 31 : 60 * 60;
 
   if (token) {

@@ -2418,6 +2418,10 @@ class DataController {
       });
     }
   }
+  async uploadPhoto(req, res) {
+    try {
+    } catch (error) {}
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {
