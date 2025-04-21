@@ -617,7 +617,7 @@ export default function RequestDetails({
                 </Box>
               ))}
             </Box>
-            {<PhotoFolder />}
+            {<PhotoFolder requestID={item.id} />}
             {component}
             {fullItem?.status !== 1 && (
               <section className={styles.request_buttons}>

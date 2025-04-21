@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const axios = require("axios");
 //файлы
 const fs = require("node:fs");
+const path = require("node:path");
 const XLSX = require("xlsx");
 // конец файлы
 require("dotenv").config();
@@ -2420,7 +2421,91 @@ class DataController {
   }
   async uploadPhoto(req, res) {
     try {
-    } catch (error) {}
+      const PHOTOS_ROOT = path.join(__dirname, "../photos");
+      const savedFiles = [];
+
+      const requestID = parseInt(req.body.requestID, 10);
+      const category = req.body.category || "default";
+
+      if (isNaN(requestID)) {
+        req.files.forEach((f) => {
+          if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+        });
+        return res.status(400).json({ error: "Некорректный requestID" });
+      }
+
+      const existingQuery = `
+        SELECT original_name FROM photos
+        WHERE issue_id = $1 AND category = $2
+      `;
+      const existingResult = await pool.query(existingQuery, [
+        requestID,
+        category,
+      ]);
+      const existingNames = new Set(
+        existingResult.rows.map((r) => r.original_name)
+      );
+
+      for (const file of req.files) {
+        const originalName = Buffer.from(file.originalname, "latin1").toString(
+          "utf8"
+        );
+
+        if (existingNames.has(originalName)) {
+          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+          continue;
+        }
+
+        const destDir = path.join(
+          PHOTOS_ROOT,
+          String(requestID),
+          String(category)
+        );
+        fs.mkdirSync(destDir, { recursive: true });
+
+        const ext = path.extname(originalName);
+        const destName = file.filename + ext;
+        const destPath = path.join(destDir, destName);
+
+        fs.renameSync(file.path, destPath);
+
+        const relativePath = path
+          .relative(PHOTOS_ROOT, destPath)
+          .replace(/\\/g, "/");
+
+        const insertQuery = `
+          INSERT INTO photos (issue_id, category, filename, original_name)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id, created_at
+        `;
+        const insertValues = [requestID, category, destName, originalName];
+        const { rows } = await pool.query(insertQuery, insertValues);
+
+        savedFiles.push({
+          id: rows[0].id,
+          requestID,
+          category,
+          savedName: destName,
+          originalName,
+          relativePath,
+          uploadedAt: rows[0].created_at,
+        });
+      }
+
+      return res.json({ status: "ok", files: savedFiles });
+    } catch (error) {
+      req.files?.forEach((f) => {
+        if (fs.existsSync(f.path)) {
+          try {
+            fs.unlinkSync(f.path);
+          } catch (unlinkError) {
+            console.error("Ошибка при удалении временного файла:", unlinkError);
+          }
+        }
+      });
+      console.error("Ошибка при загрузке фото:", error);
+      return res.status(500).send("Ошибка при загрузке");
+    }
   }
 }
 async function updateToken(login, refreshToken, UUID4) {

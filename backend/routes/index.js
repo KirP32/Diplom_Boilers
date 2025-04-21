@@ -107,11 +107,6 @@ router.post(
   DataController.updatePrices
 );
 router.post(
-  "/WorkerConfirmedData",
-  checkCookie,
-  DataController.WorkerConfirmedData
-);
-router.post(
   "/updateCoefficient",
   checkCookie,
   DataController.updateCoefficient
@@ -121,7 +116,12 @@ router.post(
   checkCookie,
   DataController.InsertGoodsServices
 );
-router.post("/uploadPhoto", checkCookie, DataController.uploadPhoto);
+router.post(
+  "/uploadPhoto",
+  checkCookie,
+  upload.array("files"),
+  DataController.uploadPhoto
+);
 
 router.delete(
   "/delete_device/:device_uid",

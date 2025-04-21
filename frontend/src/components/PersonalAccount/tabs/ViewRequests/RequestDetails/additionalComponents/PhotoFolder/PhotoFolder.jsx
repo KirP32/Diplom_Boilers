@@ -11,7 +11,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import styles from "./PhotoFolder.module.scss";
 import DeleteIcon from "@mui/icons-material/Delete";
 import $api from "../../../../../../../http";
-export default function PhotoFolder() {
+export default function PhotoFolder({ requestID }) {
   const [photoOpen, setPhotoOpen] = useState(false);
   const [drag, setDrag] = useState(false);
   const [files, setFiles] = useState([]);
@@ -65,6 +65,11 @@ export default function PhotoFolder() {
     setPreviewOpen(false);
   };
 
+  const handleDialogExited = () => {
+    URL.revokeObjectURL(previewSrc);
+    setPreviewSrc("");
+  };
+
   const removeFile = (idx) => {
     setFiles((prev) => {
       const toRevoke = prev[idx].url;
@@ -77,18 +82,22 @@ export default function PhotoFolder() {
   };
   async function handleClickSendPhoto() {
     const formData = new FormData();
-    formData.append("files", files);
-    $api
-      .post("/uploadPhoto", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((result) => {
-        console.log(result);
-      })
-      .catch((error) => console.log(error));
+
+    files.forEach(({ file }) => {
+      formData.append("files", file);
+    });
+
+    formData.append("requestID", requestID);
+    // formData.append("category", category);
+
+    try {
+      const result = await $api.post("/uploadPhoto", formData);
+      console.log("Ответ сервера:", result.data);
+    } catch (error) {
+      console.error("Ошибка при отправке фото:", error);
+    }
   }
+
   return (
     <div className="photo_body_wrapper" style={{ paddingBottom: "10px" }}>
       <PhotoLibraryIcon
@@ -175,7 +184,12 @@ export default function PhotoFolder() {
         )}
       </Collapse>
 
-      <Dialog open={previewOpen} onClose={closePreview} maxWidth="lg">
+      <Dialog
+        open={previewOpen}
+        onClose={closePreview}
+        onExited={handleDialogExited}
+        maxWidth="lg"
+      >
         <DialogContent sx={{ position: "relative", p: 0 }}>
           <IconButton
             onClick={closePreview}
