@@ -2481,19 +2481,9 @@ class DataController {
         `;
         const insertValues = [requestID, category, destName, originalName];
         const { rows } = await pool.query(insertQuery, insertValues);
-
-        savedFiles.push({
-          id: rows[0].id,
-          requestID,
-          category,
-          savedName: destName,
-          originalName,
-          relativePath,
-          uploadedAt: rows[0].created_at,
-        });
       }
 
-      return res.json({ status: "ok", files: savedFiles });
+      return res.json("ok");
     } catch (error) {
       req.files?.forEach((f) => {
         if (fs.existsSync(f.path)) {
