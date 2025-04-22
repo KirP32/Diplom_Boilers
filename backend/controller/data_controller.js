@@ -2467,7 +2467,8 @@ class DataController {
         const destName = file.filename + ext;
         const destPath = path.join(destDir, destName);
 
-        fs.renameSync(file.path, destPath);
+        fs.copyFileSync(file.path, destPath);
+        fs.unlinkSync(file.path);
 
         const relativePath = path
           .relative(PHOTOS_ROOT, destPath)
