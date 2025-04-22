@@ -27,7 +27,7 @@ services:
     networks:
       - dev
     volumes:
-      - ./photo:/app/photos
+      - ./photo:/photos
 
   frontend:
     build: ./frontend

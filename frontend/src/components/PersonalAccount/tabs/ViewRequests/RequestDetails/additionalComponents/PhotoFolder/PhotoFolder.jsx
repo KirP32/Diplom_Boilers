@@ -17,8 +17,21 @@ export default function PhotoFolder({ requestID }) {
   const [files, setFiles] = useState([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState("");
+  const [photoArray, setPhotoArray] = useState([]);
 
   const urlRef = useRef([]);
+
+  useEffect(() => {
+    const category = "default";
+    $api
+      .get(`/getRequestPhoto/${requestID}/${category}`)
+      .then((result) => {
+        console.log(result);
+      })
+      .catch((error) => {
+        console.error("Ошибка при получении фото:", error);
+      });
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -92,7 +105,7 @@ export default function PhotoFolder({ requestID }) {
 
     try {
       await $api.post("/uploadPhoto", formData);
-      setFiles({});
+      setFiles([]);
     } catch (error) {
       console.error("Ошибка при отправке фото:", error);
     }

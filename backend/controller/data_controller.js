@@ -2507,6 +2507,16 @@ class DataController {
       return res.status(500).send("Ошибка при загрузке");
     }
   }
+  async getRequestPhoto(req, res) {
+    try {
+      const { requestID, category } = req.params;
+      const PHOTOS_ROOT = path.join(__dirname, "../photos");
+      return res.send({ PHOTOS_ROOT: PHOTOS_ROOT, __dirname: __dirname });
+    } catch (error) {
+      console.error("Ошибка при получении фото:", error);
+      return res.status(500).send("Ошибка при загрузке фото");
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

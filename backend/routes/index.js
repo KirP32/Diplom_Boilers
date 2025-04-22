@@ -75,6 +75,11 @@ router.get(
   checkCookie,
   DataController.getFreeContractNumber
 );
+router.get(
+  "/getRequestPhoto/:requestID/:category",
+  checkCookie,
+  DataController.getRequestPhoto
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
