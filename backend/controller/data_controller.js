@@ -3,6 +3,7 @@ const pool = require("../dataBase/pool");
 const { getTokens } = require("../getTokens");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
+const { S3Client, ListBucketsCommand } = require("@aws-sdk/client-s3");
 //файлы
 const fs = require("node:fs");
 const path = require("node:path");
@@ -2424,7 +2425,7 @@ class DataController {
       const PHOTOS_ROOT = path.join(__dirname, "../photos");
       const savedFiles = [];
 
-      const requestID = parseInt(req.body.requestID, 10);
+      const requestID = parseInt(req.params.requestID, 10);
       const category = req.body.category || "default";
 
       if (isNaN(requestID)) {
@@ -2502,7 +2503,15 @@ class DataController {
     try {
       const { requestID, category } = req.params;
       const PHOTOS_ROOT = path.join(__dirname, "../photos");
-      return res.send({ PHOTOS_ROOT: PHOTOS_ROOT, __dirname: __dirname });
+      const url =
+        PHOTOS_ROOT + "/64/default/07da69c57d98d32e6650745887dcfaa4.png";
+      function toBase64(file, onSuccess) {
+        let reader = new FileReader();
+        reader.onload = () => onSuccess(reader.result);
+        reader.readAsDataURL(file);
+      }
+
+      return res.send("ok");
     } catch (error) {
       console.error("Ошибка при получении фото:", error);
       return res.status(500).send("Ошибка при загрузке фото");
