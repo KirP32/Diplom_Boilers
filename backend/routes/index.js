@@ -1,8 +1,9 @@
 const Router = require("express").Router;
 const { DataController } = require("../controller/data_controller");
+const express = require("express");
 
 const checkCookie = require("../middleware/checkCookie.js");
-
+const checkAuth = require("../middleware/checkAuth.js");
 const router = new Router();
 
 const multer = require("multer");
@@ -78,6 +79,8 @@ router.get(
 router.get(
   "/getRequestPhoto/:requestID/:category",
   checkCookie,
+  checkAuth,
+  express.static("./photos"),
   DataController.getRequestPhoto
 );
 
@@ -122,8 +125,9 @@ router.post(
   DataController.InsertGoodsServices
 );
 router.post(
-  "/uploadPhoto",
+  "/uploadPhoto/:requestID",
   checkCookie,
+  checkAuth,
   upload.array("files"),
   DataController.uploadPhoto
 );

@@ -117,7 +117,7 @@ export default function RequestDetails({
     const requestId = item.id;
 
     function handleConnect() {
-      console.log("Сокет УСПЕШНО ПОДКЛЮЧЕН");
+      // console.log("Сокет УСПЕШНО ПОДКЛЮЧЕН");
 
       setSocketLoading(false);
       socket.emit("joinRequest", requestId, (response) => {
@@ -136,21 +136,21 @@ export default function RequestDetails({
       console.error("Описание ошибки:", err.description);
       console.error("Контекст ошибки:", err.context);
     };
-    console.log("Начинаю подключение к сокету");
+    // console.log("Начинаю подключение к сокету");
     socket.connect();
     socket.on("connect", handleConnect);
     socket.on("requestUpdated", handleRequestUpdate);
     socket.on("connect_error", handleConnectError);
 
     return () => {
-      console.log("Закрытие подключения");
+      // console.log("Закрытие подключения");
       socket.emit("leaveRequest", requestId);
       socket.off("connect", handleConnect);
       socket.off("requestUpdated", handleRequestUpdate);
       socket.off("connect_error", handleConnectError);
     };
   }, []);
-  console.log("Текущее состояние socketLoading:", socketLoading);
+  // console.log("Текущее состояние socketLoading:", socketLoading);
   async function handleNextStage() {
     try {
       if (access_level > 0) {
