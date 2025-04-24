@@ -1,6 +1,5 @@
 const Router = require("express").Router;
 const { DataController } = require("../controller/data_controller");
-const express = require("express");
 
 const checkCookie = require("../middleware/checkCookie.js");
 const checkAuth = require("../middleware/checkAuth.js");
@@ -80,7 +79,6 @@ router.get(
   "/getRequestPhoto/:requestID/:category",
   checkCookie,
   checkAuth,
-  express.static("./photos"),
   DataController.getRequestPhoto
 );
 
@@ -167,6 +165,13 @@ router.delete(
   `/deleteRequestGood/:requestID/:good_id`,
   checkCookie,
   DataController.handleDeleteGood
+);
+
+router.delete(
+  `/deletePhoto/:requestID/:id/:original_name`,
+  checkCookie,
+  checkAuth,
+  DataController.deletePhoto
 );
 
 router.put("/off_esp", checkCookie, DataController.off_esp);

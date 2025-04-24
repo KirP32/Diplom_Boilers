@@ -3,7 +3,7 @@ const pool = require("../dataBase/pool");
 const { getTokens } = require("../getTokens");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
-const { S3Client } = require("@aws-sdk/client-s3");
+
 //файлы
 const fs = require("node:fs");
 const path = require("node:path");
@@ -11,6 +11,23 @@ const XLSX = require("xlsx");
 // конец файлы
 require("dotenv").config();
 const RussianNouns = require("russian-nouns-js");
+
+// S3 begin
+const { S3Client } = require("@aws-sdk/client-s3");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { GetObjectCommand } = require("@aws-sdk/client-s3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const s3 = new S3Client({
+  region: process.env.S3_REGION,
+  endpoint: process.env.S3_ENDPOINT,
+  forcePathStyle: true,
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY,
+    secretAccessKey: process.env.S3_SECRET_KEY,
+  },
+});
+// S3 end
 
 class DataController {
   async changes(req, res, next) {
@@ -2422,44 +2439,140 @@ class DataController {
   }
   async uploadPhoto(req, res) {
     try {
-      console.log(req.files);
-      for (const element of req.files) {
-        fs.unlink(element.path, (err) => {
-          if (err) throw err;
-        });
+      const files = req.files || [];
+      if (!files.length) {
+        return res.status(400).json({ error: "Нет файлов для загрузки" });
       }
 
-      return res.send("ok");
-    } catch (error) {
-      req.files?.forEach((f) => {
-        if (fs.existsSync(f.path)) {
-          try {
-            fs.unlinkSync(f.path);
-          } catch (unlinkError) {
-            console.error("Ошибка при удалении временного файла:", unlinkError);
-          }
+      const requestID = parseInt(req.params.requestID, 10);
+      const category = req.params.category || "default";
+
+      const uploadedBy = await getID(decodeJWT(req.cookies.refreshToken).login);
+
+      const uploadedPhotos = await Promise.all(
+        files.map(async (file) => {
+          const originalName = Buffer.from(
+            file.originalname,
+            "latin1"
+          ).toString("utf-8");
+          const uniqueName = `${file.filename}${path.extname(originalName)}`;
+          const key = `${requestID}/${uniqueName}`;
+
+          const fileBuffer = await fs.promises.readFile(file.path);
+
+          await s3.send(
+            new PutObjectCommand({
+              Bucket: process.env.S3_BUCKET,
+              Key: key,
+              Body: fileBuffer,
+              ContentType: file.mimetype,
+              ContentLength: fileBuffer.length,
+            })
+          );
+
+          await pool.query(
+            `INSERT INTO photos (issue_id, category, filename, original_name, uploaded_by)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [requestID, category, key, originalName, uploadedBy]
+          );
+
+          const { rows } = await pool.query(
+            `SELECT id, filename, original_name 
+               FROM photos 
+              WHERE filename = $1 AND issue_id = $2`,
+            [key, requestID]
+          );
+
+          return rows[0];
+        })
+      );
+
+      for (const file of req.files) {
+        if (fs.existsSync(file.path)) {
+          fs.unlink(file.path, (err) => {
+            if (err) console.warn("Не удалось удалить", file.path, err);
+          });
         }
-      });
-      console.log(error);
-      return res.status(500).send("Ошибка при загрузке");
+      }
+
+      return res.json({ status: "ok", photos: uploadedPhotos });
+    } catch (error) {
+      console.error("Ошибка uploadPhoto:", error);
+      for (const file of req.files) {
+        if (fs.existsSync(file.path)) {
+          fs.unlink(file.path, (err) => {
+            if (err) console.warn("Не удалось удалить", file.path, err);
+          });
+        }
+      }
+
+      return res.status(500).json({ error: "Ошибка при загрузке на S3" });
     }
   }
+
   async getRequestPhoto(req, res) {
     try {
-      const { requestID, category } = req.params;
-      const PHOTOS_ROOT = path.join(__dirname, "../photos");
-      const url =
-        PHOTOS_ROOT + "/64/default/07da69c57d98d32e6650745887dcfaa4.png";
-      function toBase64(file, onSuccess) {
-        let reader = new FileReader();
-        reader.onload = () => onSuccess(reader.result);
-        reader.readAsDataURL(file);
+      const requestID = parseInt(req.params.requestID, 10);
+      const category = req.params.category || "default";
+
+      const { rows } = await pool.query(
+        `SELECT id, filename, original_name
+           FROM photos
+          WHERE issue_id = $1`,
+        [requestID]
+      );
+
+      if (!rows.length) {
+        return res.status(404).json({ photos: [] });
       }
 
-      return res.send("ok");
+      const photos = await Promise.all(
+        rows.map(async ({ id, filename, original_name }) => {
+          const cmd = new GetObjectCommand({
+            Bucket: process.env.S3_BUCKET,
+            Key: filename,
+          });
+
+          const url = await getSignedUrl(s3, cmd, { expiresIn: 60 * 60 });
+
+          return { id, original_name, url };
+        })
+      );
+      return res.json({ photos });
     } catch (error) {
       console.error("Ошибка при получении фото:", error);
-      return res.status(500).send("Ошибка при загрузке фото");
+      return res.status(500).json({ error: "Не удалось получить фото" });
+    }
+  }
+  async deletePhoto(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const original_name = req.params.original_name;
+
+      const { rows } = await pool.query(
+        `SELECT filename FROM photos WHERE id = $1 AND original_name = $2`,
+        [id, original_name]
+      );
+
+      if (!rows.length) {
+        return res.status(404).json({ error: "Фото не найдено" });
+      }
+
+      const filename = rows[0].filename;
+
+      await pool.query(`DELETE FROM photos WHERE id = $1`, [id]);
+
+      const cmd = new DeleteObjectCommand({
+        Bucket: process.env.S3_BUCKET,
+        Key: filename,
+      });
+
+      await s3.send(cmd);
+
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Ошибка при удалении фото:", error);
+      return res.status(500).json({ error: "Не удалось удалить фото" });
     }
   }
 }

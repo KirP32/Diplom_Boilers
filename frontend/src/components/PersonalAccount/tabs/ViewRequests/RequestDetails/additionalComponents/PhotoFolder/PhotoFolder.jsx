@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
 import {
   Button,
@@ -18,22 +18,21 @@ export default function PhotoFolder({ requestID }) {
   const [files, setFiles] = useState([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState("");
-
+  const [urlArray, setUrlArray] = useState([]);
   const urlRef = useRef([]);
+
+  const fetchPhotos = useCallback(async () => {
+    try {
+      const category = "default";
+      const res = await $api.get(`/getRequestPhoto/${requestID}/${category}`);
+      setUrlArray(res.data.photos || []);
+    } catch (err) {}
+  }, [requestID]);
+
   // В разработке
-  // useEffect(() => {
-  //   const category = "default";
-  //   $api
-  //     .get(`/getRequestPhoto/${requestID}/${category}`)
-  //     .then((result) => {
-  //       console.log(result.data);
-  //       setPhotoArray(result.data.url.replace("/", "\\/g"));
-  //       console.log(result.data.url.replace(/\//g, "\\"));
-  //     })
-  //     .catch((error) => {
-  //       console.error("Ошибка при получении фото:", error);
-  //     });
-  // }, []);
+  useEffect(() => {
+    if (requestID) fetchPhotos();
+  }, [requestID, fetchPhotos]);
 
   useEffect(() => {
     return () => {
@@ -96,15 +95,34 @@ export default function PhotoFolder({ requestID }) {
     files.forEach(({ file }) => {
       formData.append("files", file);
     });
-
-    // formData.append("requestID", requestID);
-    // formData.append("category", category);
-
+    // ДОДЕЛАТЬ СОВМЕЩЕНИЕ ID И URL ИЗ FILES
     try {
-      await $api.post(`/uploadPhoto/${requestID}`, formData);
+      const response = await $api.post(`/uploadPhoto/${requestID}`, formData);
+
+      const uploadedPhotos = response.data.photos;
+
+      setUrlArray((prev) => [
+        ...prev,
+        ...uploadedPhotos.map(({ id, filename, original_name }) => ({
+          id,
+          url: `https://s3.regru.cloud/${filename}`, // Конструируем URL на основе возвращенного filename
+          original_name,
+        })),
+      ]);
+
+      // Очищаем локальные файлы после успешной загрузки
       setFiles([]);
     } catch (error) {
-      console.error("Ошибка при отправке фото:", error);
+      console.error("Ошибка при загрузке фото:", error);
+    }
+  }
+  async function removePhoto(id, original_name) {
+    try {
+      $api.delete(`/deletePhoto/${requestID}/${id}/${original_name}`);
+
+      setUrlArray((prev) => prev.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error("Ошибка при удалении фото:", error);
     }
   }
 
@@ -116,6 +134,29 @@ export default function PhotoFolder({ requestID }) {
         style={{ cursor: "pointer" }}
       />
       <Collapse in={photoOpen}>
+        {urlArray.length > 0 && (
+          <div className={styles.preview_grid}>
+            {urlArray.map(({ url, id, original_name }) => (
+              <div key={url} className={styles.thumb_wrapper}>
+                <img
+                  src={url}
+                  alt="image"
+                  className={styles.thumb}
+                  onClick={openPreview(url)}
+                />
+                <IconButton
+                  size="small"
+                  className={styles.delete_btn}
+                  onClick={() => removePhoto(id, original_name)}
+                  style={{ color: "red", zIndex: 1 }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className={styles.drop_area}>
           {drag ? (
             <div

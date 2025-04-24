@@ -131,23 +131,23 @@ export default function RequestDetails({
       addToItem(data);
     };
 
-    const handleConnectError = (err) => {
-      console.error("Ошибка подключения:", err.message);
-      console.error("Описание ошибки:", err.description);
-      console.error("Контекст ошибки:", err.context);
-    };
+    // const handleConnectError = (err) => {
+    //   console.error("Ошибка подключения:", err.message);
+    //   console.error("Описание ошибки:", err.description);
+    //   console.error("Контекст ошибки:", err.context);
+    // };
     // console.log("Начинаю подключение к сокету");
     socket.connect();
     socket.on("connect", handleConnect);
     socket.on("requestUpdated", handleRequestUpdate);
-    socket.on("connect_error", handleConnectError);
+    // socket.on("connect_error", handleConnectError);
 
     return () => {
       // console.log("Закрытие подключения");
       socket.emit("leaveRequest", requestId);
       socket.off("connect", handleConnect);
       socket.off("requestUpdated", handleRequestUpdate);
-      socket.off("connect_error", handleConnectError);
+      // socket.off("connect_error", handleConnectError);
     };
   }, []);
   // console.log("Текущее состояние socketLoading:", socketLoading);
