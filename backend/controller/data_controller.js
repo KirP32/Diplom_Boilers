@@ -2422,13 +2422,6 @@ class DataController {
   }
   async uploadPhoto(req, res) {
     try {
-      console.log("=== S3 CONFIG ===");
-      console.log("Access Key:", process.env.S3_ACCESS_KEY);
-      console.log("Secret Key:", process.env.S3_SECRET_KEY);
-      console.log("Endpoint:", process.env.S3_ENDPOINT);
-      console.log("Bucket:", process.env.S3_BUCKET_NAME);
-      console.log("=================");
-
       console.log(req.files);
       for (const element of req.files) {
         fs.unlink(element.path, (err) => {
