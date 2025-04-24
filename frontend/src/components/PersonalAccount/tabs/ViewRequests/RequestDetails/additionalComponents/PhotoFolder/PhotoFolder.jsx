@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState, useEffect, useRef } from "react";
 import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
 import {
@@ -17,21 +18,22 @@ export default function PhotoFolder({ requestID }) {
   const [files, setFiles] = useState([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState("");
-  const [photoArray, setPhotoArray] = useState([]);
 
   const urlRef = useRef([]);
-
-  useEffect(() => {
-    const category = "default";
-    $api
-      .get(`/getRequestPhoto/${requestID}/${category}`)
-      .then((result) => {
-        console.log(result);
-      })
-      .catch((error) => {
-        console.error("Ошибка при получении фото:", error);
-      });
-  }, []);
+  // В разработке
+  // useEffect(() => {
+  //   const category = "default";
+  //   $api
+  //     .get(`/getRequestPhoto/${requestID}/${category}`)
+  //     .then((result) => {
+  //       console.log(result.data);
+  //       setPhotoArray(result.data.url.replace("/", "\\/g"));
+  //       console.log(result.data.url.replace(/\//g, "\\"));
+  //     })
+  //     .catch((error) => {
+  //       console.error("Ошибка при получении фото:", error);
+  //     });
+  // }, []);
 
   useEffect(() => {
     return () => {
@@ -78,11 +80,6 @@ export default function PhotoFolder({ requestID }) {
     setPreviewOpen(false);
   };
 
-  const handleDialogExited = () => {
-    URL.revokeObjectURL(previewSrc);
-    setPreviewSrc("");
-  };
-
   const removeFile = (idx) => {
     setFiles((prev) => {
       const toRevoke = prev[idx].url;
@@ -100,11 +97,11 @@ export default function PhotoFolder({ requestID }) {
       formData.append("files", file);
     });
 
-    formData.append("requestID", requestID);
+    // formData.append("requestID", requestID);
     // formData.append("category", category);
 
     try {
-      await $api.post("/uploadPhoto", formData);
+      await $api.post(`/uploadPhoto/${requestID}`, formData);
       setFiles([]);
     } catch (error) {
       console.error("Ошибка при отправке фото:", error);
@@ -197,12 +194,7 @@ export default function PhotoFolder({ requestID }) {
         )}
       </Collapse>
 
-      <Dialog
-        open={previewOpen}
-        onClose={closePreview}
-        onExited={handleDialogExited}
-        maxWidth="lg"
-      >
+      <Dialog open={previewOpen} onClose={closePreview} maxWidth="lg">
         <DialogContent sx={{ position: "relative", p: 0 }}>
           <IconButton
             onClick={closePreview}

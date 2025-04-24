@@ -3,7 +3,7 @@ const pool = require("../dataBase/pool");
 const { getTokens } = require("../getTokens");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
-const { S3Client, ListBucketsCommand } = require("@aws-sdk/client-s3");
+const { S3Client } = require("@aws-sdk/client-s3");
 //файлы
 const fs = require("node:fs");
 const path = require("node:path");
@@ -2422,69 +2422,21 @@ class DataController {
   }
   async uploadPhoto(req, res) {
     try {
-      const PHOTOS_ROOT = path.join(__dirname, "../photos");
-      const savedFiles = [];
+      console.log("=== S3 CONFIG ===");
+      console.log("Access Key:", process.env.S3_ACCESS_KEY);
+      console.log("Secret Key:", process.env.S3_SECRET_KEY);
+      console.log("Endpoint:", process.env.S3_ENDPOINT);
+      console.log("Bucket:", process.env.S3_BUCKET_NAME);
+      console.log("=================");
 
-      const requestID = parseInt(req.params.requestID, 10);
-      const category = req.body.category || "default";
-
-      if (isNaN(requestID)) {
-        req.files.forEach((f) => {
-          if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+      console.log(req.files);
+      for (const element of req.files) {
+        fs.unlink(element.path, (err) => {
+          if (err) throw err;
         });
-        return res.status(400).json({ error: "Некорректный requestID" });
       }
 
-      const existingQuery = `
-        SELECT original_name FROM photos
-        WHERE issue_id = $1 AND category = $2
-      `;
-      const existingResult = await pool.query(existingQuery, [
-        requestID,
-        category,
-      ]);
-      const existingNames = new Set(
-        existingResult.rows.map((r) => r.original_name)
-      );
-
-      for (const file of req.files) {
-        const originalName = Buffer.from(file.originalname, "latin1").toString(
-          "utf8"
-        );
-
-        if (existingNames.has(originalName)) {
-          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-          continue;
-        }
-
-        const destDir = path.join(
-          PHOTOS_ROOT,
-          String(requestID),
-          String(category)
-        );
-        fs.mkdirSync(destDir, { recursive: true });
-
-        const ext = path.extname(originalName);
-        const destName = file.filename + ext;
-        const destPath = path.join(destDir, destName);
-
-        fs.copyFileSync(file.path, destPath);
-        fs.unlinkSync(file.path);
-
-        const relativePath = path
-          .relative(PHOTOS_ROOT, destPath)
-          .replace(/\\/g, "/");
-
-        const insertQuery = `
-          INSERT INTO photos (issue_id, category, filename, original_name)
-          VALUES ($1, $2, $3, $4)
-          RETURNING id, created_at
-        `;
-        const insertValues = [requestID, category, destName, originalName];
-        const { rows } = await pool.query(insertQuery, insertValues);
-      }
-
-      return res.json("ok");
+      return res.send("ok");
     } catch (error) {
       req.files?.forEach((f) => {
         if (fs.existsSync(f.path)) {
@@ -2495,7 +2447,7 @@ class DataController {
           }
         }
       });
-      console.error("Ошибка при загрузке фото:", error);
+      console.log(error);
       return res.status(500).send("Ошибка при загрузке");
     }
   }
