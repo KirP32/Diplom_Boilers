@@ -18,6 +18,7 @@ const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { GetObjectCommand } = require("@aws-sdk/client-s3");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+
 const s3 = new S3Client({
   region: process.env.S3_REGION,
   endpoint: process.env.S3_ENDPOINT,
@@ -2571,6 +2572,42 @@ class DataController {
       return res.status(500).json({ error: "Не удалось удалить фото" });
     }
   }
+  // УДАЛИТ ВСЁ ИЗ БАКЕТА, ОПАСНО, НЕ ТРОГАТЬ
+  // async clearStorage(req, res) {
+  //   try {
+  //     const bucketName = process.env.S3_BUCKET;
+
+  //     const listResponse = await s3.send(
+  //       new ListObjectsV2Command({
+  //         Bucket: bucketName,
+  //       })
+  //     );
+
+  //     const objects = listResponse.Contents || [];
+
+  //     if (objects.length === 0) {
+  //       return res.json({ status: "ok", message: "Хранилище уже пустое" });
+  //     }
+
+  //     const deleteParams = {
+  //       Bucket: bucketName,
+  //       Delete: {
+  //         Objects: objects.map((obj) => ({ Key: obj.Key })),
+  //         Quiet: false,
+  //       },
+  //     };
+
+  //     await s3.send(new DeleteObjectsCommand(deleteParams));
+
+  //     return res.json({
+  //       status: "ok",
+  //       message: `Удалено файлов: ${objects.length}`,
+  //     });
+  //   } catch (error) {
+  //     console.error("Ошибка при очистке хранилища:", error);
+  //     return res.status(500).json({ error: "Не удалось очистить хранилище" });
+  //   }
+  // }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {
