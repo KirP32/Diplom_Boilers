@@ -2446,8 +2446,8 @@ class DataController {
 
       const requestID = parseInt(req.params.requestID, 10);
       const category = req.params.category || "default";
-
-      const uploadedBy = await getID(decodeJWT(req.cookies.refreshToken).login);
+      const userLogin = decodeJWT(req.cookies.refreshToken).login;
+      const uploadedBy = await getID(userLogin);
 
       const uploadedPhotos = await Promise.all(
         files.map(async (file) => {
@@ -2459,7 +2459,6 @@ class DataController {
           const key = `${requestID}/${uniqueName}`;
 
           const fileBuffer = await fs.promises.readFile(file.path);
-
           await s3.send(
             new PutObjectCommand({
               Bucket: process.env.S3_BUCKET,
@@ -2471,8 +2470,9 @@ class DataController {
           );
 
           await pool.query(
-            `INSERT INTO photos (issue_id, category, filename, original_name, uploaded_by)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO photos 
+               (issue_id, category, filename, original_name, uploaded_by)
+             VALUES ($1,      $2,       $3,       $4,            $5)`,
             [requestID, category, key, originalName, uploadedBy]
           );
 
@@ -2482,30 +2482,26 @@ class DataController {
               WHERE filename = $1 AND issue_id = $2`,
             [key, requestID]
           );
+          const { id, filename, original_name } = rows[0];
 
-          return rows[0];
+          const getCmd = new GetObjectCommand({
+            Bucket: process.env.S3_BUCKET,
+            Key: filename,
+          });
+          const url = await getSignedUrl(s3, getCmd, { expiresIn: 60 * 60 });
+
+          fs.unlinkSync(file.path);
+
+          return { id, original_name, url };
         })
       );
-
-      for (const file of req.files) {
-        if (fs.existsSync(file.path)) {
-          fs.unlink(file.path, (err) => {
-            if (err) console.warn("Не удалось удалить", file.path, err);
-          });
-        }
-      }
 
       return res.json({ status: "ok", photos: uploadedPhotos });
     } catch (error) {
       console.error("Ошибка uploadPhoto:", error);
-      for (const file of req.files) {
-        if (fs.existsSync(file.path)) {
-          fs.unlink(file.path, (err) => {
-            if (err) console.warn("Не удалось удалить", file.path, err);
-          });
-        }
-      }
-
+      (req.files || []).forEach((f) => {
+        if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+      });
       return res.status(500).json({ error: "Ошибка при загрузке на S3" });
     }
   }

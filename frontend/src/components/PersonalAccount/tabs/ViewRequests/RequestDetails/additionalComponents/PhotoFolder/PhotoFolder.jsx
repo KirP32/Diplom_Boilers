@@ -26,7 +26,9 @@ export default function PhotoFolder({ requestID }) {
       const category = "default";
       const res = await $api.get(`/getRequestPhoto/${requestID}/${category}`);
       setUrlArray(res.data.photos || []);
-    } catch (err) {}
+    } catch (err) {
+      console.log(err);
+    }
   }, [requestID]);
 
   // В разработке
@@ -103,9 +105,9 @@ export default function PhotoFolder({ requestID }) {
 
       setUrlArray((prev) => [
         ...prev,
-        ...uploadedPhotos.map(({ id, filename, original_name }) => ({
+        ...uploadedPhotos.map(({ id, url, original_name }) => ({
           id,
-          url: `https://s3.regru.cloud/${filename}`, // Конструируем URL на основе возвращенного filename
+          url: url,
           original_name,
         })),
       ]);
