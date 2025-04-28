@@ -129,6 +129,13 @@ router.post(
   upload.array("files"),
   DataController.uploadPhoto
 );
+router.post(
+  "/WorkerConfirmedData",
+  checkCookie,
+  DataController.WorkerConfirmedData
+);
+
+// router.post("/getGeoPosition", checkCookie, DataController.getGeoPosition);
 
 router.delete(
   "/delete_device/:device_uid",

@@ -1346,38 +1346,68 @@ class DataController {
     }
   }
   async createSystem(req, res) {
+    const client = await pool.connect();
     try {
-      const { system_name } = req.body;
+      await client.query("BEGIN");
 
-      const existingSystem = await pool.query(
-        "SELECT * FROM systems WHERE name = $1",
+      const { system_name, addressValue } = req.body;
+      const exists = await client.query(
+        "SELECT 1 FROM systems WHERE name = $1",
         [system_name]
       );
-
-      if (existingSystem.rowCount > 0) {
-        return res.status(400).send({ error: "Такая система уже существует" });
+      if (exists.rowCount) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "Такая система уже существует" });
       }
 
-      const result = await pool.query("INSERT INTO systems (name) values($1)", [
-        system_name,
-      ]);
+      const { rows } = await client.query(
+        "INSERT INTO systems(name) VALUES($1) RETURNING id",
+        [system_name]
+      );
+      const system_id = rows[0].id;
 
-      const user_id = await getID(decodeJWT(req.cookies.refreshToken).login);
-      const insertResult = await pool.query(
-        "INSERT INTO user_systems (user_id, name) VALUES ($1, $2)",
+      const userLogin = decodeJWT(req.cookies.refreshToken).login;
+      const user_id = await getID(userLogin);
+      await client.query(
+        "INSERT INTO user_systems(user_id, name) VALUES($1, $2)",
         [user_id, system_name]
       );
 
-      if (result.rowCount > 0 && insertResult.rowCount > 0) {
-        return res.send("OK");
-      } else {
-        return res.sendStatus(400);
+      const token = "98be28db4ed79229bc269503c6a4d868e628b318";
+      const daDataRes = await axios.post(
+        "https://cleaner.dadata.ru/api/v1/clean/address",
+        [addressValue],
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Token ${token}`,
+            "X-secret": "e8d55594effa9cf872d2271135c9f21bb3dfeeb3",
+          },
+        }
+      );
+      const { geo_lat, geo_lon } = daDataRes.data[0] || {};
+      if (geo_lat == null || geo_lon == null) {
+        throw new Error("DaData вернула некорректный ответ");
       }
-    } catch (error) {
-      console.log(error);
-      return res.status(400).send({ error: error.message });
+
+      await client.query(
+        `INSERT INTO systems_details(system_id, geo_lat, geo_lon)
+         VALUES($1, $2, $3)`,
+        [system_id, geo_lat, geo_lon]
+      );
+
+      await client.query("COMMIT");
+      return res.send("OK");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      console.error("createSystem error:", err);
+      return res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
     }
   }
+
   async getRequestColumns(req, res) {
     try {
       const result = await pool.query(
@@ -2166,7 +2196,9 @@ class DataController {
       res.status(500).json({ error: error.message });
     }
   }
+
   async WorkerConfirmedData(req, res) {
+    const client = await pool.connect();
     try {
       const {
         kpp,
@@ -2191,68 +2223,102 @@ class DataController {
           .json({ message: "Отсутствует идентификатор пользователя" });
       }
 
-      let result;
+      await client.query("BEGIN");
 
-      switch (access_level) {
-        case 1:
-          result = await pool.query(
-            `UPDATE worker_details 
-             SET kpp = $1, inn = $2, company_name = $3, position = $4, full_name = $5, legal_address = $6,
-                 correspondent_account = $7, bank_name = $8, bic = $9, ogrn = $10, profile_status = $11, contract_number = $13
-             WHERE id = $12`,
-            [
-              kpp,
-              inn,
-              company_name,
-              position,
-              full_name,
-              legal_address,
-              correspondent_account,
-              bank_name,
-              bic,
-              ogrn,
-              profile_status,
-              id,
-              contract_number,
-            ]
+      let updateResult;
+      if (access_level === 1) {
+        updateResult = await client.query(
+          `UPDATE worker_details 
+         SET kpp                    = $1,
+             inn                    = $2,
+             company_name           = $3,
+             position               = $4,
+             full_name              = $5,
+             legal_address          = $6,
+             correspondent_account  = $7,
+             bank_name              = $8,
+             bic                    = $9,
+             ogrn                   = $10,
+             profile_status         = $11,
+             contract_number        = $12
+         WHERE id = $13`,
+          [
+            kpp,
+            inn,
+            company_name,
+            position,
+            full_name,
+            legal_address,
+            correspondent_account,
+            bank_name,
+            bic,
+            ogrn,
+            profile_status,
+            contract_number,
+            id,
+          ]
+        );
+        if (updateResult.rowCount > 0 && legal_address) {
+          const DADATA_TOKEN = "98be28db4ed79229bc269503c6a4d868e628b318";
+          const DADATA_SECRET = "e8d55594effa9cf872d2271135c9f21bb3dfeeb3";
+
+          const dadataRes = await axios.post(
+            "https://cleaner.dadata.ru/api/v1/clean/address",
+            [legal_address],
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Token ${DADATA_TOKEN}`,
+                "X-secret": DADATA_SECRET,
+              },
+            }
           );
-          break;
-
-        case 0:
-          result = await pool.query(
-            "UPDATE user_details SET profile_status = $1 WHERE id = $2",
-            [profile_status, id]
-          );
-          break;
-
-        case 2:
-          result = await pool.query(
-            "UPDATE cgs_details SET profile_status = $1 WHERE id = $2",
-            [profile_status, id]
-          );
-          break;
-
-        case 3:
-          result = await pool.query(
-            "UPDATE gef_details SET profile_status = $1 WHERE id = $2",
-            [profile_status, id]
-          );
-          break;
-
-        default:
-          return res
-            .status(400)
-            .json({ message: "Некорректный уровень доступа" });
+          const geo = dadataRes.data?.[0];
+          if (geo && geo.geo_lat && geo.geo_lon) {
+            await client.query(
+              `UPDATE worker_details 
+             SET geo_lat = $1, geo_lon = $2
+             WHERE id = $3`,
+              [geo.geo_lat, geo.geo_lon, id]
+            );
+          }
+        }
+      } else if (access_level === 0) {
+        updateResult = await client.query(
+          "UPDATE user_details SET profile_status = $1 WHERE id = $2",
+          [profile_status, id]
+        );
+      } else if (access_level === 2) {
+        updateResult = await client.query(
+          "UPDATE cgs_details SET profile_status = $1 WHERE id = $2",
+          [profile_status, id]
+        );
+      } else if (access_level === 3) {
+        updateResult = await client.query(
+          "UPDATE gef_details SET profile_status = $1 WHERE id = $2",
+          [profile_status, id]
+        );
+      } else {
+        await client.query("ROLLBACK");
+        return res
+          .status(400)
+          .json({ message: "Некорректный уровень доступа" });
       }
 
-      if (result.rowCount > 0) {
+      await client.query("COMMIT");
+
+      if (updateResult?.rowCount > 0) {
         return res.json({ message: "OK" });
       } else {
         return res.status(400).json({ message: "Обновление не выполнено" });
       }
     } catch (error) {
+      await client.query("ROLLBACK");
       console.error("Ошибка при обновлении данных:", error);
       return res.status(500).json({ message: error.message || error });
+    } finally {
+      client.release();
     }
   }
 
@@ -2608,6 +2674,7 @@ class DataController {
   //     return res.status(500).json({ error: "Не удалось очистить хранилище" });
   //   }
   // }
+  //
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {
