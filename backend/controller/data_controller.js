@@ -744,20 +744,16 @@ class DataController {
   async getRequests(req, res, next) {
     try {
       const login = decodeJWT(req.cookies.refreshToken).login;
-      const user = await pool.query(
+      const userRes = await pool.query(
         "SELECT id, access_level FROM users WHERE username = $1",
         [login]
       );
-
-      if (user.rowCount === 0) {
+      if (userRes.rowCount === 0) {
         return res.status(404).json({ error: "Пользователь не найден" });
       }
+      const { id: userId, access_level } = userRes.rows[0];
 
-      const { id, access_level } = user.rows[0];
-
-      let assignedField = "";
-      let confirmedField = "";
-
+      let assignedField, confirmedField;
       if (access_level === 1) {
         assignedField = "assigned_to";
         confirmedField = "worker_confirmed";
@@ -771,63 +767,93 @@ class DataController {
         return res.status(403).json({ error: "Недостаточно прав" });
       }
 
-      let allDevicesQuery = "";
-      let workerDevicesQuery = "";
-      let queryParams = [];
+      const geoJoins = `
+        LEFT JOIN systems s ON s.name = ur.system_name
+        LEFT JOIN systems_details sd ON sd.system_id = s.id
+  
+        LEFT JOIN users u ON u.id = ur.assigned_to
+        LEFT JOIN worker_details wd ON wd.username = u.username
+      `;
+
+      const selectFields = `
+        ur.id,
+        ur.description,
+        ur.phone_number,
+        ur.module,
+        ur.problem_name,
+        ur.status,
+        ur.${assignedField},
+        ur.assigned_to,
+        ur.system_name,
+        ur.created_at,
+  
+        -- Координаты инженерной системы
+        sd.geo_lat   AS system_geo_lat,
+        sd.geo_lon   AS system_geo_lon,
+  
+        -- Координаты АСЦ
+        wd.geo_lat   AS worker_geo_lat,
+        wd.geo_lon   AS worker_geo_lon
+      `;
+
+      let allDevicesQuery,
+        workerDevicesQuery,
+        paramsAll = [],
+        paramsWork = [];
 
       if (access_level === 3) {
-        // Для GEFFEN: allDevices – заявки, где gef_assigned_to IS NULL,
-        // workerDevices – заявки, где gef_assigned_to равен ID пользователя
         allDevicesQuery = `
-          SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
-                 ur.${assignedField}, ur.system_name, ur.created_at
+          SELECT ${selectFields}
           FROM user_requests ur
-          JOIN user_requests_info uri ON ur.id = uri.request_id
-          WHERE ur.${assignedField} IS NULL AND uri.${confirmedField} = FALSE AND ur.status != 1
+          JOIN user_requests_info uri ON uri.request_id = ur.id
+          ${geoJoins}
+          WHERE ur.${assignedField} IS NULL
+            AND uri.${confirmedField} = FALSE
+            AND ur.status != 1
         `;
         workerDevicesQuery = `
-          SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
-                 ur.${assignedField}, ur.system_name, ur.created_at
+          SELECT ${selectFields}
           FROM user_requests ur
-          JOIN user_requests_info uri ON ur.id = uri.request_id
-          WHERE ur.${assignedField} = $1 AND ur.status = 0
+          JOIN user_requests_info uri ON uri.request_id = ur.id
+          ${geoJoins}
+          WHERE ur.${assignedField} = $1
+            AND ur.status = 0
         `;
-        queryParams = [id];
+        paramsAll = [];
+        paramsWork = [userId];
       } else {
-        // Для других уровней: обычное условие по равенству поля
         allDevicesQuery = `
-          SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
-                 ur.${assignedField}, ur.system_name, ur.created_at
+          SELECT ${selectFields}
           FROM user_requests ur
-          JOIN user_requests_info uri ON ur.id = uri.request_id
-          WHERE ur.${assignedField} = $1 AND uri.${confirmedField} = FALSE AND ur.status != 1
+          JOIN user_requests_info uri ON uri.request_id = ur.id
+          ${geoJoins}
+          WHERE ur.${assignedField} = $1
+            AND uri.${confirmedField} = FALSE
+            AND ur.status != 1
         `;
         workerDevicesQuery = `
-          SELECT ur.id, ur.description, ur.phone_number, ur.module, ur.problem_name, ur.status, 
-                 ur.${assignedField}, ur.system_name, ur.created_at
+          SELECT ${selectFields}
           FROM user_requests ur
-          JOIN user_requests_info uri ON ur.id = uri.request_id
-          WHERE ur.${assignedField} = $1 AND uri.${confirmedField} = TRUE AND ur.status = 0
+          JOIN user_requests_info uri ON uri.request_id = ur.id
+          ${geoJoins}
+          WHERE ur.${assignedField} = $1
+            AND uri.${confirmedField} = TRUE
+            AND ur.status = 0
         `;
-        queryParams = [id];
+        paramsAll = [userId];
+        paramsWork = [userId];
       }
 
-      const allDevices = await pool.query(
-        allDevicesQuery,
-        access_level === 3 ? [] : queryParams
-      );
+      const allDevicesRes = await pool.query(allDevicesQuery, paramsAll);
+      const workerDevicesRes = await pool.query(workerDevicesQuery, paramsWork);
 
-      const workerDevices = await pool.query(workerDevicesQuery, queryParams);
-
-      const resultData = {
-        allDevices: allDevices.rowCount > 0 ? allDevices.rows : [],
-        workerDevices: workerDevices.rowCount > 0 ? workerDevices.rows : [],
-      };
-
-      res.send(resultData);
+      return res.json({
+        allDevices: allDevicesRes.rows,
+        workerDevices: workerDevicesRes.rows,
+      });
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ error: "Internal Server Error" });
+      console.error("getRequests error:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 
@@ -2675,6 +2701,53 @@ class DataController {
   //   }
   // }
   //
+  async getLatLon(req, res) {
+    const { assigned_to, system_name } = req.params;
+
+    const userId = parseInt(assigned_to, 10);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "Неверный assigned_to" });
+    }
+
+    try {
+      const { rows } = await pool.query(
+        `
+        SELECT
+          sd.geo_lat   AS system_geo_lat,
+          sd.geo_lon   AS system_geo_lon,
+          wd.geo_lat   AS worker_geo_lat,
+          wd.geo_lon   AS worker_geo_lon
+        FROM systems_details sd
+        JOIN systems s     ON sd.system_id = s.id
+        JOIN users u       ON u.id = $1
+        JOIN worker_details wd ON wd.username = u.username
+        WHERE s.name = $2
+        `,
+        [userId, system_name]
+      );
+
+      if (rows.length === 0) {
+        return res.status(404).json({ message: "Данные не найдены" });
+      }
+
+      const { system_geo_lat, system_geo_lon, worker_geo_lat, worker_geo_lon } =
+        rows[0];
+
+      return res.json({
+        system: {
+          geo_lat: system_geo_lat,
+          geo_lon: system_geo_lon,
+        },
+        worker: {
+          geo_lat: worker_geo_lat,
+          geo_lon: worker_geo_lon,
+        },
+      });
+    } catch (error) {
+      console.error("getLatLon error:", error);
+      return res.status(500).json({ error: "Ошибка сервера" });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

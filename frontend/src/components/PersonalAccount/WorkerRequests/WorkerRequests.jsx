@@ -11,9 +11,9 @@ import { ThemeContext } from "../../../Theme";
 import RequestDetails from "../tabs/ViewRequests/RequestDetails/RequestDetails";
 import AdditionalInfoDialog from "./AdditionalInfoDialog/AdditionalInfoDialog";
 import { useNavigate } from "react-router-dom";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import TableView from "./TableView";
+// import ToggleButton from "@mui/material/ToggleButton";
+// import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+// import TableView from "./TableView";
 import ListView from "./ListView";
 
 export default function WorkerRequests({
@@ -88,7 +88,7 @@ export default function WorkerRequests({
 
   useEffect(() => {
     getData();
-    const intervalId = setInterval(getData, 60000);
+    const intervalId = setInterval(getData, 120000);
 
     return () => clearInterval(intervalId);
   }, [getData]);
@@ -157,7 +157,7 @@ export default function WorkerRequests({
           </Button>
         </section>
       </div>
-      <section
+      {/* <section
         style={{
           display: "flex",
           justifyContent: "center",
@@ -206,9 +206,9 @@ export default function WorkerRequests({
             Таблица
           </ToggleButton>
         </ToggleButtonGroup>
-      </section>
+      </section> */}
 
-      {isTableView ? (
+      {/* {isTableView ? (
         <TableView
           availData={availData}
           isProcessing={isProcessing}
@@ -228,7 +228,16 @@ export default function WorkerRequests({
           setCurrentItem={(e) => setCurrentItem(e)}
           removeRequest={(e) => removeRequest(e)}
         />
-      )}
+      )} */}
+      <ListView
+        availData={availData}
+        isProcessing={isProcessing}
+        addRequest={addRequest}
+        setAdditionalOpen={() => setAdditionalOpen(!additionalOpen)}
+        setDetailsObject={(e) => setDetailsObject(e)}
+        setCurrentItem={(e) => setCurrentItem(e)}
+        removeRequest={(e) => removeRequest(e)}
+      />
       {add_failure && (
         <div className={styles.added__failed}>
           <h4>Заявка уже взята в работу</h4>
@@ -252,6 +261,7 @@ export default function WorkerRequests({
 
       {currentItem !== null && (
         <AdditionalInfoDialog
+          key={currentItem.id}
           open={additionalOpen}
           item={currentItem}
           setAdditionalOpen={() => setAdditionalOpen(false)}

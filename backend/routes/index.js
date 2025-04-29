@@ -81,6 +81,11 @@ router.get(
   checkAuth,
   DataController.getRequestPhoto
 );
+router.get(
+  "/getLatLon/:assigned_to/:system_name",
+  checkCookie,
+  DataController.getLatLon
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
