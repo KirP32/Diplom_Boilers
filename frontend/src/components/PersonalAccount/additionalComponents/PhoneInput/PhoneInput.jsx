@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+// PhoneInputComponent.jsx
+import React from "react";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
+import styles from "./PhoneInput.module.scss";
 
 export default function PhoneInputComponent({ phone, onPhoneChange, style }) {
   return (
-    <div
-      className="phone-input-container"
-      style={{ position: "relative", zIndex: 2 }}
-    >
+    <div className={styles.container}>
       <PhoneInput
         defaultCountry="ru"
         value={phone}
