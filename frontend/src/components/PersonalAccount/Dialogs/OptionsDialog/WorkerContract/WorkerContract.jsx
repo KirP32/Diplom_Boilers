@@ -137,7 +137,7 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
           ) : (
             <>
               {data?.company_name}, действующий на основании свидетельства
-              ОГРНИП{" "}
+              ОГРНИП {data?.ogrn} и именуемое в дальнейшем как «Исполнитель».
             </>
           )}
         </Text>
@@ -640,7 +640,9 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
               <Text style={styles.requisiteText}>{data?.company_name}</Text>
               <Text style={styles.requisiteText}>{data?.legal_address}</Text>
               <Text style={styles.requisiteText}>ИНН {data?.inn}</Text>
-              <Text style={styles.requisiteText}>КПП {data?.kpp}</Text>
+              {isCompany && (
+                <Text style={styles.requisiteText}>КПП {data?.kpp}</Text>
+              )}
               <Text style={styles.requisiteText}>
                 р/с {data?.current_account}
               </Text>
@@ -651,9 +653,13 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
               <Text style={styles.requisiteText}>
                 к/с {data?.correspondent_account}
               </Text>
-              <Text style={styles?.requisiteText}>
-                {data?.position + " " + data?.company_name}
-              </Text>
+              {isCompany ? (
+                <Text style={styles?.requisiteText}>
+                  {data?.position + " " + data?.company_name}
+                </Text>
+              ) : (
+                <Text style={styles.requisiteText}>{data?.company_name}</Text>
+              )}
 
               {/* Подпись и печать Исполнителя */}
               <Text style={[styles.requisiteText]}>
@@ -792,7 +798,7 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
           Контактный номер +7 903 697 69 43
         </Text>
         <View>
-          <Text style={[styles.signatureHeader, { marginTop: 350 }]}>
+          <Text style={[styles.signatureHeader, { marginTop: 325 }]}>
             Подписи сторон
           </Text>
           <View style={styles.signatureView}>
