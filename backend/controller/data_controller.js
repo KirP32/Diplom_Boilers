@@ -2087,7 +2087,7 @@ class DataController {
     try {
       const login = decodeJWT(req.cookies.refreshToken).login;
       const result_data = await pool.query(
-        "SELECT region, company_name, position, full_name, contract_number, phone_number, legal_address, inn, kpp, current_account, bank_name, correspondent_account, bic, contact_person, service_access_3_1_127_301, service_access_4_1, service_access_3_1_400_2000, profile_finished_at FROM worker_details WHERE username = $1",
+        "SELECT region, company_name, position, full_name, contract_number, phone_number, legal_address, inn, kpp, current_account, bank_name, correspondent_account, bic, contact_person, service_access_3_1_127_301, service_access_4_1, service_access_3_1_400_2000, profile_finished_at, auth_doct_type, ogrn FROM worker_details WHERE username = $1",
         [login]
       );
       let genitive_postion = result_data.rows[0].position || "";

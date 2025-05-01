@@ -308,7 +308,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
           legal_address:
             result.data.suggestions[0].data.address.unrestricted_value,
           inn: result.data.suggestions[0].data.inn,
-          kpp: "",
+          kpp: "КПП отсутствует",
           ogrn: result.data.suggestions[0].data.ogrn,
         });
       } else {
