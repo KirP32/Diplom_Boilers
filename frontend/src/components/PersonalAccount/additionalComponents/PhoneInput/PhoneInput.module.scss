@@ -1,19 +1,19 @@
 /* PhoneInput.module.scss */
 .container {
-    position: relative;
+    // position: relative;
     /* Убираем z-index для основного контейнера */
 
     /* Стили для обертки селектора */
-    :global(.react-international-phone-country-selector) {
-        position: static; // Меняем на static для корректного позиционирования
-    }
+    // :global(.react-international-phone-country-selector) {
+    //     position: static; // Меняем на static для корректного позиционирования
+    // }
 
     /* Стили для выпадающего списка */
     :global(.react-international-phone-country-selector-dropdown) {
-        position: fixed;
-        top: 85%;
-        left: auto;
-        height: 100px;
-        z-index: 999;
+        // position: fixed;
+        // top: 85%;
+        // left: auto;
+        // height: 100px;
+        z-index: 2;
     }
 }

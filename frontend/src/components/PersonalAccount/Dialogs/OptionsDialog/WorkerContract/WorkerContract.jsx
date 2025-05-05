@@ -97,6 +97,82 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
   const year = date.getFullYear();
   const monthName = date.toLocaleString("ru", { month: "long" });
   const formattedDate = `«${day}» ${monthGenitive[monthName]} ${year} г.`;
+
+  const agreementData = [
+    {
+      no: 1,
+      sku: "05020058",
+      name: "Панель управления котла МВ 4.1 (требуется настройка)",
+      qty: 1,
+    },
+    {
+      no: 2,
+      sku: "05020069",
+      name: "Плата ввода питания котла МВ 4.1",
+      qty: 1,
+    },
+    {
+      no: 3,
+      sku: "05020068",
+      name: "Электрод розжига и ионизация котла MB 4.1 (с крепежом)",
+      qty: 5,
+    },
+    {
+      no: 4,
+      sku: "05020066",
+      name: "Датчик температуры NTC 10 kOm котла MB 4.1",
+      qty: 3,
+    },
+    {
+      no: 5,
+      sku: "05030152",
+      name: "Датчик давления воды котла MB 4.1",
+      qty: 3,
+    },
+    {
+      no: 6,
+      sku: "05020064",
+      name: "Сифон для слива конденсата котла MB 4.1",
+      qty: 1,
+    },
+    {
+      no: 7,
+      sku: "05020037",
+      name: "Вентилятор котла MB 4.1 — 80, 99",
+      qty: 1,
+    },
+    { no: 8, sku: "05030003", name: "Панель управления котла МВ 3.1", qty: 1 },
+    {
+      no: 9,
+      sku: "05030017",
+      name: "Плата ввода питания котла МВ 3.1",
+      qty: 1,
+    },
+    {
+      no: 10,
+      sku: "05030026",
+      name: "Датчик температуры NTC 12kOm котла МВ 3.1",
+      qty: 2,
+    },
+    {
+      no: 11,
+      sku: "05030025",
+      name: "Реле давления воды котла МВ 3.1",
+      qty: 3,
+    },
+    {
+      no: 12,
+      sku: "05030142",
+      name: "Сифон для слива конденсата котла МВ 3.1 127, 145, 200, 251",
+      qty: 1,
+    },
+    {
+      no: 13,
+      sku: "05030004",
+      name: "Контроллер горения котла MB 3.1 — 127",
+      qty: 1,
+    },
+  ];
   return (
     <Document onRender={handleOnLoad}>
       <Page size="A4" style={styles.page}>
@@ -836,14 +912,16 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
         </Text>
         <Text style={[styles.paragraph, { marginTop: 15 }]}>
           Сторонами определяется на период действия Договора перечень запасных
-          частей для выполнения Работ, находящихся в резерве у исполнителя
-          согласно пункта 3 Договора.
+          частей для выполнения Работ, находящихся в резерве у Исполнителя
+          согласно пункту 3 Договора.
         </Text>
-        {/* <View style={{ fontSize: 10 }}>
-          <MyTable data={dataPrices !== null ? dataPrices : []} />
-        </View> */}
+
+        <View style={{ fontSize: 10, marginTop: 10 }}>
+          <Appendix3Table data={agreementData} />
+        </View>
+
         <View>
-          <Text style={[styles.signatureHeader, { marginTop: 350 }]}>
+          <Text style={[styles.signatureHeader, { marginTop: 110 }]}>
             Подписи сторон
           </Text>
           <View style={styles.signatureView}>
@@ -861,11 +939,9 @@ export const MyDocument = ({ data, dataPrices, handleOnLoad }) => {
               <Text style={styles.signatureMargin}></Text>
               <View style={styles.signatureLine}></View>
               <Text>
-                {data?.full_name.split(" ")[1][0] +
-                  "." +
-                  data?.full_name.split(" ")[2][0] +
-                  ". " +
-                  data?.full_name.split(" ")[0]}
+                {`${data?.full_name.split(" ")[1][0]}.${
+                  data?.full_name.split(" ")[2][0]
+                }. ${data?.full_name.split(" ")[0]}`}
               </Text>
               <Text>М.П.</Text>
             </View>
@@ -912,6 +988,48 @@ const MyTable = ({ data }) => (
   </View>
 );
 
+const Appendix3Table = ({ data }) => (
+  <View style={styles.table}>
+    {/* Заголовок таблицы */}
+    <View style={styles.tableRow}>
+      <Text
+        style={[styles.tableColHeader, styles.colSmall, styles.alignCenter]}
+      >
+        № п/п
+      </Text>
+      <Text
+        style={[styles.tableColHeader, styles.colMedium, styles.alignCenter]}
+      >
+        Артикул
+      </Text>
+      <Text
+        style={[styles.tableColHeader, styles.colLarge, styles.alignCenter]}
+      >
+        Наименование
+      </Text>
+      <Text style={[styles.tableColHeader, styles.colQty, styles.alignCenter]}>
+        Количество
+      </Text>
+    </View>
+
+    {/* Данные */}
+    {data.map((item, idx) => (
+      <View style={styles.tableRow} key={idx}>
+        <Text style={[styles.tableCol, styles.colSmall, styles.alignCenter]}>
+          {idx + 1}
+        </Text>
+        <Text style={[styles.tableCol, styles.colMedium, styles.alignCenter]}>
+          {item.sku}
+        </Text>
+        <Text style={[styles.tableCol, styles.colLarge]}>{item.name}</Text>
+        <Text style={[styles.tableCol, styles.colQty, styles.alignCenter]}>
+          {item.qty}
+        </Text>
+      </View>
+    ))}
+  </View>
+);
+
 const styles = StyleSheet.create({
   page: {
     paddingTop: 40,
@@ -927,6 +1045,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textTransform: "uppercase",
     //marginBottom: 5,
+  },
+  tableHeader: {
+    fontSize: 10,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  tableCell: {
+    fontSize: 10,
+    padding: 2,
   },
   subHeader: {
     flexDirection: "row",
@@ -997,6 +1124,10 @@ const styles = StyleSheet.create({
   colMedium: {
     width: "100px",
     textAlign: "left",
+  },
+  colQty: {
+    width: "63px",
+    textAlign: "center",
   },
   italic: {
     fontStyle: "italic",
