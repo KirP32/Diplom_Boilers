@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { Fragment, useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   Box,
   Paper,
@@ -14,6 +14,7 @@ import {
   Button as MuiButton,
   Autocomplete,
   Button,
+  IconButton,
 } from "@mui/material";
 import { ThemeContext } from "../../../../Theme";
 import PhoneInput from "../../additionalComponents/PhoneInput/PhoneInput";
@@ -21,9 +22,47 @@ import $api from "../../../../http";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 const token = "98be28db4ed79229bc269503c6a4d868e628b318";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const { access_level } = useContext(ThemeContext);
+  const seriesOptions = [
+    { value: "3.1", label: "MB 3.1" },
+    { value: "4.1", label: "MB 4.1" },
+  ];
+  const modelOptionsMap = {
+    3.1: [
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-301 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-251 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-200 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-400 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-127 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-1199 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-1060 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-800 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-660 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-500 кВт",
+      // с контролем герметичности
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-145 кВт",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-200 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-251 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-301 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-400 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-500 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-660 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-800 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-1060 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-1199 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-1600 кВт с контролем герметичности",
+      "Котел отопительный водогрейный типа GEFFEN MB 3.1-2000 кВт с контролем герметичности",
+    ],
+    4.1: [
+      "Котел конденсационный газовый водогрейный типа GEFFEN MB 4.1-99",
+      "Котел конденсационный газовый водогрейный типа GEFFEN MB 4.1-80",
+      "Котел конденсационный газовый водогрейный типа GEFFEN MB 4.1-60",
+      "Котел конденсационный газовый водогрейный типа GEFFEN MB 4.1-40",
+    ],
+  };
 
   const [problem, setProblem] = useState("");
   const [moduleObj, setModuleObj] = useState({ s_number: "Другое", type: 0 });
@@ -36,28 +75,26 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const [fullname, setFullname] = useState("");
   const [addressValue, setAddresValue] = useState("");
   const [address_list, setAddressList] = useState([]);
-  const deviceOptions = [
-    ...deviceObject.boilers,
-    { s_number: "Другое", type: 0 },
-    { s_number: "Котёл МВ 3", type: 0 },
-    { s_number: "Котёл МВ 4", type: 0 },
-  ];
-  const [defects, setDefects] = useState([{ description: "", date: "" }]);
-  const handleDefectChange = (index, field, value) => {
+  const [defects, setDefects] = useState([
+    { series: "3.1", model: "", serial: "", description: "", date: "" },
+  ]);
+  const handleDefectChange = (idx, field, value) => {
     setDefects((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], [field]: value };
+      if (field === "series") copy[idx].model = "";
+      return copy;
     });
   };
 
-  const addDefectRow = () => {
-    setDefects((prev) => [...prev, { description: "", date: "" }]);
-  };
+  const addDefect = () =>
+    setDefects((prev) => [
+      ...prev,
+      { series: "3.1", model: "", serial: "", description: "", date: "" },
+    ]);
 
-  const removeDefectRow = (index) => {
-    setDefects((prev) => prev.filter((_, i) => i !== index));
-  };
+  const removeDefect = (idx) =>
+    setDefects((prev) => prev.filter((_, i) => i !== idx));
 
   useEffect(() => {
     $api
@@ -73,10 +110,25 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     setWattsonWorker("");
     setAscWorker("");
     setPhone("");
+    setAddresValue("");
+    setDefects([
+      { series: "3.1", model: "", serial: "", description: "", date: "" },
+    ]);
   }
 
   function validate() {
-    return problem.trim() && phone.length === 12;
+    return (
+      problem.trim() &&
+      phone.length === 12 &&
+      defects.every(
+        (d) =>
+          d.series &&
+          d.model &&
+          d.serial.trim() !== "" &&
+          d.date &&
+          d.description.trim() !== ""
+      )
+    );
   }
 
   function handleCreateRequest() {
@@ -230,74 +282,114 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
             <Divider />
           </Grid>
 
-          {/* Модуль */}
           <Grid item xs={4}>
-            <Typography>Проблема с</Typography>
+            <Typography variant="h6">Список дефектов оборудования</Typography>
           </Grid>
-          <Grid item xs={8}>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel>Модуль</InputLabel>
-              <Select
-                label="Модуль"
-                value={moduleObj.s_number}
-                onChange={(e) =>
-                  setModuleObj(
-                    deviceOptions.find((o) => o.s_number === e.target.value)
-                  )
-                }
-              >
-                {deviceOptions.map((opt) => (
-                  <MenuItem key={opt.s_number} value={opt.s_number}>
-                    {opt.s_number}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+          {defects.map((d, idx) => (
+            <Grid item xs={12} key={idx}>
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Grid container spacing={2} alignItems="center">
+                  {/* Серия */}
+                  <Grid item xs={3}>
+                    <Typography>Серия</Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <FormControl fullWidth>
+                      <InputLabel>Серия</InputLabel>
+                      <Select
+                        label="Серия"
+                        value={d.series}
+                        onChange={(e) =>
+                          handleDefectChange(idx, "series", e.target.value)
+                        }
+                      >
+                        <MenuItem value="3.1">3.1</MenuItem>
+                        <MenuItem value="4.1">4.1</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  {/* Модель */}
+                  <Grid item xs={5}>
+                    <FormControl fullWidth>
+                      <InputLabel>Модель</InputLabel>
+                      <Select
+                        label="Модель"
+                        value={d.model}
+                        onChange={(e) =>
+                          handleDefectChange(idx, "model", e.target.value)
+                        }
+                      >
+                        {modelOptionsMap[d.series].map((opt) => (
+                          <MenuItem key={opt} value={opt}>
+                            {opt}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  {/* Кнопка удаления */}
+                  <Grid item xs={1} sx={{ textAlign: "right" }}>
+                    <IconButton onClick={() => removeDefect(idx)} size="small">
+                      <DeleteIcon />
+                    </IconButton>
+                  </Grid>
+
+                  {/* Серийный номер */}
+                  <Grid item xs={3}>
+                    <Typography>Серийный номер</Typography>
+                  </Grid>
+                  <Grid item xs={9}>
+                    <TextField
+                      fullWidth
+                      label="Серийный номер"
+                      value={d.serial}
+                      onChange={(e) =>
+                        handleDefectChange(idx, "serial", e.target.value)
+                      }
+                    />
+                  </Grid>
+
+                  {/* Описание дефекта */}
+                  <Grid item xs={3}>
+                    <Typography>Описание дефекта</Typography>
+                  </Grid>
+                  <Grid item xs={9}>
+                    <TextField
+                      fullWidth
+                      label="Описание"
+                      value={d.description}
+                      onChange={(e) =>
+                        handleDefectChange(idx, "description", e.target.value)
+                      }
+                    />
+                  </Grid>
+
+                  {/* Дата обнаружения */}
+                  <Grid item xs={3}>
+                    <Typography>Дата обнаружения</Typography>
+                  </Grid>
+                  <Grid item xs={9}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      slotProps={{
+                        inputLabel: { shrink: true },
+                      }}
+                      value={d.date}
+                      onChange={(e) =>
+                        handleDefectChange(idx, "date", e.target.value)
+                      }
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+          ))}
 
           <Grid item xs={12}>
-            <Typography variant="h6">Список дефектов</Typography>
-          </Grid>
-          {defects.map((defect, idx) => (
-            <Fragment key={idx}>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Описание дефекта"
-                  variant="outlined"
-                  value={defect.description}
-                  onChange={(e) =>
-                    handleDefectChange(idx, "description", e.target.value)
-                  }
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  fullWidth
-                  label="Дата обнаружения"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  variant="outlined"
-                  value={defect.date}
-                  onChange={(e) =>
-                    handleDefectChange(idx, "date", e.target.value)
-                  }
-                />
-              </Grid>
-              <Grid item xs={2} textAlign="center">
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={() => removeDefectRow(idx)}
-                  disabled={defects.length === 1}
-                >
-                  Удалить
-                </Button>
-              </Grid>
-            </Fragment>
-          ))}
-          <Grid item xs={12}>
-            <Button variant="outlined" onClick={addDefectRow}>
+            <Button variant="outlined" onClick={addDefect}>
               Добавить дефект
             </Button>
           </Grid>
