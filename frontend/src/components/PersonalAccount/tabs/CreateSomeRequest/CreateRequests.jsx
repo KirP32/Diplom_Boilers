@@ -24,6 +24,7 @@ import axios from "axios";
 const token = "98be28db4ed79229bc269503c6a4d868e628b318";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PhotoFolder from "./PhotoPholder/PhotoPholder";
+import HelpCenterIcon from "@mui/icons-material/HelpCenter";
 
 export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const { access_level } = useContext(ThemeContext);
@@ -225,6 +226,14 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     report: [], // «Отчёт о ремонте»
     request: [], // «Фото заявки»
   });
+  async function handleSuggestClick() {
+    $api
+      .get("/getRequestName")
+      .then((result) => {
+        setProblem(result.data.freeName);
+      })
+      .catch((error) => console.log(error));
+  }
   return (
     <Box sx={{ p: 2, mx: "auto" }}>
       <Paper
@@ -243,8 +252,14 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         <Grid container spacing={2} alignItems="center">
           {/* Проблема */}
           <Grid item xs={4}>
-            <Typography>Название заявки</Typography>
+            <Box sx={{ display: "flex" }}>
+              <Typography>Название заявки</Typography>
+              <IconButton onClick={handleSuggestClick}>
+                <HelpCenterIcon color="primary" />
+              </IconButton>
+            </Box>
           </Grid>
+
           <Grid item xs={8}>
             <TextField
               fullWidth
@@ -252,7 +267,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               value={problem}
               onChange={(e) => setProblem(e.target.value)}
               error={!problem.trim()}
-              helperText={!problem.trim() && "Укажите проблему"}
+              helperText={!problem.trim() && "Укажите название"}
             />
           </Grid>
           <Grid item xs={12}>

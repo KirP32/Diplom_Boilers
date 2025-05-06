@@ -1853,6 +1853,7 @@ class DataController {
       });
     }
   }
+
   async getUserAccessLevel(req, res) {
     try {
       const user_id = decodeJWT(req.cookies.refreshToken).login;
@@ -2782,6 +2783,42 @@ class DataController {
     } catch (error) {
       console.error("getLatLon error:", error);
       return res.status(500).json({ error: "Ошибка сервера" });
+    }
+  }
+
+  async getRequestName(req, res) {
+    try {
+      const MAX_ATTEMPTS = 15;
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        const now = new Date();
+
+        const day = String(now.getDate()).padStart(2, "0");
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+
+        const randomPart = Array.from({ length: 5 })
+          .map(() => Math.random().toString(36).charAt(2))
+          .join("");
+
+        const freeName = `Заявка_${day}-${month}_${randomPart}`;
+
+        const { rows } = await pool.query(
+          "SELECT COUNT(*) AS count FROM user_requests WHERE problem_name = $1",
+          [freeName]
+        );
+        if (Number(rows[0].count) === 0) {
+          return res.send({ freeName });
+        }
+
+        await new Promise((r) => setTimeout(r, 50));
+      }
+
+      throw new Error("Не удалось сгенерировать уникальное имя заявки");
+    } catch (err) {
+      console.error("getFreeRequestName error:", err);
+      return res.status(500).json({
+        message:
+          err.message || "Внутренняя ошибка сервера при генерации имени заявки",
+      });
     }
   }
 }

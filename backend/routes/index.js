@@ -86,6 +86,7 @@ router.get(
   checkCookie,
   DataController.getLatLon
 );
+router.get("/getRequestName", checkCookie, DataController.getRequestName);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

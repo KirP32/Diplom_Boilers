@@ -61,7 +61,7 @@ export default function ListView({
         <Table stickyHeader sx={tableSx} aria-label="available table">
           <TableHead>
             <TableRow>
-              <TableCell sx={headerCellSx}>Проблема</TableCell>
+              <TableCell sx={headerCellSx}>Заявка</TableCell>
               <TableCell sx={headerCellSx} align="right">
                 Оборудование
               </TableCell>
@@ -107,7 +107,7 @@ export default function ListView({
         <Table stickyHeader sx={tableSx} aria-label="worker table">
           <TableHead>
             <TableRow>
-              <TableCell sx={headerCellSx}>Проблема</TableCell>
+              <TableCell sx={headerCellSx}>Заявка</TableCell>
               <TableCell sx={headerCellSx} align="right">
                 Оборудование
               </TableCell>
