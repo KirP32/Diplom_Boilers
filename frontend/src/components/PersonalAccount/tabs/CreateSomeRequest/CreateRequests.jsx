@@ -64,7 +64,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   };
 
   const [problem, setProblem] = useState("");
-  const [moduleObj, setModuleObj] = useState({ s_number: "Другое", type: 0 });
+  // const [moduleObj, setModuleObj] = useState({ s_number: "Другое", type: 0 });
   const [description, setDescription] = useState("");
   const [wattsonWorker, setWattsonWorker] = useState("");
   const [ascWorker, setAscWorker] = useState("");
@@ -75,8 +75,10 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const [addressValue, setAddresValue] = useState("");
   const [address_list, setAddressList] = useState([]);
   const [defects, setDefects] = useState([
-    { series: "3.1", model: "", serial: "", description: "", date: "" },
+    { series: "3.1", model: "", serial_number: "", description: "", date: "" },
   ]);
+  const inputRef = useRef();
+
   const handleDefectChange = (idx, field, value) => {
     setDefects((prev) => {
       const copy = [...prev];
@@ -86,11 +88,18 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     });
   };
 
-  const addDefect = () =>
+  const addDefect = () => {
     setDefects((prev) => [
       ...prev,
-      { series: "3.1", model: "", serial: "", description: "", date: "" },
+      {
+        series: "3.1",
+        model: "",
+        serial_number: "",
+        description: "",
+        date: "",
+      },
     ]);
+  };
 
   const removeDefect = (idx) =>
     setDefects((prev) => prev.filter((_, i) => i !== idx));
@@ -104,14 +113,20 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
 
   function clearForm() {
     setProblem("");
-    setModuleObj({ s_number: "Другое", type: 0 });
+    // setModuleObj({ s_number: "Другое", type: 0 });
     setDescription("");
     setWattsonWorker("");
     setAscWorker("");
     setPhone("");
     setAddresValue("");
     setDefects([
-      { series: "3.1", model: "", serial: "", description: "", date: "" },
+      {
+        series: "3.1",
+        model: "",
+        serial_number: "",
+        description: "",
+        date: "",
+      },
     ]);
   }
 
@@ -123,7 +138,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         (d) =>
           d.series &&
           d.model &&
-          d.serial.trim() !== "" &&
+          d.serial_number.trim() !== "" &&
           d.date &&
           d.description.trim() !== ""
       )
@@ -135,12 +150,15 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
 
     const payload = {
       problem_name: problem,
-      module: moduleObj.s_number,
-      created_by: jwtDecode(localStorage.getItem("accessToken") || "").login,
+      // module: moduleObj.s_number,
+      created_by: jwtDecode(
+        localStorage.getItem("accessToken") ||
+          sessionStorage.getItem("accessToken")
+      ).login,
       description,
       system_name: deviceObject.name,
       phone,
-      type: moduleObj.type,
+      // type: moduleObj.type,
       created_by_worker: access_level !== 0,
       access_level,
       assigned_to_wattson: wattsonWorker || null,
@@ -160,22 +178,19 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       });
     });
 
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-
-    try {
-      await $api.post("/createRequest", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      setSuccessFlag(true);
-      setTimeout(() => setSuccessFlag(false), 5000);
-      clearForm();
-    } catch (err) {
-      console.error(err);
-    }
+    console.log(formData.get("data"));
+    // try {
+    //   await $api.post("/createRequest", formData, {
+    //     headers: {
+    //       "Content-Type": "multipart/form-data",
+    //     },
+    //   });
+    //   setSuccessFlag(true);
+    //   setTimeout(() => setSuccessFlag(false), 5000);
+    //   clearForm();
+    // } catch (err) {
+    //   console.error(err);
+    // }
   }
 
   const debounceRef = useRef(null);
@@ -388,9 +403,9 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                     <TextField
                       fullWidth
                       label="Серийный номер"
-                      value={d.serial}
+                      value={d.serial_number}
                       onChange={(e) =>
-                        handleDefectChange(idx, "serial", e.target.value)
+                        handleDefectChange(idx, "serial_number", e.target.value)
                       }
                     />
                   </Grid>
@@ -416,14 +431,15 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                   </Grid>
                   <Grid item xs={9}>
                     <TextField
-                      fullWidth
-                      type="date"
                       slotProps={{
-                        inputLabel: { shrink: true },
                         htmlInput: {
                           sx: { mr: 3 },
                         },
                       }}
+                      fullWidth
+                      type="date"
+                      inputRef={inputRef}
+                      onClick={() => inputRef.current?.showPicker()}
                       value={d.date}
                       onChange={(e) =>
                         handleDefectChange(idx, "date", e.target.value)
