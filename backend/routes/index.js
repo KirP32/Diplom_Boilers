@@ -82,7 +82,7 @@ router.get(
   DataController.getRequestPhoto
 );
 router.get(
-  "/getLatLon/:assigned_to/:system_name",
+  "/getLatLon/:assigned_to/:id",
   checkCookie,
   DataController.getLatLon
 );
@@ -96,7 +96,17 @@ router.post("/getUser_email", checkCookie, DataController.getUser_email);
 router.post("/add_device", checkCookie, DataController.add_device);
 router.post("/getActions", checkCookie, DataController.getActions);
 router.post("/addRequest", checkCookie, DataController.addRequest);
-router.post("/createRequest", checkCookie, DataController.createRequest);
+router.post(
+  "/createRequest",
+  checkCookie,
+  upload.fields([
+    { name: "defects", maxCount: 20 },
+    { name: "nameplates", maxCount: 20 },
+    { name: "report", maxCount: 20 },
+    { name: "request", maxCount: 20 },
+  ]),
+  DataController.createRequest
+);
 router.post("/addSystem", checkCookie, DataController.addSystem);
 router.post(
   "/updateDatabaseColumn",

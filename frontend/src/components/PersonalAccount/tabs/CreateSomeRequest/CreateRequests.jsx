@@ -23,13 +23,11 @@ import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 const token = "98be28db4ed79229bc269503c6a4d868e628b318";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PhotoFolder from "./PhotoPholder/PhotoPholder";
 
 export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const { access_level } = useContext(ThemeContext);
-  const seriesOptions = [
-    { value: "3.1", label: "MB 3.1" },
-    { value: "4.1", label: "MB 4.1" },
-  ];
+
   const modelOptionsMap = {
     3.1: [
       "Котел отопительный водогрейный типа GEFFEN MB 3.1-301 кВт",
@@ -131,9 +129,10 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     );
   }
 
-  function handleCreateRequest() {
+  async function handleCreateRequest() {
     if (!validate()) return;
-    const data = {
+
+    const payload = {
       problem_name: problem,
       module: moduleObj.s_number,
       created_by: jwtDecode(localStorage.getItem("accessToken") || "").login,
@@ -148,12 +147,36 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       defects,
       addressValue,
     };
-    $api.post("/createRequest", data).then(() => {
+    
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(payload));
+
+    Object.entries(photoFiles).forEach(([category, filesArray]) => {
+      filesArray.forEach((file) => {
+        if (file instanceof File) {
+          formData.append(category, file, file.name);
+        }
+      });
+    });
+
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+
+    try {
+      await $api.post("/createRequest", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       setSuccessFlag(true);
       setTimeout(() => setSuccessFlag(false), 5000);
       clearForm();
-    });
+    } catch (err) {
+      console.error(err);
+    }
   }
+
   const debounceRef = useRef(null);
   function handleInputChange(newInputValue) {
     if (newInputValue !== addressValue) {
@@ -196,6 +219,12 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       console.log(error.response ? error.response.data : error);
     }
   }
+  const [photoFiles, setPhotoFiles] = useState({
+    defects: [], // «Неисправности»
+    nameplates: [], // «Шильдики котлов»
+    report: [], // «Отчёт о ремонте»
+    request: [], // «Фото заявки»
+  });
   return (
     <Box sx={{ p: 2, mx: "auto" }}>
       <Paper
@@ -376,6 +405,9 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                       type="date"
                       slotProps={{
                         inputLabel: { shrink: true },
+                        htmlInput: {
+                          sx: { mr: 3 },
+                        },
                       }}
                       value={d.date}
                       onChange={(e) =>
@@ -392,6 +424,36 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
             <Button variant="outlined" onClick={addDefect}>
               Добавить дефект
             </Button>
+          </Grid>
+          <Grid item xs={4}>
+            <PhotoFolder
+              title="Неисправности"
+              files={photoFiles.defects}
+              onChange={(newFiles) =>
+                setPhotoFiles((prev) => ({ ...prev, defects: newFiles }))
+              }
+            />
+            <PhotoFolder
+              title="Шильдики котлов"
+              files={photoFiles.nameplates}
+              onChange={(newFiles) =>
+                setPhotoFiles((prev) => ({ ...prev, nameplates: newFiles }))
+              }
+            />
+            <PhotoFolder
+              title="Отчёт о ремонте"
+              files={photoFiles.report}
+              onChange={(newFiles) =>
+                setPhotoFiles((prev) => ({ ...prev, report: newFiles }))
+              }
+            />
+            <PhotoFolder
+              title="Фото заявки"
+              files={photoFiles.request}
+              onChange={(newFiles) =>
+                setPhotoFiles((prev) => ({ ...prev, request: newFiles }))
+              }
+            />
           </Grid>
 
           <Grid item xs={12}>

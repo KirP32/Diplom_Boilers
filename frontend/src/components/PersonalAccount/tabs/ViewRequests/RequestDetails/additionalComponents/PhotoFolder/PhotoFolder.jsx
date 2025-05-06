@@ -97,7 +97,7 @@ export default function PhotoFolder({ requestID }) {
     files.forEach(({ file }) => {
       formData.append("files", file);
     });
-    // ДОДЕЛАТЬ СОВМЕЩЕНИЕ ID И URL ИЗ FILES
+
     try {
       const response = await $api.post(`/uploadPhoto/${requestID}`, formData);
 

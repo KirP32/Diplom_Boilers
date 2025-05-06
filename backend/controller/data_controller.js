@@ -664,6 +664,9 @@ class DataController {
 
   async createRequest(req, res) {
     try {
+      const raw = req.body.data;
+      if (!raw) return res.status(400).json({ error: "Нет данных заявки" });
+      const payload = JSON.parse(raw);
       const {
         problem_name,
         module,
@@ -673,71 +676,128 @@ class DataController {
         phone,
         created_by_worker,
         access_level,
-        additional_data,
-        assigned_to_wattson, // региональный
-        assigned_to_worker, // работник от АСЦ
-      } = req.body;
-      let { type } = req.body;
-      if (!type) {
-        type = 0;
-      }
+        assigned_to_wattson,
+        assigned_to_worker,
+        addressValue,
+      } = payload;
 
       const createdById = await getID(created_by);
-
-      let assignedWorkerId = null;
-      let assignedRegionalWorkerId = null;
-
-      assignedRegionalWorkerId = assigned_to_wattson
-        ? await getID(assigned_to_wattson)
-        : null;
-      assignedWorkerId = assigned_to_worker
+      let worker_confirmed = false;
+      let assignedWorkerId = assigned_to_worker
         ? await getID(assigned_to_worker)
         : null;
-
-      let worker_confirmed = false;
+      let assignedRegionalWorkerId = assigned_to_wattson
+        ? await getID(assigned_to_wattson)
+        : null;
 
       if (access_level === 1) {
         assignedWorkerId = createdById;
         worker_confirmed = true;
       }
 
-      const result = await pool.query(
-        `INSERT INTO user_requests 
-          (problem_name, type, status, assigned_to, region_assigned_to, created_at, module, created_by, description, system_name, phone_number, created_by_worker, gef_assigned_to)
-        VALUES 
-          ($1, $8, 0, $9, $10, current_timestamp, $2, $3, $4, $5, $6, $7, $11)
-        RETURNING id`,
+      const insertReq = await pool.query(
+        `INSERT INTO user_requests
+          (problem_name, type, status, assigned_to, region_assigned_to, created_at,
+           module, created_by, description, system_name, phone_number,
+           created_by_worker, gef_assigned_to, address_value)
+         VALUES ($1, $2, 0, $3, $4, current_timestamp,
+                 $5, $6, $7, $8, $9, $10, $11, $12)
+         RETURNING id`,
         [
           problem_name,
+          module,
+          assignedWorkerId,
+          assignedRegionalWorkerId,
           module,
           createdById,
           description,
           system_name,
           phone,
           created_by_worker,
-          type,
-          assignedWorkerId,
-          assignedRegionalWorkerId,
           access_level === 3 ? createdById : null,
+          addressValue,
         ]
       );
-
-      if (result.rowCount !== 1) {
-        return res.status(500).send({ error: "Ошибка при создании заявки" });
-      }
-
-      const requestId = result.rows[0].id;
+      if (insertReq.rowCount !== 1)
+        throw new Error("Не удалось создать заявку");
+      const requestId = insertReq.rows[0].id;
 
       await pool.query(
-        `INSERT INTO user_requests_info (request_id, additional_info, created_at, worker_confirmed, wattson_confirmed)
-        VALUES ($1, $2, current_timestamp, $3, FALSE)`,
+        `INSERT INTO user_requests_info
+           (request_id, additional_info, created_at, worker_confirmed, wattson_confirmed)
+         VALUES ($1, $2, current_timestamp, $3, FALSE)`,
         [requestId, problem_name, worker_confirmed]
       );
 
-      return res.sendStatus(200);
-    } catch (error) {
-      console.error("Ошибка при выполнении запроса:", error);
-      res.status(500).send({ error: "Ошибка при создании заявки" });
+      const uploadedBy = createdById;
+      const categories = ["defects", "nameplates", "report", "request"];
+      for (let category of categories) {
+        const files = req.files?.[category] || [];
+        for (let file of files) {
+          const originalName = Buffer.from(
+            file.originalname,
+            "latin1"
+          ).toString("utf-8");
+          const key = `${requestId}/${category}/${originalName}`;
+
+          await s3.send(
+            new PutObjectCommand({
+              Bucket: process.env.S3_BUCKET,
+              Key: key,
+              Body: file.buffer,
+              ContentType: file.mimetype,
+              ContentLength: file.size,
+            })
+          );
+
+          await pool.query(
+            `INSERT INTO photos
+               (issue_id, category, filename, original_name, uploaded_by)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [requestId, category, key, originalName, uploadedBy]
+          );
+        }
+      }
+
+      const token = "98be28db4ed79229bc269503c6a4d868e628b318";
+      const daDataRes = await axios.post(
+        "https://cleaner.dadata.ru/api/v1/clean/address",
+        [addressValue],
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Token ${token}`,
+            "X-secret": "e8d55594effa9cf872d2271135c9f21bb3dfeeb3",
+          },
+        }
+      );
+      const { geo_lat, geo_lon } = daDataRes.data[0] || {};
+      if (geo_lat == null || geo_lon == null) {
+        throw new Error("DaData вернула некорректный ответ");
+      }
+      await pool.query(
+        `INSERT INTO user_requests(geo_lat, geo_lon)
+         VALUES($1, $2)`,
+        [geo_lat, geo_lon]
+      );
+      return res.status(200).json({ requestId });
+    } catch (err) {
+      console.error("createRequest error:", err);
+      return res.status(500).json({ error: err.message || "Серверная ошибка" });
+    } finally {
+      if (req.files) {
+        Object.values(req.files)
+          .flat()
+          .forEach((file) => {
+            if (file.path) {
+              fs.unlink(file.path, (e) => {
+                if (e)
+                  console.warn("Не удалось удалить temp файл:", file.path, e);
+              });
+            }
+          });
+      }
     }
   }
 
@@ -788,8 +848,8 @@ class DataController {
         ur.created_at,
   
         -- Координаты инженерной системы
-        sd.geo_lat   AS system_geo_lat,
-        sd.geo_lon   AS system_geo_lon,
+        ur.geo_lat   AS system_geo_lat,
+        ur.geo_lon   AS system_geo_lon,
   
         -- Координаты АСЦ
         wd.geo_lat   AS worker_geo_lat,
@@ -1376,7 +1436,7 @@ class DataController {
     try {
       await client.query("BEGIN");
 
-      const { system_name, addressValue } = req.body;
+      const { system_name } = req.body;
       const exists = await client.query(
         "SELECT 1 FROM systems WHERE name = $1",
         [system_name]
@@ -1397,30 +1457,6 @@ class DataController {
       await client.query(
         "INSERT INTO user_systems(user_id, name) VALUES($1, $2)",
         [user_id, system_name]
-      );
-
-      const token = "98be28db4ed79229bc269503c6a4d868e628b318";
-      const daDataRes = await axios.post(
-        "https://cleaner.dadata.ru/api/v1/clean/address",
-        [addressValue],
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Token ${token}`,
-            "X-secret": "e8d55594effa9cf872d2271135c9f21bb3dfeeb3",
-          },
-        }
-      );
-      const { geo_lat, geo_lon } = daDataRes.data[0] || {};
-      if (geo_lat == null || geo_lon == null) {
-        throw new Error("DaData вернула некорректный ответ");
-      }
-
-      await client.query(
-        `INSERT INTO systems_details(system_id, geo_lat, geo_lon)
-         VALUES($1, $2, $3)`,
-        [system_id, geo_lat, geo_lon]
       );
 
       await client.query("COMMIT");
@@ -2702,28 +2738,28 @@ class DataController {
   // }
   //
   async getLatLon(req, res) {
-    const { assigned_to, system_name } = req.params;
+    const userId = parseInt(req.params.assigned_to, 10);
+    const requestId = parseInt(req.params.id, 10);
 
-    const userId = parseInt(assigned_to, 10);
-    if (isNaN(userId)) {
-      return res.status(400).json({ error: "Неверный assigned_to" });
+    if (isNaN(userId) || isNaN(requestId)) {
+      return res.status(400).json({ error: "Неверные параметры" });
     }
 
     try {
       const { rows } = await pool.query(
         `
         SELECT
-          sd.geo_lat   AS system_geo_lat,
-          sd.geo_lon   AS system_geo_lon,
+          ur.geo_lat   AS system_geo_lat,
+          ur.geo_lon   AS system_geo_lon,
           wd.geo_lat   AS worker_geo_lat,
           wd.geo_lon   AS worker_geo_lon
-        FROM systems_details sd
-        JOIN systems s     ON sd.system_id = s.id
-        JOIN users u       ON u.id = $1
-        JOIN worker_details wd ON wd.username = u.username
-        WHERE s.name = $2
+        FROM user_requests ur
+        JOIN worker_details wd
+          ON ur.assigned_to = $1
+             AND wd.username = (SELECT username FROM users WHERE id = $1)
+        WHERE ur.id = $2
         `,
-        [userId, system_name]
+        [userId, requestId]
       );
 
       if (rows.length === 0) {

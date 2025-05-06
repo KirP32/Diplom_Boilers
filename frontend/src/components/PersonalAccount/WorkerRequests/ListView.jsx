@@ -158,7 +158,7 @@ const RequestRow = React.memo(
         abortControllerRef.current = new AbortController();
         try {
           const result = await $api.get(
-            `/getLatLon/${item.assigned_to}/${item.system_name}`,
+            `/getLatLon/${item.assigned_to}/${item.id}`,
             { signal: abortControllerRef.current.signal }
           );
 
@@ -292,7 +292,7 @@ const RequestRowInWork = React.memo(
       const fetchDistance = async () => {
         try {
           const result = await $api.get(
-            `/getLatLon/${item.assigned_to}/${item.system_name}`,
+            `/getLatLon/${item.assigned_to}/${item.id}`,
             { signal: controller.signal }
           );
 
