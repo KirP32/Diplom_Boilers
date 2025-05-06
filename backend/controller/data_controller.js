@@ -663,13 +663,17 @@ class DataController {
   }
 
   async createRequest(req, res) {
+    const client = await pool.connect();
     try {
+      await client.query("BEGIN");
+
       const raw = req.body.data;
-      if (!raw) return res.status(400).json({ error: "Нет данных заявки" });
+      if (!raw) {
+        return res.status(400).json({ error: "Нет данных заявки" });
+      }
       const payload = JSON.parse(raw);
       const {
         problem_name,
-        module,
         created_by,
         description,
         system_name,
@@ -679,6 +683,7 @@ class DataController {
         assigned_to_wattson,
         assigned_to_worker,
         addressValue,
+        defects = [],
       } = payload;
 
       const createdById = await getID(created_by);
@@ -695,34 +700,32 @@ class DataController {
         worker_confirmed = true;
       }
 
-      const insertReq = await pool.query(
+      const insertReq = await client.query(
         `INSERT INTO user_requests
-          (problem_name, type, status, assigned_to, region_assigned_to, created_at,
-           module, created_by, description, system_name, phone_number,
-           created_by_worker, gef_assigned_to, address_value)
-         VALUES ($1, $2, 0, $3, $4, current_timestamp,
-                 $5, $6, $7, $8, $9, $10, $11, $12)
+           (problem_name, type, status, assigned_to, region_assigned_to,
+            created_at, module, created_by, description, system_name,
+            phone_number, created_by_worker, gef_assigned_to)
+         VALUES
+           ($1, 0, 0, $2, $3, current_timestamp,
+            '', $4, $5, $6, $7, $8, $9)
          RETURNING id`,
         [
           problem_name,
-          module,
           assignedWorkerId,
           assignedRegionalWorkerId,
-          module,
           createdById,
           description,
           system_name,
           phone,
           created_by_worker,
           access_level === 3 ? createdById : null,
-          addressValue,
         ]
       );
       if (insertReq.rowCount !== 1)
         throw new Error("Не удалось создать заявку");
       const requestId = insertReq.rows[0].id;
 
-      await pool.query(
+      await client.query(
         `INSERT INTO user_requests_info
            (request_id, additional_info, created_at, worker_confirmed, wattson_confirmed)
          VALUES ($1, $2, current_timestamp, $3, FALSE)`,
@@ -731,9 +734,10 @@ class DataController {
 
       const uploadedBy = createdById;
       const categories = ["defects", "nameplates", "report", "request"];
-      for (let category of categories) {
+      for (const category of categories) {
         const files = req.files?.[category] || [];
-        for (let file of files) {
+        for (const file of files) {
+          // если будет ошибка с s3, то читать файл через fs.promises.readFile(file.path)
           const originalName = Buffer.from(
             file.originalname,
             "latin1"
@@ -750,7 +754,7 @@ class DataController {
             })
           );
 
-          await pool.query(
+          await client.query(
             `INSERT INTO photos
                (issue_id, category, filename, original_name, uploaded_by)
              VALUES ($1, $2, $3, $4, $5)`,
@@ -759,7 +763,24 @@ class DataController {
         }
       }
 
-      const token = "98be28db4ed79229bc269503c6a4d868e628b318";
+      // 5) Вставка дефектов в user_requests_details
+      for (const item of defects) {
+        await client.query(
+          `INSERT INTO user_requests_details
+             (user_request_id, series, model, serial_number, defect_info, find_date)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [
+            requestId,
+            item.series,
+            item.model,
+            item.serial_number,
+            item.description,
+            item.date, // формат "YYYY-MM-DD"
+          ]
+        );
+      }
+
+      // 6) Получаем geo-координаты из DaData и сохраняем в user_requests
       const daDataRes = await axios.post(
         "https://cleaner.dadata.ru/api/v1/clean/address",
         [addressValue],
@@ -767,8 +788,8 @@ class DataController {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Token ${token}`,
-            "X-secret": "e8d55594effa9cf872d2271135c9f21bb3dfeeb3",
+            Authorization: `Token ${process.env.DADATA_TOKEN}`,
+            "X-secret": process.env.DADATA_SECRET,
           },
         }
       );
@@ -776,16 +797,21 @@ class DataController {
       if (geo_lat == null || geo_lon == null) {
         throw new Error("DaData вернула некорректный ответ");
       }
-      await pool.query(
-        `INSERT INTO user_requests(geo_lat, geo_lon)
-         VALUES($1, $2)`,
-        [geo_lat, geo_lon]
+      await client.query(
+        `UPDATE user_requests
+           SET geo_lat = $1, geo_lon = $2
+         WHERE id = $3`,
+        [geo_lat, geo_lon, requestId]
       );
+
+      await client.query("COMMIT");
       return res.status(200).json({ requestId });
     } catch (err) {
+      await client.query("ROLLBACK");
       console.error("createRequest error:", err);
       return res.status(500).json({ error: err.message || "Серверная ошибка" });
     } finally {
+      client.release();
       if (req.files) {
         Object.values(req.files)
           .flat()
