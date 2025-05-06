@@ -147,7 +147,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       defects,
       addressValue,
     };
-    
+
     const formData = new FormData();
     formData.append("data", JSON.stringify(payload));
 
@@ -243,7 +243,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         <Grid container spacing={2} alignItems="center">
           {/* Проблема */}
           <Grid item xs={4}>
-            <Typography>Ваша проблема</Typography>
+            <Typography>Название заявки</Typography>
           </Grid>
           <Grid item xs={8}>
             <TextField
