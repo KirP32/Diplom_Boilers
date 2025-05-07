@@ -65,9 +65,7 @@ export default function PhotoFolder({ title, files, onChange }) {
           textAlign: "center",
         }}
       >
-        {dragOver
-          ? "Отпустите фотографии, чтобы загрузить"
-          : "Перетащите фотографии, чтобы загрузить"}
+        {"Перетащите фотографии, чтобы загрузить"}
         <input
           type="file"
           accept="image/*"

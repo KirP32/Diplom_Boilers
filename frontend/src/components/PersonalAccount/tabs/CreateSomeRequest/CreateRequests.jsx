@@ -13,21 +13,23 @@ import {
   InputLabel,
   Button as MuiButton,
   Autocomplete,
-  Button,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import { ThemeContext } from "../../../../Theme";
 import PhoneInput from "../../additionalComponents/PhoneInput/PhoneInput";
 import $api from "../../../../http";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-const token = "98be28db4ed79229bc269503c6a4d868e628b318";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PhotoFolder from "./PhotoPholder/PhotoPholder";
 import HelpCenterIcon from "@mui/icons-material/HelpCenter";
 
+const token = "98be28db4ed79229bc269503c6a4d868e628b318";
+
 export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const { access_level } = useContext(ThemeContext);
+  const [loading, setLoading] = useState(false);
 
   const modelOptionsMap = {
     3.1: [
@@ -41,7 +43,6 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       "Котел отопительный водогрейный типа GEFFEN MB 3.1-800 кВт",
       "Котел отопительный водогрейный типа GEFFEN MB 3.1-660 кВт",
       "Котел отопительный водогрейный типа GEFFEN MB 3.1-500 кВт",
-      // с контролем герметичности
       "Котел отопительный водогрейный типа GEFFEN MB 3.1-145 кВт",
       "Котел отопительный водогрейный типа GEFFEN MB 3.1-200 кВт с контролем герметичности",
       "Котел отопительный водогрейный типа GEFFEN MB 3.1-251 кВт с контролем герметичности",
@@ -64,7 +65,6 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   };
 
   const [problem, setProblem] = useState("");
-  // const [moduleObj, setModuleObj] = useState({ s_number: "Другое", type: 0 });
   const [description, setDescription] = useState("");
   const [wattsonWorker, setWattsonWorker] = useState("");
   const [ascWorker, setAscWorker] = useState("");
@@ -77,33 +77,12 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const [defects, setDefects] = useState([
     { series: "3.1", model: "", serial_number: "", description: "", date: "" },
   ]);
-  // const inputRef = useRef();
-
-  const handleDefectChange = (idx, field, value) => {
-    console.log("idx:", idx, "field:", field, "value", value);
-    setDefects((prev) => {
-      const copy = [...prev];
-      copy[idx] = { ...copy[idx], [field]: value };
-      if (field === "series") copy[idx].model = "";
-      return copy;
-    });
-  };
-
-  const addDefect = () => {
-    setDefects((prev) => [
-      ...prev,
-      {
-        series: "3.1",
-        model: "",
-        serial_number: "",
-        description: "",
-        date: "",
-      },
-    ]);
-  };
-
-  const removeDefect = (idx) =>
-    setDefects((prev) => prev.filter((_, i) => i !== idx));
+  const [photoFiles, setPhotoFiles] = useState({
+    defects: [],
+    nameplates: [],
+    report: [],
+    request: [],
+  });
 
   useEffect(() => {
     $api
@@ -114,12 +93,12 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
 
   function clearForm() {
     setProblem("");
-    // setModuleObj({ s_number: "Другое", type: 0 });
     setDescription("");
     setWattsonWorker("");
     setAscWorker("");
     setPhone("");
     setAddresValue("");
+    setFullname("");
     setDefects([
       {
         series: "3.1",
@@ -129,6 +108,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         date: "",
       },
     ]);
+    setPhotoFiles({ defects: [], nameplates: [], report: [], request: [] });
   }
 
   function validate() {
@@ -139,19 +119,64 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         (d) =>
           d.series &&
           d.model &&
-          d.serial_number.trim() !== "" &&
+          d.serial_number.trim() &&
           d.date &&
-          d.description.trim() !== ""
+          d.description.trim()
       )
     );
   }
 
+  const debounceRef = useRef(null);
+  function handleInputChange(newInputValue) {
+    if (newInputValue !== addressValue) {
+      setAddresValue(newInputValue);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(
+        () => handleLegalAddress(newInputValue),
+        500
+      );
+    }
+  }
+  async function handleLegalAddress(query) {
+    try {
+      const result = await axios.post(
+        "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address",
+        { query, count: 7 },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Token ${token}`,
+          },
+        }
+      );
+      setAddressList(
+        result.data.suggestions.map((item) => ({
+          label: item.value,
+          unrestricted_value: item.unrestricted_value,
+        }))
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  function handleChange(event, newValue) {
+    if (typeof newValue === "string") setAddresValue(newValue);
+  }
+  async function handleSuggestClick() {
+    try {
+      const res = await $api.get("/getRequestName");
+      setProblem(res.data.freeName);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async function handleCreateRequest() {
     if (!validate()) return;
-
+    setLoading(true);
     const payload = {
       problem_name: problem,
-      // module: moduleObj.s_number,
       created_by: jwtDecode(
         localStorage.getItem("accessToken") ||
           sessionStorage.getItem("accessToken")
@@ -159,7 +184,6 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       description,
       system_name: deviceObject.name,
       phone,
-      // type: moduleObj.type,
       created_by_worker: access_level !== 0,
       access_level,
       assigned_to_wattson: wattsonWorker || null,
@@ -168,96 +192,70 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       addressValue,
       fullname,
     };
-
     const formData = new FormData();
     formData.append("data", JSON.stringify(payload));
-
-    Object.entries(photoFiles).forEach(([category, filesArray]) => {
-      filesArray.forEach((file) => {
-        if (file instanceof File) {
-          formData.append(category, file, file.name);
-        }
-      });
-    });
-
+    Object.entries(photoFiles).forEach(([cat, files]) =>
+      files.forEach((f) => f instanceof File && formData.append(cat, f, f.name))
+    );
     try {
       await $api.post("/createRequest", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
       setSuccessFlag(true);
-      setTimeout(() => setSuccessFlag(false), 5000);
       clearForm();
-      setPhotoFiles({
-        defects: [],
-        nameplates: [],
-        report: [],
-        request: [],
-      });
+      setTimeout(() => setSuccessFlag(false), 10000);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   }
 
-  const debounceRef = useRef(null);
-  function handleInputChange(newInputValue) {
-    if (newInputValue !== addressValue) {
-      setAddresValue(newInputValue);
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-      debounceRef.current = setTimeout(() => {
-        handleLegalAddress(newInputValue);
-      }, 500);
-    }
+  function addDefect() {
+    setDefects((prev) => [
+      ...prev,
+      {
+        series: "3.1",
+        model: "",
+        serial_number: "",
+        description: "",
+        date: "",
+      },
+    ]);
+  }
+  function removeDefect(idx) {
+    setDefects((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  function handleChange(event, newValue) {
-    if (newValue && typeof newValue === "string") {
-      setAddresValue(newValue);
-    }
-  }
-  async function handleLegalAddress(query) {
-    try {
-      const result = await axios({
-        method: "POST",
-        url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Token ${token}`,
-        },
-        data: { query, count: 7 },
-      });
-      let temp_list = [];
-      result.data.suggestions.forEach((item) =>
-        temp_list.push({
-          label: item.value,
-          unrestricted_value: item.unrestricted_value,
-        })
-      );
-      setAddressList(temp_list);
-    } catch (error) {
-      console.log(error.response ? error.response.data : error);
-    }
-  }
-  const [photoFiles, setPhotoFiles] = useState({
-    defects: [], // «Неисправности»
-    nameplates: [], // «Шильдики котлов»
-    report: [], // «Отчёт о ремонте»
-    request: [], // «Фото заявки»
-  });
-  async function handleSuggestClick() {
-    $api
-      .get("/getRequestName")
-      .then((result) => {
-        setProblem(result.data.freeName);
-      })
-      .catch((error) => console.log(error));
-  }
+  const handleDefectChange = (idx, field, value) => {
+    console.log("idx:", idx, "field:", field, "value", value);
+    setDefects((prev) => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], [field]: value };
+      if (field === "series") copy[idx].model = "";
+      return copy;
+    });
+  };
   return (
-    <Box sx={{ p: 2, mx: "auto" }}>
+    <Box sx={{ p: 2, mx: "auto", position: "relative" }}>
+      {loading && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: "rgba(255,255,255,0.7)",
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
       <Paper
         elevation={1}
         sx={{
@@ -268,11 +266,9 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         }}
       >
         <Typography variant="h4" gutterBottom align="center">
-          <strong> Создание заявки</strong>
+          <strong>Создание заявки</strong>
         </Typography>
-
         <Grid container spacing={2} alignItems="center">
-          {/* Проблема */}
           <Grid item xs={4}>
             <Box sx={{ display: "flex" }}>
               <Typography>Название заявки</Typography>
@@ -281,7 +277,6 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               </IconButton>
             </Box>
           </Grid>
-
           <Grid item xs={8}>
             <TextField
               fullWidth
@@ -295,7 +290,6 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
           <Grid item xs={12}>
             <Divider />
           </Grid>
-
           <Grid item xs={4}>
             <Typography>ФИО контактного лица</Typography>
           </Grid>
@@ -307,7 +301,6 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               onChange={(e) => setFullname(e.target.value)}
             />
           </Grid>
-
           <Grid item xs={4}>
             <Typography>Адресс объекта с неисправным оборудованием</Typography>
           </Grid>
@@ -315,19 +308,13 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
             <Autocomplete
               freeSolo
               value={addressValue}
-              options={address_list}
-              filterOptions={(options) => options}
-              onInputChange={(event, newInputValue) =>
-                handleInputChange(newInputValue)
-              }
-              onChange={(event, newValue) => handleChange(event, newValue)}
-              renderInput={(params) => (
-                <TextField {...params} label="Адрес" autoFocus />
-              )}
+              options={address_list.map((o) => o.unrestricted_value)}
+              filterOptions={(opts) => opts}
+              onInputChange={(e, val) => handleInputChange(val)}
+              onChange={handleChange}
+              renderInput={(params) => <TextField {...params} label="Адрес" />}
             />
           </Grid>
-
-          {/* Телефон */}
           <Grid item xs={4}>
             <Typography>Номер для связи</Typography>
           </Grid>
@@ -335,7 +322,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
             <PhoneInput
               phone={phone}
               onPhoneChange={setPhone}
-              style={{ width: "100%", fontSize: "20px", position: "relative" }}
+              style={{ width: "100%", fontSize: "20px" }}
             />
             {phone.length !== 12 && (
               <Typography color="error" variant="caption">
@@ -343,11 +330,9 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               </Typography>
             )}
           </Grid>
-
           <Grid item xs={12}>
             <Divider />
           </Grid>
-
           <Grid item xs={4}>
             <Typography variant="h6">Список дефектов оборудования</Typography>
           </Grid>
@@ -355,7 +340,6 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
             <Grid item xs={12} key={idx}>
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Grid container spacing={2} alignItems="center">
-                  {/* Серия */}
                   <Grid item xs={3}>
                     <Typography>Серия</Typography>
                   </Grid>
@@ -365,17 +349,15 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                       <Select
                         label="Серия"
                         value={d.series}
-                        onChange={(e) =>
-                          handleDefectChange(idx, "series", e.target.value)
-                        }
+                        onChange={(e) => {
+                          handleDefectChange(idx, "series", e.target.value);
+                        }}
                       >
                         <MenuItem value="3.1">3.1</MenuItem>
                         <MenuItem value="4.1">4.1</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
-
-                  {/* Модель */}
                   <Grid item xs={5}>
                     <FormControl fullWidth>
                       <InputLabel>Модель</InputLabel>
@@ -394,15 +376,11 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                       </Select>
                     </FormControl>
                   </Grid>
-
-                  {/* Кнопка удаления */}
                   <Grid item xs={1} sx={{ textAlign: "right" }}>
                     <IconButton onClick={() => removeDefect(idx)} size="small">
                       <DeleteIcon />
                     </IconButton>
                   </Grid>
-
-                  {/* Серийный номер */}
                   <Grid item xs={3}>
                     <Typography>Серийный номер</Typography>
                   </Grid>
@@ -416,8 +394,6 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                       }
                     />
                   </Grid>
-
-                  {/* Описание дефекта */}
                   <Grid item xs={3}>
                     <Typography>Описание дефекта</Typography>
                   </Grid>
@@ -431,27 +407,10 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                       }
                     />
                   </Grid>
-
-                  {/* Дата обнаружения */}
                   <Grid item xs={3}>
                     <Typography>Дата обнаружения</Typography>
                   </Grid>
                   <Grid item xs={9}>
-                    {/* <TextField
-                      slotProps={{
-                        htmlInput: {
-                          sx: { mr: 3 },
-                        },
-                      }}
-                      fullWidth
-                      type="date"
-                      inputRef={inputRef}
-                      onClick={() => showPicker()}
-                      value={d.date}
-                      onChange={(e) =>
-                        handleDefectChange(idx, "date", e.target.value)
-                      }
-                    /> */}
                     <TextShowPicker
                       d={d}
                       idx={idx}
@@ -462,11 +421,10 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               </Paper>
             </Grid>
           ))}
-
           <Grid item xs={12}>
-            <Button variant="outlined" onClick={addDefect}>
+            <MuiButton variant="outlined" onClick={addDefect}>
               Добавить дефект
-            </Button>
+            </MuiButton>
           </Grid>
           <Grid item xs={4}>
             <PhotoFolder
@@ -498,12 +456,9 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               }
             />
           </Grid>
-
           <Grid item xs={12}>
             <Divider />
           </Grid>
-
-          {/* Подробности */}
           <Grid item xs={4}>
             <Typography>Подробности</Typography>
           </Grid>
@@ -517,17 +472,14 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               onChange={(e) => setDescription(e.target.value)}
             />
           </Grid>
-
           <Grid item xs={12}>
             <Divider />
           </Grid>
-
-          {/* Назначить WATTSON */}
           <Grid item xs={4}>
             <Typography>Назначить WATTSON</Typography>
           </Grid>
           <Grid item xs={8}>
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth>
               <InputLabel>WATTSON</InputLabel>
               <Select
                 label="WATTSON"
@@ -535,7 +487,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                 onChange={(e) => setWattsonWorker(e.target.value)}
               >
                 <MenuItem value="">Нет</MenuItem>
-                {dataEmployees?.wattson?.map((u) => (
+                {dataEmployees?.wattson.map((u) => (
                   <MenuItem key={u.id} value={u.username}>
                     {u.username}
                   </MenuItem>
@@ -543,17 +495,14 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               </Select>
             </FormControl>
           </Grid>
-
           <Grid item xs={12}>
             <Divider />
           </Grid>
-
-          {/* Назначить АСЦ */}
           <Grid item xs={4}>
             <Typography>Назначить АСЦ</Typography>
           </Grid>
           <Grid item xs={8}>
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth>
               <InputLabel>АСЦ</InputLabel>
               <Select
                 label="АСЦ"
@@ -561,7 +510,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                 onChange={(e) => setAscWorker(e.target.value)}
               >
                 <MenuItem value="">Нет</MenuItem>
-                {dataEmployees?.worker?.map((u) => (
+                {dataEmployees?.worker.map((u) => (
                   <MenuItem key={u.id} value={u.username}>
                     {u.username}
                   </MenuItem>
@@ -569,23 +518,20 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
               </Select>
             </FormControl>
           </Grid>
-
           <Grid item xs={12}>
             <Divider />
           </Grid>
         </Grid>
-
         <Box textAlign="center" mt={3}>
           <MuiButton
             variant="contained"
             color="primary"
             onClick={handleCreateRequest}
-            disabled={!validate()}
+            disabled={!validate() || loading}
           >
             Создать
           </MuiButton>
         </Box>
-
         {successFlag && (
           <Box mt={2} textAlign="center">
             <Typography color="success.main">
@@ -603,11 +549,6 @@ function TextShowPicker({ d, handleDefectChange, idx }) {
   const inputRef = useRef();
   return (
     <TextField
-      slotProps={{
-        htmlInput: {
-          sx: { mr: 3 },
-        },
-      }}
       fullWidth
       type="date"
       inputRef={inputRef}
