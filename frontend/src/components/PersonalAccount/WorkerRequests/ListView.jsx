@@ -285,7 +285,6 @@ const RequestRowInWork = React.memo(
     removeRequest,
   }) {
     const [distance, setDistance] = useState(null);
-
     useEffect(() => {
       const controller = new AbortController();
 

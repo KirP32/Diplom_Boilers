@@ -854,33 +854,47 @@ class DataController {
       }
 
       const geoJoins = `
-        LEFT JOIN systems s ON s.name = ur.system_name
-        LEFT JOIN systems_details sd ON sd.system_id = s.id
-  
-        LEFT JOIN users u ON u.id = ur.assigned_to
-        LEFT JOIN worker_details wd ON wd.username = u.username
-      `;
+            LEFT JOIN systems s ON s.name = ur.system_name
+            LEFT JOIN systems_details sd ON sd.system_id = s.id
+            LEFT JOIN users u ON u.id = ur.assigned_to
+            LEFT JOIN worker_details wd ON wd.username = u.username
+            LEFT JOIN (
+                SELECT 
+                    user_request_id,
+                    JSONB_AGG(
+                        JSONB_BUILD_OBJECT(
+                            'series', urd.series,
+                            'model', urd.model,
+                            'serial_number', urd.serial_number,
+                            'defect_info', urd.defect_info,
+                            'find_date', urd.find_date
+                        )
+                    ) AS modules_array,
+                     STRING_AGG('Котёл МВ ' || urd.series, ', ') AS module_series
+                FROM user_requests_details urd
+                GROUP BY user_request_id
+            ) urd ON urd.user_request_id = ur.id
+        `;
 
       const selectFields = `
         ur.id,
         ur.description,
         ur.phone_number,
-        ur.module,
+        COALESCE(urd.module_series, ur.module) AS module,
+        urd.modules_array,
         ur.problem_name,
         ur.status,
         ur.${assignedField},
         ur.assigned_to,
         ur.system_name,
         ur.created_at,
-  
-        -- Координаты инженерной системы
+        
         ur.geo_lat   AS system_geo_lat,
         ur.geo_lon   AS system_geo_lon,
-  
-        -- Координаты АСЦ
+        
         wd.geo_lat   AS worker_geo_lat,
         wd.geo_lon   AS worker_geo_lon
-      `;
+    `;
 
       let allDevicesQuery,
         workerDevicesQuery,
