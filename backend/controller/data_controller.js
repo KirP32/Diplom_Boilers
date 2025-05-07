@@ -725,7 +725,6 @@ class DataController {
       if (insertReq.rowCount !== 1)
         throw new Error("Не удалось создать заявку");
       const requestId = insertReq.rows[0].id;
-      console.log(requestId);
       await client.query(
         `INSERT INTO user_requests_info
            (request_id, additional_info, created_at, worker_confirmed, wattson_confirmed)
@@ -745,7 +744,6 @@ class DataController {
             "latin1"
           ).toString("utf-8");
           const key = `${requestId}/${category}/${originalName}`;
-          console.log("Сохраняем по ключу", key);
           await s3.send(
             new PutObjectCommand({
               Bucket: process.env.S3_BUCKET,

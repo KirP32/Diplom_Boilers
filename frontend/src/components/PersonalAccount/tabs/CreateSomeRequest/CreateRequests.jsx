@@ -228,7 +228,6 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   }
 
   const handleDefectChange = (idx, field, value) => {
-    console.log("idx:", idx, "field:", field, "value", value);
     setDefects((prev) => {
       const copy = [...prev];
       copy[idx] = { ...copy[idx], [field]: value };
