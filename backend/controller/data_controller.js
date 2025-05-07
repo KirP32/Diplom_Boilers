@@ -2608,16 +2608,21 @@ class DataController {
     }
   }
   async uploadPhoto(req, res) {
+    const files = req.files || [];
     try {
-      const files = req.files || [];
       if (!files.length) {
         return res.status(400).json({ error: "Нет файлов для загрузки" });
       }
 
       const requestID = parseInt(req.params.requestID, 10);
-      const category = req.params.category || "default";
+      const category = req.body.category;
       const userLogin = decodeJWT(req.cookies.refreshToken).login;
       const uploadedBy = await getID(userLogin);
+
+      const allowedCategories = ["defects", "nameplates", "report", "request"];
+      if (!allowedCategories.includes(category)) {
+        return res.status(400).json({ error: "Некорректная категория" });
+      }
 
       const uploadedPhotos = await Promise.all(
         files.map(async (file) => {
@@ -2626,7 +2631,7 @@ class DataController {
             "latin1"
           ).toString("utf-8");
           const uniqueName = `${file.filename}${path.extname(originalName)}`;
-          const key = `${requestID}/${uniqueName}`;
+          const key = `${requestID}/${category}/${uniqueName}`;
 
           const fileBuffer = await fs.promises.readFile(file.path);
           await s3.send(
@@ -2635,81 +2640,95 @@ class DataController {
               Key: key,
               Body: fileBuffer,
               ContentType: file.mimetype,
-              ContentLength: fileBuffer.length,
             })
           );
 
-          await pool.query(
+          const { rows } = await pool.query(
             `INSERT INTO photos 
                (issue_id, category, filename, original_name, uploaded_by)
-             VALUES ($1,      $2,       $3,       $4,            $5)`,
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id, filename, original_name`,
             [requestID, category, key, originalName, uploadedBy]
           );
 
-          const { rows } = await pool.query(
-            `SELECT id, filename, original_name 
-               FROM photos 
-              WHERE filename = $1 AND issue_id = $2`,
-            [key, requestID]
-          );
-          const { id, filename, original_name } = rows[0];
-
           const getCmd = new GetObjectCommand({
             Bucket: process.env.S3_BUCKET,
-            Key: filename,
+            Key: key,
           });
           const url = await getSignedUrl(s3, getCmd, { expiresIn: 60 * 60 });
 
           fs.unlinkSync(file.path);
 
-          return { id, original_name, url };
+          return {
+            id: rows[0].id,
+            original_name: rows[0].original_name,
+            url,
+            category,
+          };
         })
       );
 
-      return res.json({ status: "ok", photos: uploadedPhotos });
+      return res.json({
+        status: "ok",
+        photos: uploadedPhotos,
+        category,
+      });
     } catch (error) {
       console.error("Ошибка uploadPhoto:", error);
-      (req.files || []).forEach((f) => {
+      files.forEach((f) => {
         if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
       });
-      return res.status(500).json({ error: "Ошибка при загрузке на S3" });
+      return res.status(500).json({
+        error: "Ошибка при загрузке файлов",
+        details: error.message,
+      });
+    } finally {
+      files.forEach((f) => {
+        if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+      });
     }
   }
 
   async getRequestPhoto(req, res) {
     try {
       const requestID = parseInt(req.params.requestID, 10);
-      const category = req.params.category || "default";
 
       const { rows } = await pool.query(
-        `SELECT id, filename, original_name
+        `SELECT id, filename, original_name, category
            FROM photos
           WHERE issue_id = $1`,
         [requestID]
       );
 
       if (!rows.length) {
-        return res.status(404).json({ photos: [] });
+        return res.status(404).json({ photos_by_category: {} });
       }
 
-      const photos = await Promise.all(
-        rows.map(async ({ id, filename, original_name }) => {
+      const photosWithUrls = await Promise.all(
+        rows.map(async ({ id, filename, original_name, category }) => {
           const cmd = new GetObjectCommand({
             Bucket: process.env.S3_BUCKET,
             Key: filename,
           });
-
           const url = await getSignedUrl(s3, cmd, { expiresIn: 60 * 60 });
-
-          return { id, original_name, url };
+          return { id, original_name, url, category };
         })
       );
-      return res.json({ photos });
+
+      const photos_by_category = photosWithUrls.reduce((acc, photo) => {
+        const { category, ...rest } = photo;
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(rest);
+        return acc;
+      }, {});
+
+      return res.send({ ...photos_by_category });
     } catch (error) {
       console.error("Ошибка при получении фото:", error);
       return res.status(500).json({ error: "Не удалось получить фото" });
     }
   }
+
   async deletePhoto(req, res) {
     try {
       const id = parseInt(req.params.id, 10);

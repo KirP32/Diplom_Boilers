@@ -6,32 +6,51 @@ import {
   Collapse,
   Dialog,
   DialogContent,
+  FormControl,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import styles from "./PhotoFolder.module.scss";
 import DeleteIcon from "@mui/icons-material/Delete";
 import $api from "../../../../../../../http";
+
+const CATEGORIES = [
+  { value: "defects", label: "Неисправности" },
+  { value: "nameplates", label: "Шильдики котлов" },
+  { value: "report", label: "Отчёт о ремонте" },
+  { value: "request", label: "Фото заявки" },
+];
+
 export default function PhotoFolder({ requestID }) {
+  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].value);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [drag, setDrag] = useState(false);
   const [files, setFiles] = useState([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState("");
-  const [urlArray, setUrlArray] = useState([]);
+  const [urlsByCategory, setUrlsByCategory] = useState({
+    defects: [],
+    nameplates: [],
+    report: [],
+    request: [],
+  });
   const urlRef = useRef([]);
 
   const fetchPhotos = useCallback(async () => {
     try {
-      const category = "default";
-      const res = await $api.get(`/getRequestPhoto/${requestID}/${category}`);
-      setUrlArray(res.data.photos || []);
+      const res = await $api.get(`/getRequestPhoto/${requestID}`);
+      setUrlsByCategory((prev) => ({
+        ...prev,
+        ...res.data,
+      }));
     } catch (err) {
       console.log(err);
     }
   }, [requestID]);
 
-  // В разработке
   useEffect(() => {
     if (requestID) fetchPhotos();
   }, [requestID, fetchPhotos]);
@@ -81,18 +100,9 @@ export default function PhotoFolder({ requestID }) {
     setPreviewOpen(false);
   };
 
-  const removeFile = (idx) => {
-    setFiles((prev) => {
-      const toRevoke = prev[idx].url;
-      URL.revokeObjectURL(toRevoke);
-      urlRef.current = urlRef.current.filter((u) => u !== toRevoke);
-      const copy = [...prev];
-      copy.splice(idx, 1);
-      return copy;
-    });
-  };
   async function handleClickSendPhoto() {
     const formData = new FormData();
+    formData.append("category", selectedCategory);
 
     files.forEach(({ file }) => {
       formData.append("files", file);
@@ -101,18 +111,18 @@ export default function PhotoFolder({ requestID }) {
     try {
       const response = await $api.post(`/uploadPhoto/${requestID}`, formData);
 
-      const uploadedPhotos = response.data.photos;
-
-      setUrlArray((prev) => [
+      setUrlsByCategory((prev) => ({
         ...prev,
-        ...uploadedPhotos.map(({ id, url, original_name }) => ({
-          id,
-          url: url,
-          original_name,
-        })),
-      ]);
+        [selectedCategory]: [
+          ...prev[selectedCategory],
+          ...response.data.photos.map(({ id, url, original_name }) => ({
+            id,
+            url,
+            original_name,
+          })),
+        ],
+      }));
 
-      // Очищаем локальные файлы после успешной загрузки
       setFiles([]);
     } catch (error) {
       console.error("Ошибка при загрузке фото:", error);
@@ -120,9 +130,14 @@ export default function PhotoFolder({ requestID }) {
   }
   async function removePhoto(id, original_name) {
     try {
-      $api.delete(`/deletePhoto/${requestID}/${id}/${original_name}`);
+      await $api.delete(`/deletePhoto/${requestID}/${id}/${original_name}`);
 
-      setUrlArray((prev) => prev.filter((item) => item.id !== id));
+      setUrlsByCategory((prev) => ({
+        ...prev,
+        [selectedCategory]: prev[selectedCategory].filter(
+          (photo) => photo.id !== id
+        ),
+      }));
     } catch (error) {
       console.error("Ошибка при удалении фото:", error);
     }
@@ -130,32 +145,51 @@ export default function PhotoFolder({ requestID }) {
 
   return (
     <div className="photo_body_wrapper" style={{ paddingBottom: "10px" }}>
-      <PhotoLibraryIcon
-        fontSize="large"
-        onClick={() => setPhotoOpen((open) => !open)}
-        style={{ cursor: "pointer" }}
-      />
-      <Collapse in={photoOpen}>
-        {urlArray.length > 0 && (
-          <div className={styles.preview_grid}>
-            {urlArray.map(({ url, id, original_name }) => (
-              <div key={url} className={styles.thumb_wrapper}>
-                <img
-                  src={url}
-                  alt="image"
-                  className={styles.thumb}
-                  onClick={openPreview(url)}
-                />
-                <IconButton
-                  size="small"
-                  className={styles.delete_btn}
-                  onClick={() => removePhoto(id, original_name)}
-                  style={{ color: "red", zIndex: 1 }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <PhotoLibraryIcon
+          fontSize="large"
+          onClick={() => setPhotoOpen((open) => !open)}
+          style={{ cursor: "pointer" }}
+        />
+      </div>
+      <Collapse in={photoOpen} sx={{ mt: 3 }}>
+        <FormControl size="small" sx={{ minWidth: 200, mb: 2 }}>
+          <InputLabel>Категория фото</InputLabel>
+          <Select
+            value={selectedCategory}
+            label="Категория фото"
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            {CATEGORIES.map(({ value, label }) => (
+              <MenuItem key={value} value={value}>
+                {label}
+              </MenuItem>
             ))}
+          </Select>
+        </FormControl>
+
+        {urlsByCategory[selectedCategory]?.length > 0 && (
+          <div className={styles.preview_grid}>
+            {urlsByCategory[selectedCategory].map(
+              ({ url, id, original_name }) => (
+                <div key={url} className={styles.thumb_wrapper}>
+                  <img
+                    src={url}
+                    alt="image"
+                    className={styles.thumb}
+                    onClick={openPreview(url)}
+                  />
+                  <IconButton
+                    size="small"
+                    className={styles.delete_btn}
+                    onClick={() => removePhoto(id, original_name)}
+                    style={{ color: "red", zIndex: 1 }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </div>
+              )
+            )}
           </div>
         )}
 
@@ -209,7 +243,7 @@ export default function PhotoFolder({ requestID }) {
                   <IconButton
                     size="small"
                     className={styles.delete_btn}
-                    onClick={() => removeFile(idx)}
+                    onClick={() => removePhoto(idx)}
                     style={{ color: "red", zIndex: 1 }}
                   >
                     <DeleteIcon fontSize="small" />

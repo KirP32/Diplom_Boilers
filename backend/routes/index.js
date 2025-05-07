@@ -76,7 +76,7 @@ router.get(
   DataController.getFreeContractNumber
 );
 router.get(
-  "/getRequestPhoto/:requestID/:category",
+  "/getRequestPhoto/:requestID",
   checkCookie,
   checkAuth,
   DataController.getRequestPhoto

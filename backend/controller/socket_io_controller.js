@@ -85,6 +85,11 @@ async function handleStage(request_id, access_level, max_stage, action) {
         (regional_confirmed || region_assigned_to === null) &&
         service_engineer_confirmed;
 
+    // console.log("worker_confirmed", worker_confirmed);
+    // console.log("assigned_to", assigned_to);
+    // console.log("regional_confirmed", regional_confirmed);
+    // console.log("region_assigned_to", region_assigned_to);
+    // console.log("service_engineer_confirmed", service_engineer_confirmed);
     if (allConfirmed) {
       let newStage = currentStage;
 
