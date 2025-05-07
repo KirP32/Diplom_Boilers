@@ -666,7 +666,6 @@ class DataController {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-
       const raw = req.body.data;
       if (!raw) {
         return res.status(400).json({ error: "Нет данных заявки" });
@@ -683,6 +682,7 @@ class DataController {
         assigned_to_wattson,
         assigned_to_worker,
         addressValue,
+        fullname,
         defects = [],
       } = payload;
 
@@ -704,10 +704,10 @@ class DataController {
         `INSERT INTO user_requests
            (problem_name, type, status, assigned_to, region_assigned_to,
             created_at, module, created_by, description, system_name,
-            phone_number, created_by_worker, gef_assigned_to)
+            phone_number, created_by_worker, gef_assigned_to, fio)
          VALUES
            ($1, 0, 0, $2, $3, current_timestamp,
-            '', $4, $5, $6, $7, $8, $9)
+            '', $4, $5, $6, $7, $8, $9, $10)
          RETURNING id`,
         [
           problem_name,
@@ -719,12 +719,13 @@ class DataController {
           phone,
           created_by_worker,
           access_level === 3 ? createdById : null,
+          fullname,
         ]
       );
       if (insertReq.rowCount !== 1)
         throw new Error("Не удалось создать заявку");
       const requestId = insertReq.rows[0].id;
-
+      console.log(requestId);
       await client.query(
         `INSERT INTO user_requests_info
            (request_id, additional_info, created_at, worker_confirmed, wattson_confirmed)
@@ -738,19 +739,20 @@ class DataController {
         const files = req.files?.[category] || [];
         for (const file of files) {
           // если будет ошибка с s3, то читать файл через fs.promises.readFile(file.path)
+          const fileBuffer = await fs.promises.readFile(file.path);
           const originalName = Buffer.from(
             file.originalname,
             "latin1"
           ).toString("utf-8");
           const key = `${requestId}/${category}/${originalName}`;
-
+          console.log("Сохраняем по ключу", key);
           await s3.send(
             new PutObjectCommand({
               Bucket: process.env.S3_BUCKET,
               Key: key,
-              Body: file.buffer,
+              Body: fileBuffer,
               ContentType: file.mimetype,
-              ContentLength: file.size,
+              ContentLength: fileBuffer.length,
             })
           );
 
@@ -763,7 +765,6 @@ class DataController {
         }
       }
 
-      // 5) Вставка дефектов в user_requests_details
       for (const item of defects) {
         await client.query(
           `INSERT INTO user_requests_details
@@ -775,12 +776,11 @@ class DataController {
             item.model,
             item.serial_number,
             item.description,
-            item.date, // формат "YYYY-MM-DD"
+            item.date,
           ]
         );
       }
-
-      // 6) Получаем geo-координаты из DaData и сохраняем в user_requests
+      const token = "98be28db4ed79229bc269503c6a4d868e628b318";
       const daDataRes = await axios.post(
         "https://cleaner.dadata.ru/api/v1/clean/address",
         [addressValue],
@@ -788,8 +788,8 @@ class DataController {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Token ${process.env.DADATA_TOKEN}`,
-            "X-secret": process.env.DADATA_SECRET,
+            Authorization: `Token ${token}`,
+            "X-secret": "e8d55594effa9cf872d2271135c9f21bb3dfeeb3",
           },
         }
       );

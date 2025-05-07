@@ -77,9 +77,10 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const [defects, setDefects] = useState([
     { series: "3.1", model: "", serial_number: "", description: "", date: "" },
   ]);
-  const inputRef = useRef();
+  // const inputRef = useRef();
 
   const handleDefectChange = (idx, field, value) => {
+    console.log("idx:", idx, "field:", field, "value", value);
     setDefects((prev) => {
       const copy = [...prev];
       copy[idx] = { ...copy[idx], [field]: value };
@@ -165,6 +166,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       assigned_to_worker: ascWorker || null,
       defects,
       addressValue,
+      fullname,
     };
 
     const formData = new FormData();
@@ -178,19 +180,24 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       });
     });
 
-    console.log(formData.get("data"));
-    // try {
-    //   await $api.post("/createRequest", formData, {
-    //     headers: {
-    //       "Content-Type": "multipart/form-data",
-    //     },
-    //   });
-    //   setSuccessFlag(true);
-    //   setTimeout(() => setSuccessFlag(false), 5000);
-    //   clearForm();
-    // } catch (err) {
-    //   console.error(err);
-    // }
+    try {
+      await $api.post("/createRequest", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setSuccessFlag(true);
+      setTimeout(() => setSuccessFlag(false), 5000);
+      clearForm();
+      setPhotoFiles({
+        defects: [],
+        nameplates: [],
+        report: [],
+        request: [],
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   const debounceRef = useRef(null);
@@ -430,7 +437,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                     <Typography>Дата обнаружения</Typography>
                   </Grid>
                   <Grid item xs={9}>
-                    <TextField
+                    {/* <TextField
                       slotProps={{
                         htmlInput: {
                           sx: { mr: 3 },
@@ -439,11 +446,16 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                       fullWidth
                       type="date"
                       inputRef={inputRef}
-                      onClick={() => inputRef.current?.showPicker()}
+                      onClick={() => showPicker()}
                       value={d.date}
                       onChange={(e) =>
                         handleDefectChange(idx, "date", e.target.value)
                       }
+                    /> */}
+                    <TextShowPicker
+                      d={d}
+                      idx={idx}
+                      handleDefectChange={handleDefectChange}
                     />
                   </Grid>
                 </Grid>
@@ -584,5 +596,24 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
         )}
       </Paper>
     </Box>
+  );
+}
+
+function TextShowPicker({ d, handleDefectChange, idx }) {
+  const inputRef = useRef();
+  return (
+    <TextField
+      slotProps={{
+        htmlInput: {
+          sx: { mr: 3 },
+        },
+      }}
+      fullWidth
+      type="date"
+      inputRef={inputRef}
+      onClick={() => inputRef.current?.showPicker()}
+      value={d.date}
+      onChange={(e) => handleDefectChange(idx, "date", e.target.value)}
+    />
   );
 }
