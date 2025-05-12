@@ -63,6 +63,7 @@ export default function PhotoFolder({ requestID }) {
   }, []);
 
   const addFiles = (incomingFiles) => {
+    console.log(incomingFiles);
     const images = Array.from(incomingFiles).filter((f) =>
       f.type.startsWith("image/")
     );
@@ -89,7 +90,10 @@ export default function PhotoFolder({ requestID }) {
     setDrag(false);
   };
   const handleFileChange = (e) => {
-    if (e.target.files) addFiles(e.target.files);
+    if (e.target.files) {
+      addFiles(e.target.files);
+      e.target.value = "";
+    }
   };
 
   const openPreview = (src) => () => {
@@ -141,6 +145,15 @@ export default function PhotoFolder({ requestID }) {
     } catch (error) {
       console.error("Ошибка при удалении фото:", error);
     }
+  }
+  function removePhotoLocal(fileToRemove, fileUrl) {
+    setFiles((prev) => {
+      const updated = prev.filter(({ url }) => url !== fileUrl);
+
+      URL.revokeObjectURL(fileToRemove.url);
+
+      return updated;
+    });
   }
 
   return (
@@ -232,7 +245,7 @@ export default function PhotoFolder({ requestID }) {
         {files.length > 0 && (
           <>
             <div className={styles.preview_grid}>
-              {files.map(({ file, url }, idx) => (
+              {files.map(({ file, url }) => (
                 <div key={url} className={styles.thumb_wrapper}>
                   <img
                     src={url}
@@ -243,7 +256,7 @@ export default function PhotoFolder({ requestID }) {
                   <IconButton
                     size="small"
                     className={styles.delete_btn}
-                    onClick={() => removePhoto(idx)}
+                    onClick={() => removePhotoLocal(file, url)}
                     style={{ color: "red", zIndex: 1 }}
                   >
                     <DeleteIcon fontSize="small" />
