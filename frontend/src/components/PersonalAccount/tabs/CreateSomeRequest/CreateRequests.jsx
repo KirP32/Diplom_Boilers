@@ -114,6 +114,8 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   function validate() {
     return (
       problem.trim() &&
+      fullname.trim() &&
+      addressValue.trim() &&
       phone.length === 12 &&
       defects.every(
         (d) =>
