@@ -25,45 +25,45 @@ export default function CreateSystemDialog({ open, onClose, getAllDevices }) {
   const [systemName, setSystemName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [addressValue, setAddresValue] = useState("");
-  const [address_list, setAddressList] = useState([]);
-  const debounceRef = useRef(null);
+  // const [addressValue, setAddresValue] = useState("");
+  // const [address_list, setAddressList] = useState([]);
+  // const debounceRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  function handleInputChange(newInputValue) {
-    if (newInputValue !== addressValue) {
-      setAddresValue(newInputValue);
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-      debounceRef.current = setTimeout(() => {
-        handleLegalAddress(newInputValue);
-      }, 500);
-    }
-  }
-  async function handleLegalAddress(query) {
-    try {
-      const result = await axios({
-        method: "POST",
-        url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Token ${token}`,
-        },
-        data: { query, count: 7 },
-      });
-      let temp_list = [];
-      result.data.suggestions.forEach((item) =>
-        temp_list.push({
-          label: item.value,
-          unrestricted_value: item.unrestricted_value,
-        })
-      );
-      setAddressList(temp_list);
-    } catch (error) {
-      console.log(error.response ? error.response.data : error);
-    }
-  }
+  // function handleInputChange(newInputValue) {
+  //   if (newInputValue !== addressValue) {
+  //     setAddresValue(newInputValue);
+  //     if (debounceRef.current) {
+  //       clearTimeout(debounceRef.current);
+  //     }
+  //     debounceRef.current = setTimeout(() => {
+  //       handleLegalAddress(newInputValue);
+  //     }, 500);
+  //   }
+  // }
+  // async function handleLegalAddress(query) {
+  //   try {
+  //     const result = await axios({
+  //       method: "POST",
+  //       url: "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Accept: "application/json",
+  //         Authorization: `Token ${token}`,
+  //       },
+  //       data: { query, count: 7 },
+  //     });
+  //     let temp_list = [];
+  //     result.data.suggestions.forEach((item) =>
+  //       temp_list.push({
+  //         label: item.value,
+  //         unrestricted_value: item.unrestricted_value,
+  //       })
+  //     );
+  //     setAddressList(temp_list);
+  //   } catch (error) {
+  //     console.log(error.response ? error.response.data : error);
+  //   }
+  // }
   // async function getGeoData() {
   //   try {
   //     const { data } = await $api.post("/getGeoPosition", { addressValue });
@@ -82,7 +82,7 @@ export default function CreateSystemDialog({ open, onClose, getAllDevices }) {
       setLoading(true);
       await $api.post("/createSystem", {
         system_name: systemName,
-        addressValue,
+        // addressValue,
       });
 
       getAllDevices();
@@ -108,11 +108,11 @@ export default function CreateSystemDialog({ open, onClose, getAllDevices }) {
         console.log(error);
       });
   }
-  function handleChange(event, newValue) {
-    if (newValue && typeof newValue === "string") {
-      setAddresValue(newValue);
-    }
-  }
+  // function handleChange(event, newValue) {
+  //   if (newValue && typeof newValue === "string") {
+  //     setAddresValue(newValue);
+  //   }
+  // }
 
   return (
     <>
@@ -148,7 +148,7 @@ export default function CreateSystemDialog({ open, onClose, getAllDevices }) {
             disabled={loading}
             onChange={(e) => setSystemName(e.target.value)}
           />
-          <Autocomplete
+          {/* <Autocomplete
             freeSolo
             value={addressValue}
             options={address_list}
@@ -165,7 +165,7 @@ export default function CreateSystemDialog({ open, onClose, getAllDevices }) {
                 autoFocus
               />
             )}
-          />
+          /> */}
         </DialogContent>
         <DialogActions sx={{ display: "flex", justifyContent: "space-around" }}>
           <Button color="primary" variant="outlined" onClick={generateName}>
