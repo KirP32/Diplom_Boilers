@@ -100,6 +100,9 @@ export default function SearchWorker({ access_level, item }) {
                     inputLabel: {
                       shrink: true,
                     },
+                    htmlInput: {
+                      sx: { mr: 2 },
+                    },
                   }}
                   fullWidth
                 />
@@ -135,6 +138,9 @@ export default function SearchWorker({ access_level, item }) {
                   slotProps={{
                     inputLabel: {
                       shrink: true,
+                    },
+                    htmlInput: {
+                      sx: { mr: 2 },
                     },
                   }}
                   fullWidth
