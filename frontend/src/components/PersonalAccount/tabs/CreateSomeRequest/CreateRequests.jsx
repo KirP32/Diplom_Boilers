@@ -589,7 +589,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
           <Grid item xs={4}>
             <Typography>Назначить WATTSON</Typography>
           </Grid>
-          <Grid item xs={8}>
+          {/* <Grid item xs={8}>
             <FormControl fullWidth>
               <InputLabel>WATTSON</InputLabel>
               <Select
@@ -605,7 +605,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                 ))}
               </Select>
             </FormControl>
-          </Grid>
+          </Grid> */}
           <Grid item xs={12}>
             <Divider />
           </Grid>
