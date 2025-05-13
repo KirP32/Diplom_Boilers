@@ -21,6 +21,7 @@ export default function Materials({
   access_level,
   worker_username,
   worker_region,
+  setSnackbarOpen,
 }) {
   const [services, setServices] = useState([]);
   const [goods, setGoods] = useState([]);
@@ -139,14 +140,16 @@ export default function Materials({
     };
     await $api
       .post("/InsertGoodsServices", data)
-      .then(() => {})
+      .then(() => {
+        setSnackbarOpen(true);
+      })
       .catch(() => {});
   };
 
   return (
     <Box>
       <Typography variant="h5" align="center" gutterBottom>
-        Услуги и запчасти
+        <b> Услуги и запчасти</b>
       </Typography>
       <Grid container spacing={2}>
         {/* Блок услуг */}
@@ -317,7 +320,7 @@ export default function Materials({
       {access_level === 3 && (
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Button variant="contained" color="success" onClick={handleConfirm}>
-            Подтвердить
+            Подтвердить Услуги и Заявки
           </Button>
         </Box>
       )}

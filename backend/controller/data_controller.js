@@ -683,6 +683,7 @@ class DataController {
         assigned_to_worker,
         addressValue,
         fullname,
+        region_code,
         equipments = [],
       } = payload;
 
@@ -704,10 +705,10 @@ class DataController {
         `INSERT INTO user_requests
            (problem_name, type, status, assigned_to, region_assigned_to,
             created_at, module, created_by, description, system_name,
-            phone_number, created_by_worker, gef_assigned_to, fio, addres)
+            phone_number, created_by_worker, gef_assigned_to, fio, addres, region_code)
          VALUES
            ($1, 0, 0, $2, $3, current_timestamp,
-            '', $4, $5, $6, $7, $8, $9, $10, $11)
+            '', $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING id`,
         [
           problem_name,
@@ -721,6 +722,7 @@ class DataController {
           access_level === 3 ? createdById : null,
           fullname,
           addressValue,
+          region_code,
         ]
       );
       if (insertReq.rowCount !== 1)
@@ -2585,6 +2587,7 @@ class DataController {
       client.release();
     }
   }
+
   async handleDeleteService(req, res) {
     try {
       const { requestID, service_id } = req.params;
@@ -2912,6 +2915,118 @@ class DataController {
         message:
           err.message || "Внутренняя ошибка сервера при генерации имени заявки",
       });
+    }
+  }
+  async confirmEquipmentData(req, res) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const updateEqText = `
+      UPDATE user_requests_equipments
+      SET
+        article_number      = $1,
+        seller              = $2,
+        sale_date           = $3,
+        commissioning_date  = $4,
+        commissioning_org   = $5,
+        commissioning_master= $6,
+        previous_repairs    = $7,
+        sale_document       = $8
+      WHERE id = $9
+    `;
+
+      const updateDefText = `
+      UPDATE user_requests_details
+      SET detailed_description = $1
+      WHERE id = $2
+    `;
+
+      for (const element of req.body) {
+        await client.query(updateEqText, [
+          element.article_number,
+          element.seller_name,
+          element.sale_date,
+          element.commissioning_date,
+          element.commissioning_org,
+          element.commissioning_master,
+          element.previous_repairs,
+          element.document_number,
+          element.id,
+        ]);
+
+        for (const defect of element.defect_descriptions) {
+          await client.query(updateDefText, [defect.description, defect.id]);
+        }
+      }
+      await client.query("COMMIT");
+      res.send("OK");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("confirmEquipmentData error:", error);
+      res.status(500).json({ message: error.message });
+    } finally {
+      client.release();
+    }
+  }
+  async getEquipmentData(req, res) {
+    try {
+      const { requestID } = req.params;
+
+      const { rows } = await pool.query(
+        `
+      SELECT
+        ue.id               AS equipment_id,
+        ue.article_number,
+        ue.seller,
+        ue.sale_date,
+        ue.commissioning_date,
+        ue.commissioning_org,
+        ue.commissioning_master,
+        ue.previous_repairs,
+        ue.sale_document,
+        ud.id               AS defect_id,
+        ud.detailed_description
+      FROM user_requests_equipments ue
+      LEFT JOIN user_requests_details ud
+        ON ud.user_request_equipment_id = ue.id
+      WHERE ue.user_request_id = $1
+      ORDER BY ue.id, ud.id
+      `,
+        [requestID]
+      );
+
+      const equipmentsMap = {};
+      for (const row of rows) {
+        const eqId = row.equipment_id;
+        if (!equipmentsMap[eqId]) {
+          equipmentsMap[eqId] = {
+            id: eqId,
+            article_number: row.article_number,
+            seller: row.seller,
+            sale_date: row.sale_date,
+            commissioning_date: row.commissioning_date,
+            commissioning_org: row.commissioning_org,
+            commissioning_master: row.commissioning_master,
+            previous_repairs: row.previous_repairs,
+            sale_document: row.sale_document,
+            defects: [],
+          };
+        }
+        if (row.defect_id) {
+          equipmentsMap[eqId].defects.push({
+            id: row.defect_id,
+            description: row.detailed_description,
+          });
+        }
+      }
+
+      const equipments = Object.values(equipmentsMap);
+
+      return res.send(equipments);
+    } catch (error) {
+      console.error("getEquipmentData error:", error);
+      return res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 }

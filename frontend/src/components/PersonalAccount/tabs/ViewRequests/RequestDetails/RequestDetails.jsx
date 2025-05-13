@@ -30,7 +30,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 const data_type_1 = [
   "Рекламация на оборудование",
-  "Материалы",
+  // "Материалы",
   "В пути",
   "Проводятся работы",
   "Завершенно",
@@ -262,16 +262,17 @@ export default function RequestDetails({
           equipments: fullItem?.equipments,
         }}
         access_level={access_level}
+        fullItem={fullItem}
       />
     ),
-    Материалы: (
-      <Materials
-        requestID={fullItem?.id}
-        access_level={access_level}
-        worker_username={fullItem?.worker_username}
-        worker_region={fullItem?.worker_region}
-      />
-    ),
+    // Материалы: (
+    //   <Materials
+    //     requestID={fullItem?.id}
+    //     access_level={access_level}
+    //     worker_username={fullItem?.worker_username}
+    //     worker_region={fullItem?.worker_region}
+    //   />
+    // ),
     "В пути": <OnWay access_level={access_level} />,
     "Проводятся работы": (
       <WorkInProgress

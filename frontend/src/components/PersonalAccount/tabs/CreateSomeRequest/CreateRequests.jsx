@@ -31,7 +31,7 @@ const token = "98be28db4ed79229bc269503c6a4d868e628b318";
 export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const { access_level } = useContext(ThemeContext);
   const [loading, setLoading] = useState(false);
-
+  const [region_code, setRegionCode] = useState(0);
   const modelOptionsMap = {
     3.1: [
       "Котел отопительный водогрейный типа GEFFEN MB 3.1-301 кВт",
@@ -146,7 +146,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(
         () => handleLegalAddress(newInputValue),
-        500
+        250
       );
     }
   }
@@ -168,6 +168,9 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
           label: item.value,
           unrestricted_value: item.unrestricted_value,
         }))
+      );
+      setRegionCode(
+        result.data.suggestions[0].data.region_kladr_id.slice(0, 2)
       );
     } catch (err) {
       console.error(err);
@@ -202,6 +205,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       assigned_to_wattson: wattsonWorker || null,
       assigned_to_worker: ascWorker || null,
       equipments,
+      region_code,
       addressValue,
       fullname,
     };

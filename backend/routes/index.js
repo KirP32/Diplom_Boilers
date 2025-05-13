@@ -87,6 +87,11 @@ router.get(
   DataController.getLatLon
 );
 router.get("/getRequestName", checkCookie, DataController.getRequestName);
+router.get(
+  "/getEquipmentData/:requestID",
+  checkCookie,
+  DataController.getEquipmentData
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
@@ -150,7 +155,11 @@ router.post(
   checkCookie,
   DataController.WorkerConfirmedData
 );
-
+router.post(
+  "/confirmEquipmentData",
+  checkCookie,
+  DataController.confirmEquipmentData
+);
 // router.post("/getGeoPosition", checkCookie, DataController.getGeoPosition);
 
 router.delete(
