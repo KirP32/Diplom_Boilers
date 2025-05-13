@@ -63,7 +63,6 @@ export default function PhotoFolder({ requestID }) {
   }, []);
 
   const addFiles = (incomingFiles) => {
-    console.log(incomingFiles);
     const images = Array.from(incomingFiles).filter((f) =>
       f.type.startsWith("image/")
     );
@@ -157,7 +156,10 @@ export default function PhotoFolder({ requestID }) {
   }
 
   return (
-    <div className="photo_body_wrapper" style={{ paddingBottom: "10px" }}>
+    <div
+      className="photo_body_wrapper"
+      style={{ paddingBottom: "10px", marginTop: "15px" }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <PhotoLibraryIcon
           fontSize="large"
@@ -165,8 +167,16 @@ export default function PhotoFolder({ requestID }) {
           style={{ cursor: "pointer" }}
         />
       </div>
-      <Collapse in={photoOpen} sx={{ mt: 3 }}>
-        <FormControl size="small" sx={{ minWidth: 200, mb: 2 }}>
+      <Collapse
+        in={photoOpen}
+        sx={{ mt: 1 }}
+        // style={{
+        //   border: "1px solid #ccc",
+        //   padding: "10px",
+        //   borderRadius: "5px",
+        // }}
+      >
+        <FormControl size="small" sx={{ minWidth: 200, mb: 2, mt: 1 }}>
           <InputLabel>Категория фото</InputLabel>
           <Select
             value={selectedCategory}
@@ -214,6 +224,10 @@ export default function PhotoFolder({ requestID }) {
               onDragLeave={handleDragLeave}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
+              style={{
+                background: "rgba(0, 0, 0, 0.1)",
+                border: "2px dashed rgb(0, 187, 255)",
+              }}
             >
               Отпустите фотографии, чтобы загрузить
             </div>

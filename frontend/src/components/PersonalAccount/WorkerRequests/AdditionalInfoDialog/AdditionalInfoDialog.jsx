@@ -53,28 +53,47 @@ export default function AdditionalInfoDialog({
       </DialogTitle>
       <DialogContent>
         <Box>
-          <p>
-            <b>Создана:</b> {formatDate(item.created_at)}
-          </p>
-          <p>
-            <b>Проблема:</b> {item.problem_name}
-          </p>
-          <p>
-            <b>Описание:</b> {item.description}
-          </p>
-          <p>
-            <b>Проблема с модулем:</b> {item.module}
-          </p>
-          <p>
-            <b>Контактный номер:</b> {item.phone_number}
-          </p>
-          <p>
-            <b>Ориентировочная цена:</b> {}
-          </p>
-          {/* <p>
-            <b>Расстояние:</b>{" "}
-            {distance === null ? "идёт расчёт расстояния..." : distance + " км"}
-          </p> */}
+          {item.created_at && (
+            <p>
+              <b>Создана:</b> {formatDate(item.created_at)}
+            </p>
+          )}
+
+          {item.problem_name && (
+            <p>
+              <b>Проблема:</b> {item.problem_name}
+            </p>
+          )}
+
+          {item.description && (
+            <p>
+              <b>Описание:</b> {item.description}
+            </p>
+          )}
+
+          {item.module && (
+            <p>
+              <b>Проблема с модулем:</b> {item.module}
+            </p>
+          )}
+
+          {item.phone_number && (
+            <p>
+              <b>Контактный номер:</b> {item.phone_number}
+            </p>
+          )}
+
+          {item.estimated_price && (
+            <p>
+              <b>Ориентировочная цена:</b> {item.estimated_price}
+            </p>
+          )}
+
+          {item.addres && (
+            <p>
+              <b>Адрес:</b> {item.addres}
+            </p>
+          )}
         </Box>
       </DialogContent>
       <DialogActions>

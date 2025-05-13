@@ -683,7 +683,7 @@ class DataController {
         assigned_to_worker,
         addressValue,
         fullname,
-        defects = [],
+        equipments = [],
       } = payload;
 
       const createdById = await getID(created_by);
@@ -704,10 +704,10 @@ class DataController {
         `INSERT INTO user_requests
            (problem_name, type, status, assigned_to, region_assigned_to,
             created_at, module, created_by, description, system_name,
-            phone_number, created_by_worker, gef_assigned_to, fio)
+            phone_number, created_by_worker, gef_assigned_to, fio, addres)
          VALUES
            ($1, 0, 0, $2, $3, current_timestamp,
-            '', $4, $5, $6, $7, $8, $9, $10)
+            '', $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING id`,
         [
           problem_name,
@@ -720,6 +720,7 @@ class DataController {
           created_by_worker,
           access_level === 3 ? createdById : null,
           fullname,
+          addressValue,
         ]
       );
       if (insertReq.rowCount !== 1)
@@ -763,21 +764,26 @@ class DataController {
         }
       }
 
-      for (const item of defects) {
-        await client.query(
-          `INSERT INTO user_requests_details
-             (user_request_id, series, model, serial_number, defect_info, find_date)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [
-            requestId,
-            item.series,
-            item.model,
-            item.serial_number,
-            item.description,
-            item.date,
-          ]
+      for (const item of equipments) {
+        const insertEqRes = await client.query(
+          `INSERT INTO user_requests_equipments
+       (user_request_id, series, model, serial_number)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id`,
+          [requestId, item.series, item.model, item.serial_number]
         );
+        const equipmentId = insertEqRes.rows[0].id;
+
+        for (const element of item.defects) {
+          await client.query(
+            `INSERT INTO user_requests_details
+         (defect_info, find_date, user_request_equipment_id)
+       VALUES ($1, $2, $3)`,
+            [element.description, element.date, equipmentId]
+          );
+        }
       }
+
       const token = "98be28db4ed79229bc269503c6a4d868e628b318";
       const daDataRes = await axios.post(
         "https://cleaner.dadata.ru/api/v1/clean/address",
@@ -852,92 +858,89 @@ class DataController {
       }
 
       const geoJoins = `
-            LEFT JOIN systems s ON s.name = ur.system_name
-            LEFT JOIN systems_details sd ON sd.system_id = s.id
-            LEFT JOIN users u ON u.id = ur.assigned_to
-            LEFT JOIN worker_details wd ON wd.username = u.username
-            LEFT JOIN (
-                SELECT 
-                    user_request_id,
-                    JSONB_AGG(
-                        JSONB_BUILD_OBJECT(
-                            'series', urd.series,
-                            'model', urd.model,
-                            'serial_number', urd.serial_number,
-                            'defect_info', urd.defect_info,
-                            'find_date', urd.find_date
-                        )
-                    ) AS modules_array,
-                     STRING_AGG('Котёл МВ ' || urd.series, ', ') AS module_series
-                FROM user_requests_details urd
-                GROUP BY user_request_id
-            ) urd ON urd.user_request_id = ur.id
-        `;
+      LEFT JOIN systems s ON s.name = ur.system_name
+      LEFT JOIN systems_details sd ON sd.system_id = s.id
+      LEFT JOIN users u ON u.id = ur.assigned_to
+      LEFT JOIN worker_details wd ON wd.username = u.username
 
-      const selectFields = `
-        ur.id,
-        ur.description,
-        ur.phone_number,
-        COALESCE(urd.module_series, ur.module) AS module,
-        urd.modules_array,
-        ur.problem_name,
-        ur.status,
-        ur.${assignedField},
-        ur.assigned_to,
-        ur.system_name,
-        ur.created_at,
-        
-        ur.geo_lat   AS system_geo_lat,
-        ur.geo_lon   AS system_geo_lon,
-        
-        wd.geo_lat   AS worker_geo_lat,
-        wd.geo_lon   AS worker_geo_lon
+      LEFT JOIN LATERAL (
+        SELECT
+          CASE
+            WHEN COUNT(DISTINCT e.series) = 0 THEN NULL
+            WHEN COUNT(DISTINCT e.series) = 1 THEN
+              'Котёл МВ ' || MIN(e.series)
+            ELSE
+              STRING_AGG(DISTINCT 'Котёл МВ ' || e.series, ', ')
+          END AS module_series
+        FROM user_requests_equipments e
+        WHERE e.user_request_id = ur.id
+      ) eq_mod ON true
     `;
 
-      let allDevicesQuery,
-        workerDevicesQuery,
-        paramsAll = [],
+      const selectFields = `
+      ur.id,
+      ur.addres,
+      ur.description,
+      ur.phone_number,
+      ur.problem_name,
+      ur.status,
+      ur.${assignedField},
+      ur.assigned_to,
+      ur.system_name,
+      ur.created_at,
+
+      ur.geo_lat   AS system_geo_lat,
+      ur.geo_lon   AS system_geo_lon,
+
+      wd.geo_lat   AS worker_geo_lat,
+      wd.geo_lon   AS worker_geo_lon,
+
+      COALESCE(eq_mod.module_series, ur.module) AS module
+    `;
+
+      let allDevicesQuery, workerDevicesQuery;
+      let paramsAll = [],
         paramsWork = [];
 
       if (access_level === 3) {
         allDevicesQuery = `
-          SELECT ${selectFields}
-          FROM user_requests ur
-          JOIN user_requests_info uri ON uri.request_id = ur.id
-          ${geoJoins}
-          WHERE ur.${assignedField} IS NULL
-            AND uri.${confirmedField} = FALSE
-            AND ur.status != 1
-        `;
+        SELECT ${selectFields}
+        FROM user_requests ur
+        JOIN user_requests_info uri ON uri.request_id = ur.id
+        ${geoJoins}
+        WHERE ur.${assignedField} IS NULL
+          AND uri.${confirmedField} = FALSE
+          AND ur.status != 1
+      `;
         workerDevicesQuery = `
-          SELECT ${selectFields}
-          FROM user_requests ur
-          JOIN user_requests_info uri ON uri.request_id = ur.id
-          ${geoJoins}
-          WHERE ur.${assignedField} = $1
-            AND ur.status = 0
-        `;
+        SELECT ${selectFields}
+        FROM user_requests ur
+        JOIN user_requests_info uri ON uri.request_id = ur.id
+        ${geoJoins}
+        WHERE ur.${assignedField} = $1
+          AND ur.status = 0
+      `;
         paramsAll = [];
         paramsWork = [userId];
       } else {
         allDevicesQuery = `
-          SELECT ${selectFields}
-          FROM user_requests ur
-          JOIN user_requests_info uri ON uri.request_id = ur.id
-          ${geoJoins}
-          WHERE ur.${assignedField} = $1
-            AND uri.${confirmedField} = FALSE
-            AND ur.status != 1
-        `;
+        SELECT ${selectFields}
+        FROM user_requests ur
+        JOIN user_requests_info uri ON uri.request_id = ur.id
+        ${geoJoins}
+        WHERE ur.${assignedField} = $1
+          AND uri.${confirmedField} = FALSE
+          AND ur.status != 1
+      `;
         workerDevicesQuery = `
-          SELECT ${selectFields}
-          FROM user_requests ur
-          JOIN user_requests_info uri ON uri.request_id = ur.id
-          ${geoJoins}
-          WHERE ur.${assignedField} = $1
-            AND uri.${confirmedField} = TRUE
-            AND ur.status = 0
-        `;
+        SELECT ${selectFields}
+        FROM user_requests ur
+        JOIN user_requests_info uri ON uri.request_id = ur.id
+        ${geoJoins}
+        WHERE ur.${assignedField} = $1
+          AND uri.${confirmedField} = TRUE
+          AND ur.status = 0
+      `;
         paramsAll = [userId];
         paramsWork = [userId];
       }
@@ -1602,27 +1605,60 @@ class DataController {
     try {
       const { id } = req.params;
       const response = await pool.query(
-        `SELECT
-          ur.*, 
-          u.username AS worker_username,
-          wd.phone_number AS worker_phone,
-          wd.region AS worker_region,
-          w.username AS wattson_username,
-          cd.phone_number AS wattson_phone,
-          rc.user_confirmed,
-          rc.worker_confirmed,
-          rc.regional_confirmed,
-          rc.service_engineer_confirmed,
-          rc.action,
-          uri.worker_confirmed AS uri_worker_confirmed
-        FROM user_requests ur
-        LEFT JOIN users u ON ur.assigned_to = u.id
-        LEFT JOIN worker_details wd ON u.username = wd.username
-        LEFT JOIN users w ON ur.region_assigned_to = w.id
-        LEFT JOIN cgs_details cd ON w.username = cd.username
-        LEFT JOIN request_confirmations rc ON ur.id = rc.request_id
-        LEFT JOIN user_requests_info uri ON ur.id = uri.request_id
-        WHERE ur.id = $1;`,
+        `
+      SELECT
+        ur.*,
+        u.username                AS worker_username,
+        wd.phone_number           AS worker_phone,
+        wd.region                 AS worker_region,
+        w.username                AS wattson_username,
+        cd.phone_number           AS wattson_phone,
+        rc.user_confirmed,
+        rc.worker_confirmed,
+        rc.regional_confirmed,
+        rc.service_engineer_confirmed,
+        rc.action,
+        uri.worker_confirmed      AS uri_worker_confirmed,
+
+        eqs.equipments
+
+      FROM user_requests ur
+
+      LEFT JOIN users u          ON ur.assigned_to        = u.id
+      LEFT JOIN worker_details wd ON u.username           = wd.username
+
+      LEFT JOIN users w          ON ur.region_assigned_to = w.id
+      LEFT JOIN cgs_details cd   ON w.username           = cd.username
+
+      LEFT JOIN request_confirmations rc ON ur.id       = rc.request_id
+      LEFT JOIN user_requests_info uri    ON ur.id       = uri.request_id
+
+      LEFT JOIN LATERAL (
+        SELECT JSONB_AGG(equipment) AS equipments
+        FROM (
+          SELECT
+            e.id,
+            e.series,
+            e.model,
+            e.serial_number,
+            (
+              SELECT JSONB_AGG(
+                JSONB_BUILD_OBJECT(
+                  'id',          d.id,
+                  'defect_info', d.defect_info,
+                  'find_date',   d.find_date
+                )
+              )
+              FROM user_requests_details d
+              WHERE d.user_request_equipment_id = e.id
+            ) AS defects
+          FROM user_requests_equipments e
+          WHERE e.user_request_id = ur.id
+        ) AS equipment
+      ) eqs ON true
+
+      WHERE ur.id = $1
+      `,
         [id]
       );
 

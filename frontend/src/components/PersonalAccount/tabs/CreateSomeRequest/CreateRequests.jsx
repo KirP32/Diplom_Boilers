@@ -15,6 +15,7 @@ import {
   Autocomplete,
   IconButton,
   CircularProgress,
+  Button,
 } from "@mui/material";
 import { ThemeContext } from "../../../../Theme";
 import PhoneInput from "../../additionalComponents/PhoneInput/PhoneInput";
@@ -74,8 +75,13 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   const [fullname, setFullname] = useState("");
   const [addressValue, setAddresValue] = useState("");
   const [address_list, setAddressList] = useState([]);
-  const [defects, setDefects] = useState([
-    { series: "3.1", model: "", serial_number: "", description: "", date: "" },
+  const [equipments, setEquipments] = useState([
+    {
+      series: "3.1",
+      model: "",
+      serial_number: "",
+      defects: [{ description: "", date: "" }],
+    },
   ]);
   const [photoFiles, setPhotoFiles] = useState({
     defects: [],
@@ -99,33 +105,38 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     setPhone("");
     setAddresValue("");
     setFullname("");
-    setDefects([
+    setEquipments([
       {
         series: "3.1",
         model: "",
         serial_number: "",
-        description: "",
-        date: "",
+        defects: [{ description: "", date: "" }],
       },
     ]);
     setPhotoFiles({ defects: [], nameplates: [], report: [], request: [] });
   }
 
   function validate() {
-    return (
-      problem.trim() &&
-      fullname.trim() &&
-      addressValue.trim() &&
-      phone.length === 12 &&
-      defects.every(
-        (d) =>
-          d.series &&
-          d.model &&
-          d.serial_number.trim() &&
-          d.date &&
-          d.description.trim()
-      )
-    );
+    const baseValid =
+      problem.trim().length > 0 &&
+      fullname.trim().length > 0 &&
+      addressValue.trim().length > 0 &&
+      phone.length === 12;
+
+    const equipmentsValid =
+      equipments.length > 0 &&
+      equipments.every((eq) => {
+        const eqFilled =
+          eq.series && eq.model && eq.serial_number.trim().length > 0;
+
+        const defectsFilled =
+          eq.defects.length > 0 &&
+          eq.defects.every((d) => d.description.trim().length > 0 && d.date);
+
+        return eqFilled && defectsFilled;
+      });
+
+    return baseValid && equipmentsValid;
   }
 
   const debounceRef = useRef(null);
@@ -190,7 +201,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
       access_level,
       assigned_to_wattson: wattsonWorker || null,
       assigned_to_worker: ascWorker || null,
-      defects,
+      equipments,
       addressValue,
       fullname,
     };
@@ -213,30 +224,55 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
     }
   }
 
-  function addDefect() {
-    setDefects((prev) => [
+  function addEquipment() {
+    setEquipments((prev) => [
       ...prev,
-      {
-        series: "3.1",
-        model: "",
-        serial_number: "",
-        description: "",
-        date: "",
-      },
+      { series: "3.1", model: "", serial_number: "", defects: [] },
     ]);
+    console.log(equipments);
   }
-  function removeDefect(idx) {
-    setDefects((prev) => prev.filter((_, i) => i !== idx));
+  function removeEquipment(eqIdx) {
+    setEquipments((prev) => prev.filter((_, i) => i !== eqIdx));
   }
-
-  const handleDefectChange = (idx, field, value) => {
-    setDefects((prev) => {
+  function handleDefectChange(eqIdx, dIdx, field, value) {
+    setEquipments((prev) => {
       const copy = [...prev];
-      copy[idx] = { ...copy[idx], [field]: value };
-      if (field === "series") copy[idx].model = "";
+      const eq = { ...copy[eqIdx] };
+      const defects = [...eq.defects];
+      defects[dIdx] = { ...defects[dIdx], [field]: value };
+      eq.defects = defects;
+      copy[eqIdx] = eq;
       return copy;
     });
-  };
+  }
+  function addDefect(eqIdx) {
+    setEquipments((prev) => {
+      const copy = [...prev];
+      copy[eqIdx] = {
+        ...copy[eqIdx],
+        defects: [...copy[eqIdx].defects, { description: "", date: "" }],
+      };
+      return copy;
+    });
+  }
+  function removeDefect(eqIdx, dIdx) {
+    setEquipments((prev) => {
+      const copy = [...prev];
+      copy[eqIdx] = {
+        ...copy[eqIdx],
+        defects: copy[eqIdx].defects.filter((_, i) => i !== dIdx),
+      };
+      return copy;
+    });
+  }
+  function handleEquipmentChange(eqIdx, field, value) {
+    setEquipments((prev) => {
+      const copy = [...prev];
+      copy[eqIdx] = { ...copy[eqIdx], [field]: value };
+      if (field === "series") copy[eqIdx].model = "";
+      return copy;
+    });
+  }
   return (
     <Box sx={{ p: 2, mx: "auto", position: "relative" }}>
       {loading && (
@@ -334,42 +370,49 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
           <Grid item xs={12}>
             <Divider />
           </Grid>
-          <Grid item xs={4}>
-            <Typography variant="h6">Список дефектов оборудования</Typography>
+
+          {/* Заголовок */}
+          <Grid item xs={12}>
+            <Typography variant="h5">Оборудование и дефекты</Typography>
           </Grid>
-          {defects.map((d, idx) => (
-            <Grid item xs={12} key={idx}>
-              <Paper variant="outlined" sx={{ p: 2 }}>
+
+          {equipments.map((eq, eqIdx) => (
+            <Grid item xs={12} key={eqIdx}>
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
                 <Grid container spacing={2} alignItems="center">
                   <Grid item xs={3}>
                     <Typography>Серия</Typography>
                   </Grid>
+
+                  {/* Выбор серии оборудования */}
                   <Grid item xs={3}>
                     <FormControl fullWidth>
                       <InputLabel>Серия</InputLabel>
                       <Select
                         label="Серия"
-                        value={d.series}
-                        onChange={(e) => {
-                          handleDefectChange(idx, "series", e.target.value);
-                        }}
+                        value={eq.series}
+                        onChange={(e) =>
+                          handleEquipmentChange(eqIdx, "series", e.target.value)
+                        }
                       >
                         <MenuItem value="3.1">3.1</MenuItem>
                         <MenuItem value="4.1">4.1</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
+
+                  {/* Выбор модели оборудования */}
                   <Grid item xs={5}>
                     <FormControl fullWidth>
                       <InputLabel>Модель</InputLabel>
                       <Select
                         label="Модель"
-                        value={d.model}
+                        value={eq.model}
                         onChange={(e) =>
-                          handleDefectChange(idx, "model", e.target.value)
+                          handleEquipmentChange(eqIdx, "model", e.target.value)
                         }
                       >
-                        {modelOptionsMap[d.series].map((opt) => (
+                        {modelOptionsMap[eq.series].map((opt) => (
                           <MenuItem key={opt} value={opt}>
                             {opt}
                           </MenuItem>
@@ -377,11 +420,19 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                       </Select>
                     </FormControl>
                   </Grid>
+
+                  {/* Кнопка удалить оборудование */}
                   <Grid item xs={1} sx={{ textAlign: "right" }}>
-                    <IconButton onClick={() => removeDefect(idx)} size="small">
+                    <IconButton
+                      onClick={() => removeEquipment(eqIdx)}
+                      size="small"
+                      sx={{ color: "red" }}
+                    >
                       <DeleteIcon />
                     </IconButton>
                   </Grid>
+
+                  {/* Строка 2: Серийный номер */}
                   <Grid item xs={3}>
                     <Typography>Серийный номер</Typography>
                   </Grid>
@@ -389,44 +440,103 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
                     <TextField
                       fullWidth
                       label="Серийный номер"
-                      value={d.serial_number}
+                      value={eq.serial_number}
                       onChange={(e) =>
-                        handleDefectChange(idx, "serial_number", e.target.value)
+                        handleEquipmentChange(
+                          eqIdx,
+                          "serial_number",
+                          e.target.value
+                        )
                       }
                     />
                   </Grid>
-                  <Grid item xs={3}>
-                    <Typography>Описание дефекта</Typography>
-                  </Grid>
-                  <Grid item xs={9}>
-                    <TextField
-                      fullWidth
-                      label="Описание"
-                      value={d.description}
-                      onChange={(e) =>
-                        handleDefectChange(idx, "description", e.target.value)
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={3}>
-                    <Typography>Дата обнаружения</Typography>
-                  </Grid>
-                  <Grid item xs={9}>
-                    <TextShowPicker
-                      d={d}
-                      idx={idx}
-                      handleDefectChange={handleDefectChange}
-                    />
+                  {/* Группа дефектов */}
+                  <Grid item xs={12}>
+                    <Box
+                      sx={{
+                        border: "1px solid #ccc",
+                        borderRadius: 1,
+                        p: 2,
+                        mb: 1,
+                      }}
+                    >
+                      {eq.defects.map((d, dIdx) => (
+                        <Grid
+                          container
+                          spacing={2}
+                          alignItems="center"
+                          key={dIdx}
+                          sx={{ mb: 1 }}
+                        >
+                          <Grid item xs={11}>
+                            <div
+                              className="title_containter"
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "20px",
+                              }}
+                            >
+                              <Typography variant="subtitle2">
+                                Дефект #{dIdx + 1}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                onClick={() => removeDefect(eqIdx, dIdx)}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </div>
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              label="Описание дефекта"
+                              value={d.description}
+                              onChange={(e) =>
+                                handleDefectChange(
+                                  eqIdx,
+                                  dIdx,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            {/* Date Picker-компонент */}
+                            <DateShowPicker
+                              d={d}
+                              handleDefectChange={(field, value) =>
+                                handleDefectChange(eqIdx, dIdx, field, value)
+                              }
+                            />
+                          </Grid>
+                        </Grid>
+                      ))}
+                      <Box sx={{ textAlign: "center", mt: 1 }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => addDefect(eqIdx)}
+                        >
+                          Добавить дефект
+                        </Button>
+                      </Box>
+                    </Box>
                   </Grid>
                 </Grid>
               </Paper>
             </Grid>
           ))}
+
           <Grid item xs={12}>
-            <MuiButton variant="outlined" onClick={addDefect}>
-              Добавить дефект
-            </MuiButton>
+            <Button variant="contained" onClick={addEquipment}>
+              Добавить оборудование
+            </Button>
           </Grid>
+
           <Grid item xs={4}>
             <PhotoFolder
               title="Неисправности"
@@ -546,7 +656,7 @@ export default function CreateRequests({ deviceObject, setSelectedTab }) {
   );
 }
 
-function TextShowPicker({ d, handleDefectChange, idx }) {
+function DateShowPicker({ d, handleDefectChange }) {
   const inputRef = useRef();
   return (
     <TextField
@@ -554,8 +664,13 @@ function TextShowPicker({ d, handleDefectChange, idx }) {
       type="date"
       inputRef={inputRef}
       onClick={() => inputRef.current?.showPicker()}
-      value={d.date}
-      onChange={(e) => handleDefectChange(idx, "date", e.target.value)}
+      value={d.date || ""}
+      onChange={(e) => handleDefectChange("date", e.target.value)}
+      slotProps={{
+        htmlInput: {
+          sx: { mr: 2 },
+        },
+      }}
     />
   );
 }
