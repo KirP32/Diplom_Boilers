@@ -59,14 +59,14 @@ router.get(
 );
 router.get("/getWorkerInfo", checkCookie, DataController.getWorkerInfo);
 router.get(
-  "/getServicePrices/:login",
+  "/getServicePrices/:requestID",
   checkCookie,
   DataController.getServicePrices
 );
 router.get("/getGoods", checkCookie, DataController.getGoods);
 
 router.get(
-  "/getActualGoodsAndServices/:request_id/:worker_region",
+  "/getActualGoodsAndServices/:requestID",
   checkCookie,
   DataController.getActualGoodsAndServices
 );

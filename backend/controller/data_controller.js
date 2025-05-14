@@ -2226,37 +2226,55 @@ class DataController {
 
   async getServicePrices(req, res) {
     try {
-      const { login } = req.params;
+      const { requestID } = req.params;
 
-      const userResult = await pool.query(
-        "SELECT id, region FROM worker_details WHERE username = $1",
-        [login]
+      const reqRes = await pool.query(
+        `SELECT 
+         ur.region_code, 
+         ur.assigned_to      -- user.id инженера, может быть NULL
+       FROM user_requests ur
+       WHERE ur.id = $1`,
+        [requestID]
       );
+      if (reqRes.rowCount === 0) {
+        return res.status(404).json({ message: "Заявка не найдена" });
+      }
+      const { region_code, assigned_to } = reqRes.rows[0];
+      const regionCode = region_code;
 
-      if (userResult.rows.length === 0) {
-        return res.status(404).json({ message: "Пользователь не найден" });
+      let workerId = null;
+      if (assigned_to) {
+        const wdRes = await pool.query(
+          `select id from worker_details where username = (select username from users where id = $1);`,
+          [assigned_to]
+        );
+        if (wdRes.rowCount > 0) {
+          workerId = wdRes.rows[0].id;
+        }
       }
 
-      const { id: worker_id, region: user_region } = userResult.rows[0];
-
       const dataPrices = await pool.query(
-        `SELECT 
-            s.id AS service_id,
-            s.name AS service_name,
-            sp.price,
-            COALESCE(wsc.coefficient, 1) AS coefficient
-         FROM services s
-         JOIN service_prices sp ON s.id = sp.service_id
-         LEFT JOIN worker_service_coefficients wsc 
-           ON s.id = wsc.service_id AND wsc.worker_id = $1
-         WHERE sp.region = $2`,
-        [worker_id, user_region]
+        `
+      SELECT
+        s.id           AS service_id,
+        s.name         AS service_name,
+        sp.price       AS base_price,
+        COALESCE(wsc.coefficient, 1) AS coefficient
+      FROM services s
+      JOIN service_prices sp
+        ON s.id = sp.service_id
+      LEFT JOIN worker_service_coefficients wsc
+        ON s.id = wsc.service_id
+        AND wsc.worker_id = COALESCE($2, 0)
+      WHERE sp.region = $1
+      `,
+        [regionCode, workerId]
       );
 
-      res.json(dataPrices.rows);
+      return res.json(dataPrices.rows);
     } catch (error) {
-      console.error("Ошибка при получении цен на услуги:", error);
-      res.status(500).json({ message: "Ошибка сервера" });
+      console.error("getServicePricesByRequest error:", error);
+      return res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 
@@ -2505,43 +2523,65 @@ class DataController {
   }
   async getActualGoodsAndServices(req, res) {
     try {
-      const { request_id, worker_region } = req.params;
-      const workerRes = await pool.query(
-        "select id from worker_details where username = (select username from users where id = (select assigned_to from user_requests where id = $1))",
-        [request_id]
+      const { requestID } = req.params;
+
+      const reqRes = await pool.query(
+        `SELECT region_code, assigned_to
+         FROM user_requests
+        WHERE id = $1`,
+        [requestID]
       );
-      if (workerRes.rowCount === 0) {
-        return res.status(404).send({ message: "Работник не найден" });
+      if (reqRes.rowCount === 0) {
+        return res.status(404).json({ message: "Заявка не найдена" });
       }
-      const worker_id = workerRes.rows[0].id;
+      const { region_code, assigned_to } = reqRes.rows[0];
+      const region = region_code;
+
+      let workerId = null;
+      if (assigned_to) {
+        const wdRes = await pool.query(
+          `select id from worker_details where username = (select username from users where id = $1);`,
+          [assigned_to]
+        );
+        if (wdRes.rowCount > 0) {
+          workerId = wdRes.rows[0].id;
+        }
+      }
 
       const data_goods = await pool.query(
         `SELECT g.id, g.article, g.name, g.price
          FROM request_goods rg
          JOIN goods g ON rg.good_id = g.id
-         WHERE rg.request_id = $1`,
-        [request_id]
+        WHERE rg.request_id = $1`,
+        [requestID]
       );
 
       const data_services = await pool.query(
-        `SELECT 
-            s.id AS service_id,
-            s.name AS service_name,
-            sp.price,
-            COALESCE(wsc.coefficient, 1) AS coefficient
-         FROM request_services rs
-         JOIN services s ON rs.service_id = s.id
-         JOIN service_prices sp ON s.id = sp.service_id
-         LEFT JOIN worker_service_coefficients wsc 
-           ON s.id = wsc.service_id AND wsc.worker_id = $1
-         WHERE rs.request_id = $2 AND sp.region = $3`,
-        [worker_id, request_id, worker_region]
+        `SELECT
+         s.id           AS service_id,
+         s.name         AS service_name,
+         sp.price       AS base_price,
+         COALESCE(wsc.coefficient, 1) AS coefficient
+       FROM request_services rs
+       JOIN services s
+         ON rs.service_id = s.id
+       JOIN service_prices sp
+         ON s.id = sp.service_id
+       LEFT JOIN worker_service_coefficients wsc
+         ON wsc.service_id = s.id
+        AND wsc.worker_id = COALESCE($3, 0)
+       WHERE rs.request_id = $1
+         AND sp.region = $2`,
+        [requestID, region, workerId]
       );
 
-      return res.send({ goods: data_goods.rows, services: data_services.rows });
+      return res.json({
+        goods: data_goods.rows,
+        services: data_services.rows,
+      });
     } catch (error) {
-      console.error(error);
-      return res.status(500).send({ message: error });
+      console.error("getActualGoodsAndServices error:", error);
+      return res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 

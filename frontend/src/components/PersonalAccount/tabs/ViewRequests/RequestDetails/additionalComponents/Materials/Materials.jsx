@@ -35,11 +35,12 @@ export default function Materials({
   const [pendingGoods, setPendingGoods] = useState([]);
 
   useEffect(() => {
+    if (!requestID) return;
     $api
-      .get(`/getServicePrices/${worker_username}`)
-      .then((result) => setServices(result.data))
-      .catch((error) => console.error(error));
-  }, [worker_username]);
+      .get(`/getServicePrices/${requestID}`)
+      .then((res) => setServices(res.data))
+      .catch(console.error);
+  }, [requestID]);
 
   useEffect(() => {
     $api
@@ -51,7 +52,7 @@ export default function Materials({
   async function getActualGoodsAndServices() {
     if (worker_region !== null) {
       await $api
-        .get(`/getActualGoodsAndServices/${requestID}/${worker_region}`)
+        .get(`/getActualGoodsAndServices/${requestID}`)
         .then((result) => {
           setActualGoodsAndServices({
             services: result.data?.services || [],
@@ -227,7 +228,7 @@ export default function Materials({
                         secondary={
                           access_level === 3
                             ? `Цена: ${
-                                service.price * service.coefficient
+                                service.base_price * service?.coefficient
                               }, Коэффициент: ${service.coefficient}`
                             : `Цена: ${service.price * service.coefficient}`
                         }
