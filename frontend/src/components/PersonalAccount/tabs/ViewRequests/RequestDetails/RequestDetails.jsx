@@ -6,6 +6,7 @@ import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepButton from "@mui/material/StepButton";
 import Button from "@mui/material/Button";
+import region_data from "../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 
 import {
   Typography,
@@ -19,9 +20,7 @@ import {
 import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
 import { IconButton } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
 import SearchWorker from "./additionalComponents/SearchWorker/SearchWorker";
-import Materials from "./additionalComponents/Materials/Materials";
 import OnWay from "./additionalComponents/OnWay/OnWay";
 import WorkInProgress from "./additionalComponents/WorkInProgress/WorkInProgress";
 import Complete from "./additionalComponents/Complete/Complete";
@@ -153,6 +152,7 @@ export default function RequestDetails({
       // socket.off("connect_error", handleConnectError);
     };
   }, []);
+
   // console.log("Текущее состояние socketLoading:", socketLoading);
   async function handleNextStage() {
     try {
@@ -263,6 +263,12 @@ export default function RequestDetails({
         }}
         access_level={access_level}
         fullItem={fullItem}
+        setFullItem={(e) => {
+          setFullItem((prev) => ({
+            ...prev,
+            ...e,
+          }));
+        }}
       />
     ),
     // Материалы: (
@@ -314,7 +320,7 @@ export default function RequestDetails({
     if (editingName) {
       try {
         await $api.post("/setNewWorker", data);
-
+        // изменить логику, не брать данные с сервера повторно, использовать всё из прошлого запроса
         const tooltipResponse = await $api.get("/getTooltipEmployees");
 
         setNameList(tooltipResponse.data);
@@ -487,36 +493,37 @@ export default function RequestDetails({
                   key={conf.name}
                   sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
                 >
-                  {conf.name === keyEditing ? (
-                    <Autocomplete
-                      sx={{ width: 300 }}
-                      options={
-                        conf.name === "АСЦ"
-                          ? [
-                              { id: null, username: "Нет", access_level: 0 },
-                              ...nameList.worker_name,
-                            ]
-                          : [
-                              { id: null, username: "Нет", access_level: 1 },
-                              ...nameList.wattson_name,
-                            ]
-                      }
-                      value={editingName}
-                      onChange={(_, newValue) => setEditingName(newValue || "")}
-                      getOptionLabel={(option) => option.username || ""}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          autoFocus
-                          label="Введите имя пользователя"
-                          size="small"
-                          onBlur={handleFieldBlur}
-                          onKeyDown={handleKeyDown}
-                        />
-                      )}
-                      freeSolo
-                    />
-                  ) : (
+                  {
+                    // conf.name === keyEditing ? (
+                    //   <Autocomplete
+                    //     sx={{ width: 300 }}
+                    //     options={
+                    //       conf.name === "АСЦ"
+                    //         ? [
+                    //             { id: null, username: "Нет", access_level: 0 },
+                    //             ...nameList.worker_name,
+                    //           ]
+                    //         : [
+                    //             { id: null, username: "Нет", access_level: 1 },
+                    //             ...nameList.wattson_name,
+                    //           ]
+                    //     }
+                    //     value={editingName}
+                    //     onChange={(_, newValue) => setEditingName(newValue || "")}
+                    //     getOptionLabel={(option) => option.username || ""}
+                    //     renderInput={(params) => (
+                    //       <TextField
+                    //         {...params}
+                    //         autoFocus
+                    //         label="Введите имя пользователя"
+                    //         size="small"
+                    //         onBlur={handleFieldBlur}
+                    //         onKeyDown={handleKeyDown}
+                    //       />
+                    //     )}
+                    //     freeSolo
+                    //   />
+                    // ) : (
                     <>
                       {access_level === 3 && conf.name !== "GEFFEN" ? (
                         <Tooltip
@@ -552,7 +559,7 @@ export default function RequestDetails({
                         {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
                       </Typography>
 
-                      {access_level === 3 &&
+                      {/* {access_level === 3 &&
                         conf.name !== "GEFFEN" &&
                         conf.name !== "Пользователь" && (
                           <IconButton
@@ -564,9 +571,10 @@ export default function RequestDetails({
                           >
                             <EditIcon fontSize="small" />
                           </IconButton>
-                        )}
+                        )} */}
                     </>
-                  )}
+                    // )
+                  }
                 </Box>
               ))}
             </Box>
@@ -581,7 +589,10 @@ export default function RequestDetails({
             {<PhotoFolder requestID={item.id} />}
             {component}
             {fullItem?.status !== 1 && (
-              <section className={styles.request_buttons}>
+              <section
+                className={styles.request_buttons}
+                style={{ marginTop: "20px" }}
+              >
                 <Button
                   variant="contained"
                   disabled={isBackDisabled}
@@ -651,6 +662,15 @@ function RequestInfo({ fullItem, formatDate, requestOpen, setRequsetOpen }) {
         <Typography variant="body1" sx={{ mb: 1 }}>
           <b>Система:</b> {fullItem?.system_name}
         </Typography>
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          <b>Регион:</b>{" "}
+          {
+            region_data.find((item) => {
+              return item.code === Number(fullItem?.region_code);
+            })?.name
+          }
+        </Typography>
+
         <Typography variant="body1" sx={{ mb: 1 }}>
           <b>Создана:</b> {fullItem ? formatDate(fullItem.created_at) : ""}
         </Typography>

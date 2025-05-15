@@ -148,6 +148,13 @@ export default function OptionsDialog({ open, user, setOptions }) {
           }
         }
 
+        if (key === "region" && (!newValue || isNaN(Number(newValue)))) {
+          setErrorMessage("Выберите регион");
+          setSnackbarOpen(true);
+          setSuccess_updated(false);
+          return;
+        }
+
         if (key === "kpp" || key === "bic") {
           if (editedValue.length !== 9 || /^\d+$/.test(editedValue) === false) {
             if (key === "kpp") {
@@ -1306,22 +1313,30 @@ export default function OptionsDialog({ open, user, setOptions }) {
                   {editingField === "region" ? (
                     <Autocomplete
                       {...defaultProps}
+                      freeSolo
                       value={region_value}
+                      getOptionLabel={(option) =>
+                        typeof option === "string" ? option : option.name || ""
+                      }
                       onChange={(event, newValue) => {
-                        setRegion_value(newValue);
-                        setEditedValue(newValue ? newValue.code : "");
+                        if (typeof newValue === "string") {
+                          setRegion_value({ code: null, name: newValue });
+                          setEditedValue(newValue);
+                        } else if (newValue && "code" in newValue) {
+                          setRegion_value(newValue);
+                          setEditedValue(newValue.code);
+                        } else {
+                          setRegion_value(null);
+                          setEditedValue("");
+                        }
                       }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
                           size="small"
                           onBlur={() => handleBlurOrEnter("region")}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleBlurOrEnter("region");
-                          }}
                         />
                       )}
-                      freeSolo
                     />
                   ) : (
                     <div style={{ display: "flex" }}>

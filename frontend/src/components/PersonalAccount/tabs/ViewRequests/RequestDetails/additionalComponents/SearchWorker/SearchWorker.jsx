@@ -10,15 +10,82 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
+import {
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  IconButton,
+} from "@mui/material";
 import Materials from "../Materials/Materials";
 import $api from "../../../../../../../http";
 import { useEffect } from "react";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { useMemo } from "react";
+import region_data from "../../../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 
 // eslint-disable-next-line no-unused-vars
-export default function SearchWorker({ access_level, item, fullItem }) {
+export default function SearchWorker({
+  access_level,
+  item,
+  fullItem,
+  setFullItem,
+}) {
   const [data, setData] = useState([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [equipmentData, setEquipmentData] = useState([]);
+  const [workerList, setWorkerList] = useState([]);
+  const [selectedId, setSelectedId] = useState(fullItem?.assigned_to);
+  // Фильтры
+  const [filterName, setFilterName] = useState("");
+  const [filterCompany, setFilterCompany] = useState("");
+
+  useEffect(() => {
+    if (!fullItem?.region_code) return;
+    $api
+      .get(`/getWorkerList/${fullItem.region_code}`)
+      .then((res) => setWorkerList(res.data))
+      .catch(console.error);
+  }, [fullItem?.region_code]);
+
+  const filtered = useMemo(() => {
+    return workerList.filter((w) => {
+      return (
+        w.username.toLowerCase().includes(filterName.toLowerCase()) &&
+        w.company_name.toLowerCase().includes(filterCompany.toLowerCase())
+      );
+    });
+  }, [workerList, filterName, filterCompany]);
+
+  const handleSelect = async (w) => {
+    let data = {};
+    if (selectedId === w.user_id) {
+      setSelectedId(null);
+      data = {
+        requestID: fullItem.id,
+        id: null,
+        username: "Нет",
+        access_level: 0,
+      };
+    } else {
+      setSelectedId(w.user_id);
+      data = { requestID: fullItem.id, ...w, access_level: 1 };
+    }
+    await $api
+      .post("/setNewWorker", data)
+      .then(() => {
+        setFullItem({
+          worker_username:
+            selectedId === w.user_id ? "Нет информации" : w.username,
+          worker_phone:
+            selectedId === w.user_id ? "Нет информации" : w.phone_number,
+        });
+      })
+      .catch((error) => console.log(error));
+  };
 
   useEffect(() => {
     if (!fullItem?.id) return;
@@ -101,6 +168,8 @@ export default function SearchWorker({ access_level, item, fullItem }) {
         setSnackbarOpen(true);
       });
   }
+  const isReadOnly = access_level !== 3;
+
   return (
     <Box sx={{ display: "flex", gap: 5, flexDirection: "column" }}>
       <Box sx={{ mx: "auto", maxWidth: 800, fontSize: 20 }}>
@@ -143,30 +212,52 @@ export default function SearchWorker({ access_level, item, fullItem }) {
                 </Grid>
 
                 <Grid item xs={6}>
-                  <TextField
-                    label="Дата продажи оборудования"
-                    type="date"
-                    value={local?.sale_date || ""}
-                    onChange={(e) =>
-                      handleFieldChange(idx, "sale_date", e.target.value)
-                    }
-                    slotProps={{
-                      inputLabel: {
-                        shrink: true,
-                      },
-                      htmlInput: {
-                        sx: { mr: 2 },
-                      },
-                    }}
-                    fullWidth
-                  />
+                  {isReadOnly ? (
+                    <>
+                      <TextField
+                        label="Дата продажи оборудования"
+                        value={local?.sale_date || ""}
+                        slotProps={{
+                          inputLabel: {
+                            shrink: true,
+                          },
+                          htmlInput: {
+                            sx: { mr: 2 },
+                          },
+                        }}
+                        fullWidth
+                      />
+                    </>
+                  ) : (
+                    <TextField
+                      label="Дата продажи оборудования"
+                      type="date"
+                      value={local?.sale_date || ""}
+                      onChange={(e) =>
+                        isReadOnly
+                          ? null
+                          : handleFieldChange(idx, "sale_date", e.target.value)
+                      }
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                        htmlInput: {
+                          sx: { mr: 2 },
+                        },
+                      }}
+                      fullWidth
+                    />
+                  )}
                 </Grid>
                 <Grid item xs={6}>
                   <TextField
                     label="Продавец оборудования"
                     value={local?.seller_name || ""}
                     onChange={(e) =>
-                      handleFieldChange(idx, "seller_name", e.target.value)
+                      isReadOnly
+                        ? null
+                        : handleFieldChange(idx, "seller_name", e.target.value)
                     }
                     slotProps={{
                       inputLabel: { shrink: true },
@@ -180,7 +271,13 @@ export default function SearchWorker({ access_level, item, fullItem }) {
                     label="Артикул"
                     value={local?.article_number || ""}
                     onChange={(e) =>
-                      handleFieldChange(idx, "article_number", e.target.value)
+                      isReadOnly
+                        ? null
+                        : handleFieldChange(
+                            idx,
+                            "article_number",
+                            e.target.value
+                          )
                     }
                     slotProps={{
                       inputLabel: { shrink: true },
@@ -190,27 +287,43 @@ export default function SearchWorker({ access_level, item, fullItem }) {
                   />
                 </Grid>
                 <Grid item xs={6}>
-                  <TextField
-                    label="Дата ввода в эксплуатацию"
-                    type="date"
-                    value={local?.commissioning_date || ""}
-                    onChange={(e) =>
-                      handleFieldChange(
-                        idx,
-                        "commissioning_date",
-                        e.target.value
-                      )
-                    }
-                    slotProps={{
-                      inputLabel: {
-                        shrink: true,
-                      },
-                      htmlInput: {
-                        sx: { mr: 2 },
-                      },
-                    }}
-                    fullWidth
-                  />
+                  {isReadOnly ? (
+                    <TextField
+                      label="Дата ввода в эксплуатацию"
+                      value={local?.commissioning_date || ""}
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                        htmlInput: {
+                          sx: { mr: 2 },
+                        },
+                      }}
+                      fullWidth
+                    />
+                  ) : (
+                    <TextField
+                      label="Дата ввода в эксплуатацию"
+                      type="date"
+                      value={local?.commissioning_date || ""}
+                      onChange={(e) =>
+                        handleFieldChange(
+                          idx,
+                          "commissioning_date",
+                          e.target.value
+                        )
+                      }
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                        htmlInput: {
+                          sx: { mr: 2 },
+                        },
+                      }}
+                      fullWidth
+                    />
+                  )}
                 </Grid>
 
                 <Grid item xs={6}>
@@ -218,7 +331,13 @@ export default function SearchWorker({ access_level, item, fullItem }) {
                     label="Документ реализации"
                     value={local?.document_number || ""}
                     onChange={(e) =>
-                      handleFieldChange(idx, "document_number", e.target.value)
+                      isReadOnly
+                        ? null
+                        : handleFieldChange(
+                            idx,
+                            "document_number",
+                            e.target.value
+                          )
                     }
                     slotProps={{
                       inputLabel: { shrink: true },
@@ -232,11 +351,13 @@ export default function SearchWorker({ access_level, item, fullItem }) {
                     label="Организация ввода в эксплуатацию"
                     value={local?.commissioning_org || ""}
                     onChange={(e) =>
-                      handleFieldChange(
-                        idx,
-                        "commissioning_org",
-                        e.target.value
-                      )
+                      isReadOnly
+                        ? null
+                        : handleFieldChange(
+                            idx,
+                            "commissioning_org",
+                            e.target.value
+                          )
                     }
                     slotProps={{
                       inputLabel: { shrink: true },
@@ -250,11 +371,13 @@ export default function SearchWorker({ access_level, item, fullItem }) {
                     label="Мастер ввода в эксплуатацию"
                     value={local?.commissioning_master || ""}
                     onChange={(e) =>
-                      handleFieldChange(
-                        idx,
-                        "commissioning_master",
-                        e.target.value
-                      )
+                      isReadOnly
+                        ? null
+                        : handleFieldChange(
+                            idx,
+                            "commissioning_master",
+                            e.target.value
+                          )
                     }
                     slotProps={{
                       inputLabel: { shrink: true },
@@ -271,7 +394,13 @@ export default function SearchWorker({ access_level, item, fullItem }) {
                     minRows={2}
                     value={local?.previous_repairs || ""}
                     onChange={(e) =>
-                      handleFieldChange(idx, "previous_repairs", e.target.value)
+                      isReadOnly
+                        ? null
+                        : handleFieldChange(
+                            idx,
+                            "previous_repairs",
+                            e.target.value
+                          )
                     }
                     slotProps={{
                       inputLabel: { shrink: true },
@@ -309,11 +438,13 @@ export default function SearchWorker({ access_level, item, fullItem }) {
                             )?.description || ""
                           }
                           onChange={(e) =>
-                            handleDefectDescriptionChange(
-                              idx,
-                              d.id,
-                              e.target.value
-                            )
+                            isReadOnly
+                              ? null
+                              : handleDefectDescriptionChange(
+                                  idx,
+                                  d.id,
+                                  e.target.value
+                                )
                           }
                           fullWidth
                           multiline
@@ -323,46 +454,22 @@ export default function SearchWorker({ access_level, item, fullItem }) {
                     ))}
                   </Grid>
                 )}
-
-                {/* <Grid item xs={12}>
-                <TextField
-                  label="Новый дефект"
-                  value={local.new_defect}
-                  onChange={(e) =>
-                    handleFieldChange(idx, "new_defect", e.target.value)
-                  }
-                  fullWidth
-                />
-              </Grid> */}
-
-                {/* <Grid item xs={12} textAlign="right">
-                <Button
-                  variant="contained"
-                  onClick={() =>
-                    console.log(
-                      "Сохранить данные для оборудования",
-                      eq.id,
-                      local
-                    )
-                  }
-                >
-                  Сохранить
-                </Button>
-              </Grid> */}
               </Grid>
             </Paper>
           );
         })}
 
-        <Box sx={{ textAlign: "center", mt: 2 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => postEquipmentData(equipmentData)}
-          >
-            Подтвердить данные оборудования
-          </Button>
-        </Box>
+        {!isReadOnly && (
+          <Box sx={{ textAlign: "center", mt: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => postEquipmentData(equipmentData)}
+            >
+              Подтвердить данные оборудования
+            </Button>
+          </Box>
+        )}
       </Box>
       <Materials
         requestID={fullItem?.id}
@@ -388,6 +495,90 @@ export default function SearchWorker({ access_level, item, fullItem }) {
           {"Данные обновлены"}
         </Alert>
       </Snackbar>
+      {/* Раздел выбора АСЦ*/}
+      {access_level === 3 && (
+        <Box sx={{ m: 3 }}>
+          {/* Фильтры */}
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              label="Поиск по АСЦ"
+              size="small"
+              value={filterName}
+              onChange={(e) => setFilterName(e.target.value)}
+            />
+            {/* <TextField
+            label="Поиск по региону"
+            size="small"
+            value={filterRegion}
+            onChange={(e) => setFilterRegion(e.target.value)}
+          /> */}
+            <TextField
+              label="Поиск по компании"
+              size="small"
+              value={filterCompany}
+              onChange={(e) => setFilterCompany(e.target.value)}
+            />
+          </Box>
+
+          {/* Таблица */}
+          <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>АСЦ</TableCell>
+                  <TableCell>Регион</TableCell>
+                  <TableCell>Заявки</TableCell>
+                  <TableCell>Компания</TableCell>
+                  <TableCell>ФИО</TableCell>
+                  <TableCell>Телефон</TableCell>
+                  <TableCell>Адрес</TableCell>
+                  <TableCell align="center">Выбрать</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filtered.map((w) => (
+                  <TableRow key={w.user_id} hover>
+                    <TableCell>{w.username}</TableCell>
+                    <TableCell>
+                      {
+                        region_data.find((item) => {
+                          return item.code === Number(w.region);
+                        })?.name
+                      }
+                    </TableCell>
+                    <TableCell>{w.active_requests}</TableCell>
+                    <TableCell>{w.company_name}</TableCell>
+                    <TableCell>{w.full_name}</TableCell>
+                    <TableCell>{w.phone_number}</TableCell>
+                    <TableCell>{w.legal_address}</TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        color={w.user_id === selectedId ? "success" : "default"}
+                        onClick={() => handleSelect(w)}
+                      >
+                        {w.user_id === selectedId ? (
+                          <CheckCircleOutlineIcon />
+                        ) : (
+                          <AddCircleOutlineIcon />
+                        )}
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8}>
+                      <Typography align="center" color="text.secondary">
+                        Нет АСЦ по заданным фильтрам
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      )}
     </Box>
   );
 }

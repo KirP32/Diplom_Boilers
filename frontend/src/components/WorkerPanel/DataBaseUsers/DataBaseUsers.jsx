@@ -922,7 +922,11 @@ export default function DataBaseUsers() {
               }}
             >
               <TableContainer
-                sx={{ maxHeight: 440, overflowX: "auto", width: "100%" }}
+                sx={{
+                  maxHeight: 650,
+                  overflowX: "auto",
+                  width: "100%",
+                }}
               >
                 <Table aria-label="sticky table">
                   <TableHead>

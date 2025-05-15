@@ -64,7 +64,6 @@ router.get(
   DataController.getServicePrices
 );
 router.get("/getGoods", checkCookie, DataController.getGoods);
-
 router.get(
   "/getActualGoodsAndServices/:requestID",
   checkCookie,
@@ -92,6 +91,7 @@ router.get(
   checkCookie,
   DataController.getEquipmentData
 );
+router.get("/getWorkerList/:region", checkCookie, DataController.getWorkerList);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

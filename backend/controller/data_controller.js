@@ -1696,8 +1696,7 @@ class DataController {
   }
   async setNewWorker(req, res) {
     try {
-      const { username, access_level, requestID, id: userId } = req.body;
-
+      const { username, access_level, requestID, user_id } = req.body;
       const requestQuery = await pool.query(
         `SELECT ur.assigned_to, ur.region_assigned_to, ur.system_name 
          FROM user_requests ur 
@@ -1761,7 +1760,7 @@ class DataController {
       } else {
         const result = await pool.query(
           `UPDATE user_requests SET ${updateField} = $1 WHERE id = $2`,
-          [userId, requestID]
+          [user_id, requestID]
         );
         if (result.rowCount === 0) {
           return res.status(404).json({ message: "Заявка не найдена." });
@@ -1772,10 +1771,10 @@ class DataController {
         const checkQuery = await pool.query(
           `SELECT COUNT(*) 
            FROM user_requests ur
-           JOIN user_requests_info uri ON ur.id = uri.request_id
            WHERE ur.${updateField} = $1 AND ur.system_name = $2`,
           [oldUserId, system_name]
         );
+        // JOIN user_requests_info uri ON ur.id = uri.request_id вот эту строчку убрал
         const remainingRequests = parseInt(checkQuery.rows[0].count, 10);
         if (remainingRequests === 0) {
           await pool.query(
@@ -2241,7 +2240,6 @@ class DataController {
       }
       const { region_code, assigned_to } = reqRes.rows[0];
       const regionCode = region_code;
-
       let workerId = null;
       if (assigned_to) {
         const wdRes = await pool.query(
@@ -3067,6 +3065,42 @@ class DataController {
     } catch (error) {
       console.error("getEquipmentData error:", error);
       return res.status(500).json({ message: "Ошибка сервера" });
+    }
+  }
+  async getWorkerList(req, res) {
+    try {
+      const { region } = req.params;
+      const workerList = await pool.query(
+        `
+        SELECT
+          wd.username,
+          u.id                   AS user_id,
+          wd.region,
+          wd.company_name,
+          wd.full_name,
+          wd.phone_number,
+          wd.legal_address,
+          COALESCE(req.cnt, 0)   AS active_requests
+        FROM worker_details wd
+        LEFT JOIN users u
+          ON u.username = wd.username
+        LEFT JOIN (
+          SELECT assigned_to, COUNT(*) AS cnt
+          FROM user_requests
+          GROUP BY assigned_to
+        ) req
+          ON req.assigned_to = u.id
+        WHERE wd.region = $1 AND profile_status = 2;
+        `,
+        [region]
+      );
+
+      if (workerList.rowCount > 0) {
+        return res.send(workerList.rows);
+      }
+      return res.sendStatus(500);
+    } catch (error) {
+      return res.status(500).send({ message: error });
     }
   }
 }
