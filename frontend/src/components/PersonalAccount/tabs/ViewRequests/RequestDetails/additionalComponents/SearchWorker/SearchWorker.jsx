@@ -478,17 +478,17 @@ export default function SearchWorker({
           );
         })}
 
-        {!isReadOnly && (
-          <Box sx={{ textAlign: "center", mt: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => postEquipmentData(equipmentData)}
-            >
-              Подтвердить данные оборудования
-            </Button>
-          </Box>
-        )}
+        <Box sx={{ textAlign: "center", mt: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => postEquipmentData(equipmentData)}
+          >
+            {!isReadOnly
+              ? "Подтвердить данные оборудования"
+              : "Установить дату ремонта"}
+          </Button>
+        </Box>
       </Box>
       <Materials
         requestID={fullItem?.id}
