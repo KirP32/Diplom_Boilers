@@ -11,8 +11,6 @@ import region_data from "../../../../WorkerPanel/DataBaseUsers/russian_regions_c
 import {
   Typography,
   Box,
-  Autocomplete,
-  TextField,
   Tooltip,
   CircularProgress,
   Collapse,
@@ -41,14 +39,14 @@ export default function RequestDetails({
   getAllDevices, // если завершена, чтобы убрать доступ к системе у работника
 }) {
   const [fullItem, setFullItem] = useState(null);
-  const [keyEditing, setKeyEditing] = useState("");
-  const [editingName, setEditingName] = useState("");
+  // const [keyEditing, setKeyEditing] = useState("");
+  // const [editingName, setEditingName] = useState("");
   const { access_level } = useContext(ThemeContext);
   const [itemStage, setItemStage] = useState(fullItem?.stage);
-  const [nameList, setNameList] = useState({
-    worker_name: [],
-    wattson_name: [],
-  });
+  // const [nameList, setNameList] = useState({
+  //   worker_name: [],
+  //   wattson_name: [],
+  // });
   const [socketLoading, setSocketLoading] = useState(true);
   const [lockedAction, setLockedAction] = useState(null);
   const [lastActionUser, setLastActionUser] = useState(null);
@@ -81,16 +79,16 @@ export default function RequestDetails({
       }));
     }
   }
-  useEffect(() => {
-    $api
-      .get("/workersNameList")
-      .then((result) => {
-        setNameList(result.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, []);
+  // useEffect(() => {
+  //   $api
+  //     .get("/workersNameList")
+  //     .then((result) => {
+  //       setNameList(result.data);
+  //     })
+  //     .catch((error) => {
+  //       console.log(error);
+  //     });
+  // }, []);
 
   useEffect(() => {
     async function fetchFullItem() {
@@ -305,47 +303,47 @@ export default function RequestDetails({
     (access_level === 2 && fullItem?.regional_confirmed) ||
     (access_level === 3 && fullItem?.service_engineer_confirmed);
 
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter") {
-      handleSubmit();
-    }
-  };
+  // const handleKeyDown = (event) => {
+  //   if (event.key === "Enter") {
+  //     handleSubmit();
+  //   }
+  // };
 
-  const handleFieldBlur = () => {
-    handleSubmit();
-  };
+  // const handleFieldBlur = () => {
+  //   handleSubmit();
+  // };
 
-  const handleSubmit = async () => {
-    const data = { requestID: fullItem.id, ...editingName };
-    if (editingName) {
-      try {
-        await $api.post("/setNewWorker", data);
-        // изменить логику, не брать данные с сервера повторно, использовать всё из прошлого запроса
-        const tooltipResponse = await $api.get("/getTooltipEmployees");
+  // const handleSubmit = async () => {
+  //   const data = { requestID: fullItem.id, ...editingName };
+  //   if (editingName) {
+  //     try {
+  //       await $api.post("/setNewWorker", data);
+  //       // изменить логику, не брать данные с сервера повторно, использовать всё из прошлого запроса
+  //       const tooltipResponse = await $api.get("/getTooltipEmployees");
 
-        setNameList(tooltipResponse.data);
+  //       setNameList(tooltipResponse.data);
 
-        const updatedFull = await $api.get(`/getFullRequest/${fullItem.id}`);
-        setFullItem(updatedFull.data);
+  //       const updatedFull = await $api.get(`/getFullRequest/${fullItem.id}`);
+  //       setFullItem(updatedFull.data);
 
-        const updatedEditingName =
-          (tooltipResponse.data.worker_name || []).find(
-            (worker) => worker.username === editingName.username
-          ) ||
-          (tooltipResponse.data.wattson_name || []).find(
-            (worker) => worker.username === editingName.username
-          ) ||
-          "";
+  //       const updatedEditingName =
+  //         (tooltipResponse.data.worker_name || []).find(
+  //           (worker) => worker.username === editingName.username
+  //         ) ||
+  //         (tooltipResponse.data.wattson_name || []).find(
+  //           (worker) => worker.username === editingName.username
+  //         ) ||
+  //         "";
 
-        setEditingName(updatedEditingName);
-        setKeyEditing(null);
-      } catch (error) {
-        console.log(error);
-      }
-    } else {
-      setKeyEditing(null);
-    }
-  };
+  //       setEditingName(updatedEditingName);
+  //       setKeyEditing(null);
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   } else {
+  //     setKeyEditing(null);
+  //   }
+  // };
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);

@@ -9,23 +9,14 @@ import {
   Button,
   Snackbar,
   Alert,
-} from "@mui/material";
-import {
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  IconButton,
+  FormControl,
+  Radio,
 } from "@mui/material";
 import Materials from "../Materials/Materials";
 import $api from "../../../../../../../http";
 import { useEffect } from "react";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { useMemo } from "react";
-import region_data from "../../../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
+
+import { FormControlLabel, FormLabel, RadioGroup } from "@mui/material";
 
 // eslint-disable-next-line no-unused-vars
 export default function SearchWorker({
@@ -37,55 +28,6 @@ export default function SearchWorker({
   const [data, setData] = useState([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [equipmentData, setEquipmentData] = useState([]);
-  const [workerList, setWorkerList] = useState([]);
-  const [selectedId, setSelectedId] = useState(fullItem?.assigned_to);
-  // Фильтры
-  const [filterName, setFilterName] = useState("");
-  const [filterCompany, setFilterCompany] = useState("");
-
-  useEffect(() => {
-    if (!fullItem?.region_code) return;
-    $api
-      .get(`/getWorkerList/${fullItem.region_code}`)
-      .then((res) => setWorkerList(res.data))
-      .catch(console.error);
-  }, [fullItem?.region_code]);
-
-  const filtered = useMemo(() => {
-    return workerList.filter((w) => {
-      return (
-        w.username.toLowerCase().includes(filterName.toLowerCase()) &&
-        w.company_name.toLowerCase().includes(filterCompany.toLowerCase())
-      );
-    });
-  }, [workerList, filterName, filterCompany]);
-
-  const handleSelect = async (w) => {
-    let data = {};
-    if (selectedId === w.user_id) {
-      setSelectedId(null);
-      data = {
-        requestID: fullItem.id,
-        id: null,
-        username: "Нет",
-        access_level: 0,
-      };
-    } else {
-      setSelectedId(w.user_id);
-      data = { requestID: fullItem.id, ...w, access_level: 1 };
-    }
-    await $api
-      .post("/setNewWorker", data)
-      .then(() => {
-        setFullItem({
-          worker_username:
-            selectedId === w.user_id ? "Нет информации" : w.username,
-          worker_phone:
-            selectedId === w.user_id ? "Нет информации" : w.phone_number,
-        });
-      })
-      .catch((error) => console.log(error));
-  };
 
   useEffect(() => {
     if (!fullItem?.id) return;
@@ -126,6 +68,7 @@ export default function SearchWorker({
       defect_descriptions: (eq?.defects || []).map((d) => ({
         id: d.id,
         description: d.description ?? "",
+        is_warranty_case: d.is_warranty_case,
       })),
     }));
 
@@ -147,6 +90,23 @@ export default function SearchWorker({
 
       const updatedDescriptions = currentDescriptions.map((desc) =>
         desc.id === defectId ? { ...desc, description: value } : desc
+      );
+
+      copy[equipmentIndex] = {
+        ...copy[equipmentIndex],
+        defect_descriptions: updatedDescriptions,
+      };
+
+      return copy;
+    });
+  };
+  const handleDefectWarrantyChange = (equipmentIndex, defectId, isWarranty) => {
+    setEquipmentData((prev) => {
+      const copy = [...prev];
+      const currentDescriptions = [...copy[equipmentIndex].defect_descriptions];
+
+      const updatedDescriptions = currentDescriptions.map((desc) =>
+        desc.id === defectId ? { ...desc, is_warranty_case: isWarranty } : desc
       );
 
       copy[equipmentIndex] = {
@@ -416,42 +376,75 @@ export default function SearchWorker({
                       История дефектов
                     </Typography>
 
-                    {eq.defects.map((d, di) => (
-                      <Box
-                        key={di}
-                        sx={{
-                          border: "1px dashed #bbb",
-                          borderRadius: 1,
-                          p: 2,
-                          mb: 2,
-                        }}
-                      >
-                        <Typography sx={{ mb: 1 }}>
-                          <b>{d.find_date}</b> — {d.defect_info}
-                        </Typography>
+                    {eq.defects.map((d, di) => {
+                      const descObj = equipmentData[
+                        idx
+                      ]?.defect_descriptions.find((dd) => dd.id === d.id) || {
+                        description: "",
+                        is_warranty_case: false,
+                      };
 
-                        <TextField
-                          label="Описание неисправности"
-                          value={
-                            equipmentData[idx]?.defect_descriptions.find(
-                              (dd) => dd.id === d.id
-                            )?.description || ""
-                          }
-                          onChange={(e) =>
-                            isReadOnly
-                              ? null
-                              : handleDefectDescriptionChange(
-                                  idx,
-                                  d.id,
-                                  e.target.value
-                                )
-                          }
-                          fullWidth
-                          multiline
-                          minRows={2}
-                        />
-                      </Box>
-                    ))}
+                      return (
+                        <Box
+                          key={di}
+                          sx={{
+                            border: "1px dashed #bbb",
+                            borderRadius: 1,
+                            p: 2,
+                            mb: 2,
+                          }}
+                        >
+                          <Typography sx={{ mb: 1 }}>
+                            <strong>{d.find_date}</strong> — {d.defect_info}
+                          </Typography>
+
+                          <TextField
+                            label="Описание неисправности"
+                            value={descObj.description}
+                            onChange={(e) =>
+                              isReadOnly
+                                ? null
+                                : handleDefectDescriptionChange(
+                                    idx,
+                                    d.id,
+                                    e.target.value
+                                  )
+                            }
+                            fullWidth
+                            multiline
+                            minRows={2}
+                            sx={{ mb: 2 }}
+                          />
+
+                          <FormControl component="fieldset">
+                            <FormLabel component="legend">
+                              Гарантийный случай?
+                            </FormLabel>
+                            <RadioGroup
+                              row
+                              value={String(descObj.is_warranty_case)}
+                              onChange={(e) => {
+                                if (!isReadOnly) {
+                                  const val = e.target.value === "true";
+                                  handleDefectWarrantyChange(idx, d.id, val);
+                                }
+                              }}
+                            >
+                              <FormControlLabel
+                                value="false"
+                                control={<Radio />}
+                                label="Нет"
+                              />
+                              <FormControlLabel
+                                value="true"
+                                control={<Radio />}
+                                label="Да"
+                              />
+                            </RadioGroup>
+                          </FormControl>
+                        </Box>
+                      );
+                    })}
                   </Grid>
                 )}
               </Grid>
@@ -474,9 +467,10 @@ export default function SearchWorker({
       <Materials
         requestID={fullItem?.id}
         access_level={access_level}
-        worker_username={fullItem?.worker_username}
         worker_region={fullItem?.worker_region}
         setSnackbarOpen={(e) => setSnackbarOpen(e)}
+        fullItem={fullItem}
+        setFullItem={(e) => setFullItem(e)}
       />
       <Snackbar
         open={snackbarOpen}
@@ -496,89 +490,6 @@ export default function SearchWorker({
         </Alert>
       </Snackbar>
       {/* Раздел выбора АСЦ*/}
-      {access_level === 3 && (
-        <Box sx={{ m: 3 }}>
-          {/* Фильтры */}
-          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-            <TextField
-              label="Поиск по АСЦ"
-              size="small"
-              value={filterName}
-              onChange={(e) => setFilterName(e.target.value)}
-            />
-            {/* <TextField
-            label="Поиск по региону"
-            size="small"
-            value={filterRegion}
-            onChange={(e) => setFilterRegion(e.target.value)}
-          /> */}
-            <TextField
-              label="Поиск по компании"
-              size="small"
-              value={filterCompany}
-              onChange={(e) => setFilterCompany(e.target.value)}
-            />
-          </Box>
-
-          {/* Таблица */}
-          <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>АСЦ</TableCell>
-                  <TableCell>Регион</TableCell>
-                  <TableCell>Заявки</TableCell>
-                  <TableCell>Компания</TableCell>
-                  <TableCell>ФИО</TableCell>
-                  <TableCell>Телефон</TableCell>
-                  <TableCell>Адрес</TableCell>
-                  <TableCell align="center">Выбрать</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filtered.map((w) => (
-                  <TableRow key={w.user_id} hover>
-                    <TableCell>{w.username}</TableCell>
-                    <TableCell>
-                      {
-                        region_data.find((item) => {
-                          return item.code === Number(w.region);
-                        })?.name
-                      }
-                    </TableCell>
-                    <TableCell>{w.active_requests}</TableCell>
-                    <TableCell>{w.company_name}</TableCell>
-                    <TableCell>{w.full_name}</TableCell>
-                    <TableCell>{w.phone_number}</TableCell>
-                    <TableCell>{w.legal_address}</TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        color={w.user_id === selectedId ? "success" : "default"}
-                        onClick={() => handleSelect(w)}
-                      >
-                        {w.user_id === selectedId ? (
-                          <CheckCircleOutlineIcon />
-                        ) : (
-                          <AddCircleOutlineIcon />
-                        )}
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={8}>
-                      <Typography align="center" color="text.secondary">
-                        Нет АСЦ по заданным фильтрам
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
     </Box>
   );
 }

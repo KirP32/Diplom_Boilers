@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Grid,
@@ -12,16 +12,26 @@ import {
   Typography,
   TextField,
   Autocomplete,
+  TableCell,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableBody,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import $api from "../../../../../../../http";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import region_data from "../../../../../../WorkerPanel/DataBaseUsers/russian_regions_codes.json";
 
 export default function Materials({
   requestID,
   access_level,
-  worker_username,
   worker_region,
   setSnackbarOpen,
+  fullItem,
+  setFullItem,
 }) {
   const [services, setServices] = useState([]);
   const [goods, setGoods] = useState([]);
@@ -32,7 +42,55 @@ export default function Materials({
 
   const [pendingServices, setPendingServices] = useState([]);
   const [pendingGoods, setPendingGoods] = useState([]);
+  // Фильтры
+  const [filterName, setFilterName] = useState("");
+  const [filterCompany, setFilterCompany] = useState("");
+  const [workerList, setWorkerList] = useState([]);
+  const [selectedId, setSelectedId] = useState(fullItem?.assigned_to);
 
+  useEffect(() => {
+    if (!fullItem?.region_code) return;
+    $api
+      .get(`/getWorkerList/${fullItem.region_code}`)
+      .then((res) => setWorkerList(res.data))
+      .catch(console.error);
+  }, [fullItem?.region_code]);
+
+  const filtered = useMemo(() => {
+    return workerList.filter((w) => {
+      return (
+        w.username.toLowerCase().includes(filterName.toLowerCase()) &&
+        w.company_name.toLowerCase().includes(filterCompany.toLowerCase())
+      );
+    });
+  }, [workerList, filterName, filterCompany]);
+
+  const handleSelect = async (w) => {
+    let data = {};
+    if (selectedId === w.user_id) {
+      setSelectedId(null);
+      data = {
+        requestID: fullItem.id,
+        id: null,
+        username: "Нет",
+        access_level: 0,
+      };
+    } else {
+      setSelectedId(w.user_id);
+      data = { requestID: fullItem.id, ...w, access_level: 1 };
+    }
+    await $api
+      .post("/setNewWorker", data)
+      .then(() => {
+        setFullItem({
+          worker_username:
+            selectedId === w.user_id ? "Нет информации" : w.username,
+          worker_phone:
+            selectedId === w.user_id ? "Нет информации" : w.phone_number,
+        });
+      })
+      .catch((error) => console.log(error));
+  };
   useEffect(() => {
     setPendingServices((prev) =>
       prev.map((ps) => {
@@ -57,7 +115,7 @@ export default function Materials({
     return () => {
       isActive = false;
     };
-  }, [requestID, worker_username]);
+  }, [requestID, fullItem?.worker_username]);
 
   useEffect(() => {
     $api
@@ -162,6 +220,9 @@ export default function Materials({
         setSnackbarOpen(true);
       })
       .catch(() => {});
+    setPendingServices([]);
+    setPendingGoods([]);
+    await getActualGoodsAndServices();
   };
 
   return (
@@ -214,9 +275,16 @@ export default function Materials({
                       secondaryAction={
                         access_level === 3 && (
                           <>
-                            {isConfirmed && (
+                            {isPending ? (
                               <IconButton
-                                edge="end"
+                                onClick={() =>
+                                  handleRemoveService(service.service_id)
+                                }
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            ) : isConfirmed ? (
+                              <IconButton
                                 onClick={() =>
                                   handleDeleteConfirmedService(
                                     service.service_id
@@ -225,17 +293,7 @@ export default function Materials({
                               >
                                 <DeleteIcon />
                               </IconButton>
-                            )}
-                            {isPending && (
-                              <IconButton
-                                edge="end"
-                                onClick={() =>
-                                  handleRemoveService(service.service_id)
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
+                            ) : null}
                           </>
                         )
                       }
@@ -336,11 +394,94 @@ export default function Materials({
           </Paper>
         </Grid>
       </Grid>
+      {/* АСЦ */}
+      {access_level === 3 && (
+        <Box sx={{ m: 3 }}>
+          {/* Фильтры */}
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              label="Поиск по АСЦ"
+              size="small"
+              value={filterName}
+              onChange={(e) => setFilterName(e.target.value)}
+            />
+            {/* <TextField
+                  label="Поиск по региону"
+                  size="small"
+                  value={filterRegion}
+                  onChange={(e) => setFilterRegion(e.target.value)}
+                /> */}
+            <TextField
+              label="Поиск по компании"
+              size="small"
+              value={filterCompany}
+              onChange={(e) => setFilterCompany(e.target.value)}
+            />
+          </Box>
 
+          {/* Таблица */}
+          <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>АСЦ</TableCell>
+                  <TableCell>Регион</TableCell>
+                  <TableCell>Заявки</TableCell>
+                  <TableCell>Компания</TableCell>
+                  <TableCell>ФИО</TableCell>
+                  <TableCell>Телефон</TableCell>
+                  <TableCell>Адрес</TableCell>
+                  <TableCell align="center">Выбрать</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filtered.map((w) => (
+                  <TableRow key={w.user_id} hover>
+                    <TableCell>{w.username}</TableCell>
+                    <TableCell>
+                      {
+                        region_data.find((item) => {
+                          return item.code === Number(w.region);
+                        })?.name
+                      }
+                    </TableCell>
+                    <TableCell>{w.active_requests}</TableCell>
+                    <TableCell>{w.company_name}</TableCell>
+                    <TableCell>{w.full_name}</TableCell>
+                    <TableCell>{w.phone_number}</TableCell>
+                    <TableCell>{w.legal_address}</TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        color={w.user_id === selectedId ? "success" : "default"}
+                        onClick={() => handleSelect(w)}
+                      >
+                        {w.user_id === selectedId ? (
+                          <CheckCircleOutlineIcon />
+                        ) : (
+                          <AddCircleOutlineIcon />
+                        )}
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8}>
+                      <Typography align="center" color="text.secondary">
+                        Нет АСЦ по заданным фильтрам
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      )}
       {access_level === 3 && (
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Button variant="contained" color="success" onClick={handleConfirm}>
-            Подтвердить Услуги и Заявки
+            Подтвердить АСЦ, Услуги и Запчасти
           </Button>
         </Box>
       )}

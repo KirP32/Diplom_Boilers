@@ -2976,8 +2976,9 @@ class DataController {
 
       const updateDefText = `
       UPDATE user_requests_details
-      SET detailed_description = $1
-      WHERE id = $2
+      SET detailed_description = $1, 
+      is_warranty_case = $2
+      WHERE id = $3
     `;
 
       for (const element of req.body) {
@@ -2994,7 +2995,11 @@ class DataController {
         ]);
 
         for (const defect of element.defect_descriptions) {
-          await client.query(updateDefText, [defect.description, defect.id]);
+          await client.query(updateDefText, [
+            defect.description,
+            defect.is_warranty_case,
+            defect.id,
+          ]);
         }
       }
       await client.query("COMMIT");
@@ -3024,6 +3029,7 @@ class DataController {
         ue.previous_repairs,
         ue.sale_document,
         ud.id               AS defect_id,
+        ud.is_warranty_case,
         ud.detailed_description
       FROM user_requests_equipments ue
       LEFT JOIN user_requests_details ud
@@ -3055,6 +3061,7 @@ class DataController {
           equipmentsMap[eqId].defects.push({
             id: row.defect_id,
             description: row.detailed_description,
+            is_warranty_case: row.is_warranty_case,
           });
         }
       }
