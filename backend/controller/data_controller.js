@@ -2970,6 +2970,7 @@ class DataController {
         commissioning_org   = $5,
         commissioning_master= $6,
         previous_repairs    = $7,
+        repair_completion_date = $10,
         sale_document       = $8
       WHERE id = $9
     `;
@@ -2992,6 +2993,7 @@ class DataController {
           element.previous_repairs,
           element.document_number,
           element.id,
+          element.repair_completion_date,
         ]);
 
         for (const defect of element.defect_descriptions) {
@@ -3026,6 +3028,7 @@ class DataController {
         ue.commissioning_date,
         ue.commissioning_org,
         ue.commissioning_master,
+        ue.repair_completion_date,
         ue.previous_repairs,
         ue.sale_document,
         ud.id               AS defect_id,
@@ -3054,6 +3057,7 @@ class DataController {
             commissioning_master: row.commissioning_master,
             previous_repairs: row.previous_repairs,
             sale_document: row.sale_document,
+            repair_completion_date: row.repair_completion_date,
             defects: [],
           };
         }
