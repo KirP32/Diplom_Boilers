@@ -284,6 +284,7 @@ export default function RequestDetails({
         access_level={access_level}
         worker_username={fullItem?.worker_username}
         worker_region={fullItem?.worker_region}
+        work_completion_date={fullItem?.work_completion_date}
       />
     ),
     Завершенно: (

@@ -3126,6 +3126,18 @@ class DataController {
       return res.status(500).send({ message: error });
     }
   }
+  async updateCompletionDate(req, res) {
+    try {
+      const { saleDate, id } = req.body;
+      await pool.query(
+        "UPDATE user_requests SET work_completion_date = $1 where id = $2",
+        [saleDate, id]
+      );
+      return res.send("OK");
+    } catch (error) {
+      return res.status(500).send({ message: error });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

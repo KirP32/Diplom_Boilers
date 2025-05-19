@@ -29,6 +29,7 @@
     "react-international-phone": "^4.4.0",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.26.2",
+    "react-signature-canvas": "^1.1.0-alpha.2",
     "sass": "^1.79.3",
     "socket.io-client": "^4.8.1",
     "uuid": "^11.0.3"

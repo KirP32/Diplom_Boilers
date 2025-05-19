@@ -15,12 +15,16 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import $api from "../../../../../../../http";
+import EditIcon from "@mui/icons-material/Edit";
+import CheckIcon from "@mui/icons-material/Check";
+import { green } from "@mui/material/colors";
 
 export default function WorkInProgress({
   requestID,
   access_level,
   worker_username,
   worker_region,
+  work_completion_date,
 }) {
   const [servicesCatalog, setServicesCatalog] = useState([]);
   const [goodsCatalog, setGoodsCatalog] = useState([]);
@@ -32,15 +36,27 @@ export default function WorkInProgress({
 
   const [pendingServices, setPendingServices] = useState([]);
   const [pendingGoods, setPendingGoods] = useState([]);
-
+  const [date, setDate] = useState(work_completion_date.slice(0, 10) || "");
+  const [isEditingDate, setIsEditingDate] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-
+  setServicesCatalog;
   useEffect(() => {
+    if (!requestID) return;
+
+    let isActive = true;
     $api
-      .get(`/getServicePrices/${worker_username}`)
-      .then((result) => setServicesCatalog(result.data))
-      .catch((error) => console.error(error));
-  }, [worker_username]);
+      .get(`/getServicePrices/${requestID}`)
+      .then((res) => {
+        if (isActive) {
+          setServicesCatalog(res.data);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      isActive = false;
+    };
+  }, [requestID, worker_username]);
 
   useEffect(() => {
     $api
@@ -52,7 +68,7 @@ export default function WorkInProgress({
   async function getActualGoodsAndServices() {
     if (worker_region !== null) {
       await $api
-        .get(`/getActualGoodsAndServices/${requestID}/${worker_region}`)
+        .get(`/getActualGoodsAndServices/${requestID}`)
         .then((result) => {
           setActualGoodsAndServices({
             services: result.data?.services || [],
@@ -154,21 +170,32 @@ export default function WorkInProgress({
       .catch((error) => console.log(error));
   };
 
+  const handleSave = async () => {
+    try {
+      await $api.post("/updateCompletionDate", {
+        saleDate: date,
+        id: requestID,
+      });
+      setIsEditingDate(false);
+    } catch (error) {
+      console.error("Ошибка при сохранении даты:", error);
+    }
+  };
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h5" align="center" gutterBottom>
         Итоговые услуги и запчасти
       </Typography>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} alignItems="stretch">
         {/* Блок услуг */}
         <Grid item xs={12} md={6}>
           <Paper
             sx={{
               p: 2,
-              minHeight: 350,
-              maxHeight: 404,
               display: "flex",
               flexDirection: "column",
+              maxHeight: 500,
+              height: "100%",
             }}
           >
             <Typography variant="h6" gutterBottom>
@@ -236,9 +263,13 @@ export default function WorkInProgress({
                         secondary={
                           access_level === 3
                             ? `Цена: ${
-                                service.price * service.coefficient
-                              }, Коэффициент: ${service.coefficient}`
-                            : `Цена: ${service.price * service.coefficient}`
+                                service.base_price * service.coefficient
+                              } руб. с учётом коэффициента АСЦ: ${
+                                service.coefficient
+                              }`
+                            : `Цена: ${
+                                service.base_price * service.coefficient
+                              } руб.`
                         }
                       />
                     </ListItem>
@@ -254,10 +285,10 @@ export default function WorkInProgress({
           <Paper
             sx={{
               p: 2,
-              minHeight: 350,
-              maxHeight: 404,
               display: "flex",
               flexDirection: "column",
+              maxHeight: 500,
+              height: "100%",
             }}
           >
             <Typography variant="h6" gutterBottom>
@@ -368,6 +399,44 @@ export default function WorkInProgress({
             Подтвердить
           </Button>
         )}
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          marginTop: 2,
+          gap: 2,
+        }}
+      >
+        <Typography variant="h5">Дата выполнения работ:</Typography>
+        <TextField
+          type="date"
+          value={date || ""}
+          onChange={(e) => setDate(e.target.value)}
+          disabled={!isEditingDate}
+          slotProps={{
+            inputLabel: {
+              shrink: true,
+            },
+            htmlInput: {
+              sx: { mr: 2 },
+            },
+          }}
+          sx={{ width: 250 }}
+        />
+        <IconButton
+          onClick={() => {
+            if (isEditingDate) {
+              handleSave();
+            } else {
+              setIsEditingDate(true);
+            }
+          }}
+          sx={{ color: isEditingDate ? green[600] : "default" }}
+        >
+          {isEditingDate ? <CheckIcon /> : <EditIcon />}
+        </IconButton>
       </Box>
     </Box>
   );
