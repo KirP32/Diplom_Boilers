@@ -161,6 +161,11 @@ router.post(
   DataController.confirmEquipmentData
 );
 // router.post("/getGeoPosition", checkCookie, DataController.getGeoPosition);
+router.post(
+  "/updateCompletionDate",
+  checkCookie,
+  DataController.updateCompletionDate
+);
 
 router.delete(
   "/delete_device/:device_uid",
