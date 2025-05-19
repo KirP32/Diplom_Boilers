@@ -304,10 +304,12 @@ export default function Materials({
                           access_level === 3
                             ? `Цена: ${
                                 service.base_price * service?.coefficient
-                              } с учётом коэффициента АСЦ: ${
+                              } руб. с учётом коэффициента АСЦ: ${
                                 service.coefficient
                               }`
-                            : `Цена: ${service.price * service.coefficient}`
+                            : `Цена: ${
+                                service.base_price * service.coefficient
+                              } руб.`
                         }
                       />
                     </ListItem>
