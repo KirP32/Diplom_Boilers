@@ -877,6 +877,17 @@ class DataController {
         FROM user_requests_equipments e
         WHERE e.user_request_id = ur.id
       ) eq_mod ON true
+
+      LEFT JOIN LATERAL (
+        SELECT SUM(sp.price * COALESCE(wsc.coefficient, 1))::double precision AS total_cost
+        FROM request_services rs
+        JOIN service_prices sp ON rs.service_id = sp.service_id AND sp.region = ur.region_code
+        LEFT JOIN users u_sub ON u_sub.id = ur.assigned_to
+        LEFT JOIN worker_details wd_sub ON wd_sub.username = u_sub.username
+        LEFT JOIN worker_service_coefficients wsc 
+          ON rs.service_id = wsc.service_id AND wsc.worker_id = wd_sub.id::bigint
+        WHERE rs.request_id = ur.id
+      ) total ON true
     `;
 
       const selectFields = `
@@ -897,7 +908,8 @@ class DataController {
       wd.geo_lat   AS worker_geo_lat,
       wd.geo_lon   AS worker_geo_lon,
 
-      COALESCE(eq_mod.module_series, ur.module) AS module
+      COALESCE(eq_mod.module_series, ur.module) AS module,
+      COALESCE(total.total_cost, 0)::double precision AS total_cost
     `;
 
       let allDevicesQuery, workerDevicesQuery;

@@ -65,9 +65,9 @@ export default function ListView({
               <TableCell sx={headerCellSx} align="right">
                 Оборудование
               </TableCell>
-              {/* <TableCell sx={headerCellSx} align="right">
-                Система
-              </TableCell> */}
+              <TableCell sx={headerCellSx} align="right">
+                Стоимость ремонта
+              </TableCell>
               <TableCell sx={headerCellSx} align="right">
                 Расстояние
               </TableCell>
@@ -111,9 +111,9 @@ export default function ListView({
               <TableCell sx={headerCellSx} align="right">
                 Оборудование
               </TableCell>
-              {/* <TableCell sx={headerCellSx} align="right">
-                Система
-              </TableCell> */}
+              <TableCell sx={headerCellSx} align="right">
+                Стоимость ремонта
+              </TableCell>
               <TableCell sx={headerCellSx} align="right">
                 Расстояние
               </TableCell>
@@ -216,7 +216,7 @@ const RequestRow = React.memo(
         >
           {item.module}
         </TableCell>
-        {/* <TableCell
+        <TableCell
           align="right"
           sx={{
             overflow: "hidden",
@@ -224,8 +224,8 @@ const RequestRow = React.memo(
             whiteSpace: "nowrap",
           }}
         >
-          {item.system_name}
-        </TableCell> */}
+          {item.total_cost} руб.
+        </TableCell>
         <TableCell
           align="right"
           sx={{
@@ -344,7 +344,7 @@ const RequestRowInWork = React.memo(
         >
           {item.module}
         </TableCell>
-        {/* <TableCell
+        <TableCell
           align="right"
           sx={{
             overflow: "hidden",
@@ -352,8 +352,8 @@ const RequestRowInWork = React.memo(
             whiteSpace: "nowrap",
           }}
         >
-          {item.system_name}
-        </TableCell> */}
+          {item.total_cost} руб.
+        </TableCell>
         <TableCell
           align="right"
           sx={{
