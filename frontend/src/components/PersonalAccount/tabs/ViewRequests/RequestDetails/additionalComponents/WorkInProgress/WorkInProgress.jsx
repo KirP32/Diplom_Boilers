@@ -35,12 +35,13 @@ export default function WorkInProgress({
     goods: [],
   });
 
-  const [pendingServices, setPendingServices] = useState([]);
-  const [pendingGoods, setPendingGoods] = useState([]);
+  const [editableServices, setEditableServices] = useState([]);
+  const [editableGoods, setEditableGoods] = useState([]);
+
   const [date, setDate] = useState(work_completion_date?.slice(0, 10) || "");
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  setServicesCatalog;
+
   useEffect(() => {
     if (!requestID) return;
 
@@ -91,76 +92,72 @@ export default function WorkInProgress({
     return () => clearInterval(intervalId);
   }, [requestID, worker_region]);
 
+  useEffect(() => {
+    if (isEditing) {
+      setEditableServices(
+        actualGoodsAndServices.services.map((s) => ({
+          ...s,
+          amount: s.amount || 1,
+        }))
+      );
+      setEditableGoods(
+        actualGoodsAndServices.goods.map((g) => ({
+          ...g,
+          amount: g.amount || 1,
+        }))
+      );
+    }
+  }, [isEditing, actualGoodsAndServices]);
+
   const handleServiceSelect = (event, value) => {
     if (!value) return;
-    const alreadySelected =
-      actualGoodsAndServices.services.some(
-        (s) => s.service_id === value.service_id
-      ) || pendingServices.some((s) => s.service_id === value.service_id);
+    const alreadySelected = editableServices.some(
+      (s) => s.service_id === value.service_id
+    );
     if (!alreadySelected) {
-      setPendingServices((prev) => [...prev, value]);
+      setEditableServices((prev) => [...prev, { ...value, amount: 1 }]);
     }
   };
 
   const handleGoodsSelect = (event, value) => {
     if (!value) return;
-    const alreadySelected =
-      actualGoodsAndServices.goods.some((g) => g.id === value.id) ||
-      pendingGoods.some((g) => g.id === value.id);
+    const alreadySelected = editableGoods.some((g) => g.id === value.id);
     if (!alreadySelected) {
-      setPendingGoods((prev) => [...prev, value]);
+      setEditableGoods((prev) => [...prev, { ...value, amount: 1 }]);
     }
   };
 
-  const handleRemoveService = (service_id) => {
-    setPendingServices((prev) =>
+  const handleServiceAmountChange = (id, value) => {
+    setEditableServices((prev) =>
+      prev.map((s) =>
+        s.service_id === id ? { ...s, amount: parseInt(value) || 1 } : s
+      )
+    );
+  };
+
+  const handleGoodsAmountChange = (id, value) => {
+    setEditableGoods((prev) =>
+      prev.map((g) =>
+        g.id === id ? { ...g, amount: parseInt(value) || 1 } : g
+      )
+    );
+  };
+
+  const handleDeleteService = (service_id) => {
+    setEditableServices((prev) =>
       prev.filter((s) => s.service_id !== service_id)
     );
   };
 
-  const handleRemoveGoods = (id) => {
-    setPendingGoods((prev) => prev.filter((g) => g.id !== id));
+  const handleDeleteGoods = (id) => {
+    setEditableGoods((prev) => prev.filter((g) => g.id !== id));
   };
-
-  const handleDeleteConfirmedService = async (service_id) => {
-    try {
-      await $api.delete(`/deleteRequestService/${requestID}/${service_id}`);
-      getActualGoodsAndServices();
-    } catch (error) {
-      console.error("Ошибка при удалении услуги:", error);
-    }
-  };
-
-  const handleDeleteConfirmedGoods = async (id) => {
-    try {
-      await $api.delete(`/deleteRequestGood/${requestID}/${id}`);
-      getActualGoodsAndServices();
-    } catch (error) {
-      console.error("Ошибка при удалении запчасти:", error);
-    }
-  };
-
-  const unionServices = [
-    ...actualGoodsAndServices.services,
-    ...pendingServices.filter(
-      (ps) =>
-        !actualGoodsAndServices.services.some(
-          (s) => s.service_id === ps.service_id
-        )
-    ),
-  ];
-  const unionGoods = [
-    ...actualGoodsAndServices.goods,
-    ...pendingGoods.filter(
-      (pg) => !actualGoodsAndServices.goods.some((g) => g.id === pg.id)
-    ),
-  ];
 
   const handleConfirmChanges = async () => {
     const data = {
       requestID,
-      services: unionServices,
-      goods: unionGoods,
+      services: editableServices,
+      goods: editableGoods,
     };
     await $api
       .post("/InsertGoodsServices", data)
@@ -221,62 +218,58 @@ export default function WorkInProgress({
             )}
             <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
               <List>
-                {unionServices.map((service) => {
-                  const isConfirmed = actualGoodsAndServices.services.some(
-                    (s) => s.service_id === service.service_id
-                  );
-                  const isPending = pendingServices.some(
-                    (s) => s.service_id === service.service_id
-                  );
-                  return (
-                    <ListItem
-                      key={service.service_id}
-                      secondaryAction={
-                        isEditing && (
-                          <>
-                            {isConfirmed && (
-                              <IconButton
-                                edge="end"
-                                onClick={() =>
-                                  handleDeleteConfirmedService(
-                                    service.service_id
-                                  )
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
-                            {isPending && (
-                              <IconButton
-                                edge="end"
-                                onClick={() =>
-                                  handleRemoveService(service.service_id)
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
-                          </>
-                        )
+                {(isEditing
+                  ? editableServices
+                  : actualGoodsAndServices.services
+                ).map((service) => (
+                  <ListItem
+                    key={service.service_id}
+                    secondaryAction={
+                      isEditing && (
+                        <>
+                          <TextField
+                            label="Кол-во"
+                            type="number"
+                            size="small"
+                            value={service.amount || 1}
+                            onChange={(e) =>
+                              handleServiceAmountChange(
+                                service.service_id,
+                                e.target.value
+                              )
+                            }
+                            sx={{ width: 80, mr: 1 }}
+                          />
+                          <IconButton
+                            edge="end"
+                            onClick={() =>
+                              handleDeleteService(service.service_id)
+                            }
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </>
+                      )
+                    }
+                  >
+                    <ListItemText
+                      primary={`${service.service_name} (x${
+                        service.amount || 1
+                      })`}
+                      secondary={
+                        access_level === 3
+                          ? `Цена: ${
+                              service.base_price * service.coefficient
+                            } руб. с учётом коэффициента АСЦ: ${
+                              service.coefficient
+                            }`
+                          : `Цена: ${
+                              service.base_price * service.coefficient
+                            } руб.`
                       }
-                    >
-                      <ListItemText
-                        primary={service.service_name}
-                        secondary={
-                          access_level === 3
-                            ? `Цена: ${
-                                service.base_price * service.coefficient
-                              } руб. с учётом коэффициента АСЦ: ${
-                                service.coefficient
-                              }`
-                            : `Цена: ${
-                                service.base_price * service.coefficient
-                              } руб.`
-                        }
-                      />
-                    </ListItem>
-                  );
-                })}
+                    />
+                  </ListItem>
+                ))}
               </List>
             </Box>
           </Paper>
@@ -314,46 +307,40 @@ export default function WorkInProgress({
             )}
             <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
               <List>
-                {unionGoods.map((good) => {
-                  const isConfirmed = actualGoodsAndServices.goods.some(
-                    (g) => g.id === good.id
-                  );
-                  const isPending = pendingGoods.some((g) => g.id === good.id);
-                  return (
+                {(isEditing ? editableGoods : actualGoodsAndServices.goods).map(
+                  (good) => (
                     <ListItem
                       key={good.id}
                       secondaryAction={
                         isEditing && (
                           <>
-                            {isConfirmed && (
-                              <IconButton
-                                edge="end"
-                                onClick={() =>
-                                  handleDeleteConfirmedGoods(good.id)
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
-                            {isPending && (
-                              <IconButton
-                                edge="end"
-                                onClick={() => handleRemoveGoods(good.id)}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
+                            <TextField
+                              label="Кол-во"
+                              type="number"
+                              size="small"
+                              value={good.amount || 1}
+                              onChange={(e) =>
+                                handleGoodsAmountChange(good.id, e.target.value)
+                              }
+                              sx={{ width: 80, mr: 1 }}
+                            />
+                            <IconButton
+                              edge="end"
+                              onClick={() => handleDeleteGoods(good.id)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
                           </>
                         )
                       }
                     >
                       <ListItemText
-                        primary={good.name}
+                        primary={`${good.name} (x${good.amount || 1})`}
                         secondary={`Артикул: ${good.article}, Цена: ${good.price}`}
                       />
                     </ListItem>
-                  );
-                })}
+                  )
+                )}
               </List>
             </Box>
           </Paper>
@@ -402,6 +389,7 @@ export default function WorkInProgress({
           </Button>
         )}
       </Box>
+
       <Box
         sx={{
           display: "flex",
@@ -418,12 +406,8 @@ export default function WorkInProgress({
           onChange={(e) => setDate(e.target.value)}
           disabled={!isEditingDate}
           slotProps={{
-            inputLabel: {
-              shrink: true,
-            },
-            htmlInput: {
-              sx: { mr: 2 },
-            },
+            inputLabel: { shrink: true },
+            htmlInput: { sx: { mr: 2 } },
           }}
           sx={{ width: 250 }}
         />

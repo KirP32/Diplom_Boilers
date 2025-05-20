@@ -514,7 +514,6 @@ export default function SearchWorker({
           {"Данные обновлены"}
         </Alert>
       </Snackbar>
-      {/* Раздел выбора АСЦ*/}
     </Box>
   );
 }

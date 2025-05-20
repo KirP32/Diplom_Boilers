@@ -39,10 +39,9 @@ export default function Materials({
     services: [],
     goods: [],
   });
+  const [editableServices, setEditableServices] = useState([]);
+  const [editableGoods, setEditableGoods] = useState([]);
 
-  const [pendingServices, setPendingServices] = useState([]);
-  const [pendingGoods, setPendingGoods] = useState([]);
-  // Фильтры
   const [filterName, setFilterName] = useState("");
   const [filterCompany, setFilterCompany] = useState("");
   const [workerList, setWorkerList] = useState([]);
@@ -91,138 +90,134 @@ export default function Materials({
       })
       .catch((error) => console.log(error));
   };
-  useEffect(() => {
-    setPendingServices((prev) =>
-      prev.map((ps) => {
-        const fresh = services.find((s) => s.service_id === ps.service_id);
-        return fresh ? { ...fresh } : ps;
-      })
-    );
-  }, [services]);
-  useEffect(() => {
-    if (!requestID) return;
-
-    let isActive = true;
-    $api
-      .get(`/getServicePrices/${requestID}`)
-      .then((res) => {
-        if (isActive) {
-          setServices(res.data);
-        }
-      })
-      .catch(console.error);
-
-    return () => {
-      isActive = false;
-    };
-  }, [requestID, fullItem?.worker_username]);
 
   useEffect(() => {
     $api
       .get(`/getGoods`)
-      .then((result) => setGoods(result.data))
-      .catch((error) => console.error(error));
+      .then((res) => setGoods(res.data))
+      .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (!requestID) return;
+    let isActive = true;
+    $api
+      .get(`/getServicePrices/${requestID}`)
+      .then((res) => {
+        if (isActive) setServices(res.data);
+      })
+      .catch(console.error);
+    return () => {
+      isActive = false;
+    };
+  }, [requestID, fullItem?.worker_username]);
 
   async function getActualGoodsAndServices() {
     if (worker_region !== null) {
       await $api
         .get(`/getActualGoodsAndServices/${requestID}`)
         .then((result) => {
+          const servicesWithAmount =
+            result.data?.services?.map((s) => ({
+              ...s,
+              amount: s.amount || 1,
+            })) || [];
+          const goodsWithAmount =
+            result.data?.goods?.map((g) => ({ ...g, amount: g.amount || 1 })) ||
+            [];
           setActualGoodsAndServices({
-            services: result.data?.services || [],
-            goods: result.data?.goods || [],
+            services: servicesWithAmount,
+            goods: goodsWithAmount,
           });
+          setEditableServices(servicesWithAmount);
+          setEditableGoods(goodsWithAmount);
         })
-        .catch((error) => console.log(error));
+        .catch(console.error);
     } else {
-      setActualGoodsAndServices({
-        services: [],
-        goods: [],
-      });
+      setActualGoodsAndServices({ services: [], goods: [] });
     }
   }
 
   useEffect(() => {
     getActualGoodsAndServices();
-    const intervalId = setInterval(() => {
-      getActualGoodsAndServices();
-    }, 60000);
+    const intervalId = setInterval(() => getActualGoodsAndServices(), 60000);
     return () => clearInterval(intervalId);
   }, [requestID, worker_region]);
 
-  const handleServiceSelect = (event, value) => {
+  const handleServiceSelect = (e, value) => {
     if (access_level !== 3 || !value) return;
-    const alreadySelected =
-      actualGoodsAndServices.services.some(
-        (s) => s.service_id === value.service_id
-      ) || pendingServices.some((s) => s.service_id === value.service_id);
-    if (!alreadySelected) {
-      setPendingServices((prev) => [...prev, value]);
-    }
+    const exists = editableServices.some(
+      (s) => s.service_id === value.service_id
+    );
+    if (!exists)
+      setEditableServices((prev) => [...prev, { ...value, amount: 1 }]);
   };
 
-  const handleGoodsSelect = (event, value) => {
+  const handleGoodsSelect = (e, value) => {
     if (access_level !== 3 || !value) return;
-    const alreadySelected =
-      actualGoodsAndServices.goods.some((g) => g.id === value.id) ||
-      pendingGoods.some((g) => g.id === value.id);
-    if (!alreadySelected) {
-      setPendingGoods((prev) => [...prev, value]);
-    }
+    const exists = editableGoods.some((g) => g.id === value.id);
+    if (!exists) setEditableGoods((prev) => [...prev, { ...value, amount: 1 }]);
   };
 
-  const handleRemoveService = (service_id) => {
-    setPendingServices((prev) =>
-      prev.filter((s) => s.service_id !== service_id)
+  const handleServiceAmountChange = (id, value) => {
+    setEditableServices((prev) =>
+      prev.map((s) =>
+        s.service_id === id ? { ...s, amount: parseInt(value) || 1 } : s
+      )
     );
   };
 
-  const handleRemoveGoods = (id) => {
-    setPendingGoods((prev) => prev.filter((g) => g.id !== id));
+  const handleGoodsAmountChange = (id, value) => {
+    setEditableGoods((prev) =>
+      prev.map((g) =>
+        g.id === id ? { ...g, amount: parseInt(value) || 1 } : g
+      )
+    );
   };
 
-  const handleDeleteConfirmedService = async (service_id) => {
-    await $api.delete(`/deleteRequestService/${requestID}/${service_id}`);
+  const handleDeleteService = async (id) => {
+    await $api.delete(`/deleteRequestService/${requestID}/${id}`);
     getActualGoodsAndServices();
   };
 
-  const handleDeleteConfirmedGoods = async (good_id) => {
-    await $api.delete(`/deleteRequestGood/${requestID}/${good_id}`);
+  const handleDeleteGoods = async (id) => {
+    await $api.delete(`/deleteRequestGood/${requestID}/${id}`);
     getActualGoodsAndServices();
   };
 
-  const unionServices = [
-    ...actualGoodsAndServices.services,
-    ...pendingServices.filter(
-      (ps) =>
-        !actualGoodsAndServices.services.some(
-          (s) => s.service_id === ps.service_id
-        )
-    ),
-  ];
-  const unionGoods = [
-    ...actualGoodsAndServices.goods,
-    ...pendingGoods.filter(
-      (pg) => !actualGoodsAndServices.goods.some((g) => g.id === pg.id)
-    ),
-  ];
+  const handleRemoveService = async (id) => {
+    const isConfirmed = actualGoodsAndServices.services.some(
+      (s) => s.service_id === id
+    );
+    if (isConfirmed) {
+      await $api.delete(`/deleteRequestService/${requestID}/${id}`);
+      await getActualGoodsAndServices();
+    } else {
+      setEditableServices((prev) => prev.filter((s) => s.service_id !== id));
+    }
+  };
+
+  const handleRemoveGoods = async (id) => {
+    const isConfirmed = actualGoodsAndServices.goods.some((g) => g.id === id);
+    if (isConfirmed) {
+      await $api.delete(`/deleteRequestGood/${requestID}/${id}`);
+      await getActualGoodsAndServices();
+    } else {
+      setEditableGoods((prev) => prev.filter((g) => g.id !== id));
+    }
+  };
 
   const handleConfirm = async () => {
     const data = {
       requestID,
-      services: unionServices,
-      goods: unionGoods,
+      services: editableServices,
+      goods: editableGoods,
     };
     await $api
       .post("/InsertGoodsServices", data)
-      .then(() => {
-        setSnackbarOpen(true);
-      })
+      .then(() => setSnackbarOpen(true))
       .catch(() => {});
-    setPendingServices([]);
-    setPendingGoods([]);
-    await getActualGoodsAndServices();
+    getActualGoodsAndServices();
   };
 
   return (
@@ -231,15 +226,9 @@ export default function Materials({
         <b> Услуги и запчасти</b>
       </Typography>
       <Grid container spacing={2}>
-        {/* Блок услуг */}
         <Grid item xs={12} md={6}>
           <Paper
-            sx={{
-              p: 2,
-              height: "400px",
-              display: "flex",
-              flexDirection: "column",
-            }}
+            sx={{ p: 2, height: 400, display: "flex", flexDirection: "column" }}
           >
             <Typography variant="h6" gutterBottom>
               Услуги
@@ -262,73 +251,53 @@ export default function Materials({
             )}
             <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
               <List>
-                {unionServices.map((service) => {
-                  const isConfirmed = actualGoodsAndServices.services.some(
-                    (s) => s.service_id === service.service_id
-                  );
-                  const isPending = pendingServices.some(
-                    (s) => s.service_id === service.service_id
-                  );
-                  return (
-                    <ListItem
-                      key={service.service_id}
-                      secondaryAction={
-                        access_level === 3 && (
-                          <>
-                            {isPending ? (
-                              <IconButton
-                                onClick={() =>
-                                  handleRemoveService(service.service_id)
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            ) : isConfirmed ? (
-                              <IconButton
-                                onClick={() =>
-                                  handleDeleteConfirmedService(
-                                    service.service_id
-                                  )
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            ) : null}
-                          </>
-                        )
-                      }
-                    >
-                      <ListItemText
-                        primary={service.service_name}
-                        secondary={
-                          access_level === 3
-                            ? `Цена: ${
-                                service.base_price * service?.coefficient
-                              } руб. с учётом коэффициента АСЦ: ${
-                                service.coefficient
-                              }`
-                            : `Цена: ${
-                                service.base_price * service.coefficient
-                              } руб.`
-                        }
-                      />
-                    </ListItem>
-                  );
-                })}
+                {editableServices.map((service) => (
+                  <ListItem
+                    key={service.service_id}
+                    secondaryAction={
+                      access_level === 3 && (
+                        <>
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={service.amount || 1}
+                            onChange={(e) =>
+                              handleServiceAmountChange(
+                                service.service_id,
+                                e.target.value
+                              )
+                            }
+                            sx={{ width: 80, mr: 1 }}
+                          />
+                          <IconButton
+                            onClick={() =>
+                              handleRemoveService(service.service_id)
+                            }
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </>
+                      )
+                    }
+                  >
+                    <ListItemText
+                      primary={`${service.service_name} (x${
+                        service.amount || 1
+                      })`}
+                      secondary={`Цена: ${
+                        service.base_price * service.coefficient
+                      } руб.`}
+                    />
+                  </ListItem>
+                ))}
               </List>
             </Box>
           </Paper>
         </Grid>
 
-        {/* Блок запчастей */}
         <Grid item xs={12} md={6}>
           <Paper
-            sx={{
-              p: 2,
-              height: "400px",
-              display: "flex",
-              flexDirection: "column",
-            }}
+            sx={{ p: 2, height: 400, display: "flex", flexDirection: "column" }}
           >
             <Typography variant="h6" gutterBottom>
               Запчасти
@@ -351,55 +320,45 @@ export default function Materials({
             )}
             <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
               <List>
-                {unionGoods.map((good) => {
-                  const isConfirmed = actualGoodsAndServices.goods.some(
-                    (g) => g.id === good.id
-                  );
-                  const isPending = pendingGoods.some((g) => g.id === good.id);
-                  return (
-                    <ListItem
-                      key={good.id}
-                      secondaryAction={
-                        access_level === 3 && (
-                          <>
-                            {isConfirmed && (
-                              <IconButton
-                                edge="end"
-                                onClick={() =>
-                                  handleDeleteConfirmedGoods(good.id)
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
-                            {isPending && (
-                              <IconButton
-                                edge="end"
-                                onClick={() => handleRemoveGoods(good.id)}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
-                          </>
-                        )
-                      }
-                    >
-                      <ListItemText
-                        primary={good.name}
-                        secondary={`Артикул: ${good.article}, Цена: ${good.price}`}
-                      />
-                    </ListItem>
-                  );
-                })}
+                {editableGoods.map((good) => (
+                  <ListItem
+                    key={good.id}
+                    secondaryAction={
+                      access_level === 3 && (
+                        <>
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={good.amount || 1}
+                            onChange={(e) =>
+                              handleGoodsAmountChange(good.id, e.target.value)
+                            }
+                            sx={{ width: 80, mr: 1 }}
+                          />
+                          <IconButton
+                            onClick={() => handleRemoveGoods(good.id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </>
+                      )
+                    }
+                  >
+                    <ListItemText
+                      primary={`${good.name} (x${good.amount || 1})`}
+                      secondary={`Артикул: ${good.article}, Цена: ${good.price}`}
+                    />
+                  </ListItem>
+                ))}
               </List>
             </Box>
           </Paper>
         </Grid>
       </Grid>
-      {/* АСЦ */}
+
+      {/* Таблица АСЦ */}
       {access_level === 3 && (
         <Box sx={{ m: 3 }}>
-          {/* Фильтры */}
           <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
             <TextField
               label="Поиск по АСЦ"
@@ -407,12 +366,6 @@ export default function Materials({
               value={filterName}
               onChange={(e) => setFilterName(e.target.value)}
             />
-            {/* <TextField
-                  label="Поиск по региону"
-                  size="small"
-                  value={filterRegion}
-                  onChange={(e) => setFilterRegion(e.target.value)}
-                /> */}
             <TextField
               label="Поиск по компании"
               size="small"
@@ -420,8 +373,6 @@ export default function Materials({
               onChange={(e) => setFilterCompany(e.target.value)}
             />
           </Box>
-
-          {/* Таблица */}
           <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
             <Table stickyHeader>
               <TableHead>
@@ -442,9 +393,9 @@ export default function Materials({
                     <TableCell>{w.username}</TableCell>
                     <TableCell>
                       {
-                        region_data.find((item) => {
-                          return item.code === Number(w.region);
-                        })?.name
+                        region_data.find(
+                          (item) => item.code === Number(w.region)
+                        )?.name
                       }
                     </TableCell>
                     <TableCell>{w.active_requests}</TableCell>
@@ -480,6 +431,7 @@ export default function Materials({
           </TableContainer>
         </Box>
       )}
+
       {access_level === 3 && (
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Button variant="contained" color="success" onClick={handleConfirm}>

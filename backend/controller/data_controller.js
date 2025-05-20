@@ -2509,7 +2509,7 @@ class DataController {
       }
 
       const data_goods = await pool.query(
-        `SELECT g.id, g.article, g.name, g.price
+        `SELECT g.id, g.article, g.name, g.price, rg.amount
          FROM request_goods rg
          JOIN goods g ON rg.good_id = g.id
         WHERE rg.request_id = $1`,
@@ -2521,7 +2521,8 @@ class DataController {
          s.id           AS service_id,
          s.name         AS service_name,
          sp.price       AS base_price,
-         COALESCE(wsc.coefficient, 1) AS coefficient
+         COALESCE(wsc.coefficient, 1) AS coefficient,
+         rs.amount       AS amount
        FROM request_services rs
        JOIN services s
          ON rs.service_id = s.id
@@ -2560,18 +2561,20 @@ class DataController {
 
       if (services && services.length > 0) {
         for (let service of services) {
+          const amount = service.amount || 1;
           await client.query(
-            "INSERT INTO request_services (request_id, service_id) VALUES ($1, $2)",
-            [requestID, service.service_id]
+            "INSERT INTO request_services (request_id, service_id, amount) VALUES ($1, $2, $3)",
+            [requestID, service.service_id, amount]
           );
         }
       }
 
       if (goods && goods.length > 0) {
         for (let good of goods) {
+          const amount = good.amount || 1;
           await client.query(
-            "INSERT INTO request_goods (request_id, good_id) VALUES ($1, $2)",
-            [requestID, good.id]
+            "INSERT INTO request_goods (request_id, good_id, amount) VALUES ($1, $2, $3)",
+            [requestID, good.id, amount]
           );
         }
       }
