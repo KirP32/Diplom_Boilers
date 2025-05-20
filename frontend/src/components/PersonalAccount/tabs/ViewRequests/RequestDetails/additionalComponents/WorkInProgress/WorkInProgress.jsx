@@ -37,7 +37,7 @@ export default function WorkInProgress({
 
   const [pendingServices, setPendingServices] = useState([]);
   const [pendingGoods, setPendingGoods] = useState([]);
-  const [date, setDate] = useState(work_completion_date.slice(0, 10) || "");
+  const [date, setDate] = useState(work_completion_date?.slice(0, 10) || "");
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   setServicesCatalog;

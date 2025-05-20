@@ -18,7 +18,6 @@ import { useEffect } from "react";
 
 import { FormControlLabel, FormLabel, RadioGroup } from "@mui/material";
 
-// eslint-disable-next-line no-unused-vars
 export default function SearchWorker({
   access_level,
   item,
