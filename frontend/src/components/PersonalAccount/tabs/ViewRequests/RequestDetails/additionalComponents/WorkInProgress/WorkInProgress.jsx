@@ -68,22 +68,15 @@ export default function WorkInProgress({
   }, []);
 
   async function getActualGoodsAndServices() {
-    if (worker_region !== null) {
-      await $api
-        .get(`/getActualGoodsAndServices/${requestID}`)
-        .then((result) => {
-          setActualGoodsAndServices({
-            services: result.data?.services || [],
-            goods: result.data?.goods || [],
-          });
-        })
-        .catch((error) => console.log(error));
-    } else {
-      setActualGoodsAndServices({
-        services: [],
-        goods: [],
-      });
-    }
+    await $api
+      .get(`/getActualGoodsAndServices/${requestID}`)
+      .then((result) => {
+        setActualGoodsAndServices({
+          services: result.data?.services || [],
+          goods: result.data?.goods || [],
+        });
+      })
+      .catch((error) => console.log(error));
   }
 
   useEffect(() => {

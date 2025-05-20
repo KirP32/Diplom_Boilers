@@ -175,16 +175,6 @@ export default function Materials({
     );
   };
 
-  const handleDeleteService = async (id) => {
-    await $api.delete(`/deleteRequestService/${requestID}/${id}`);
-    getActualGoodsAndServices();
-  };
-
-  const handleDeleteGoods = async (id) => {
-    await $api.delete(`/deleteRequestGood/${requestID}/${id}`);
-    getActualGoodsAndServices();
-  };
-
   const handleRemoveService = async (id) => {
     const isConfirmed = actualGoodsAndServices.services.some(
       (s) => s.service_id === id
