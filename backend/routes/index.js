@@ -166,6 +166,13 @@ router.post(
   checkCookie,
   DataController.updateCompletionDate
 );
+// router.post(
+//   "/uploadSignaturePhoto/:requestID",
+//   checkCookie,
+//   checkAuth,
+//   upload.array("files"),
+//   DataController.uploadSignaturePhoto
+// );
 
 router.delete(
   "/delete_device/:device_uid",

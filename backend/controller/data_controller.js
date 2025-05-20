@@ -861,7 +861,6 @@ class DataController {
 
       const geoJoins = `
       LEFT JOIN systems s ON s.name = ur.system_name
-      LEFT JOIN systems_details sd ON sd.system_id = s.id
       LEFT JOIN users u ON u.id = ur.assigned_to
       LEFT JOIN worker_details wd ON wd.username = u.username
 
@@ -1332,15 +1331,7 @@ class DataController {
       const result_requests = await pool.query(
         `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'user_requests_info';`
       );
-      const result_materials = await pool.query(
-        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'materials_stage';`
-      );
-      const result_in_transit = await pool.query(
-        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'in_transit_stage';`
-      );
-      const result_work_in_progress = await pool.query(
-        `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'work_in_progress_stage';`
-      );
+
       const result_services = await pool.query(
         `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'services';`
       );
@@ -1360,9 +1351,6 @@ class DataController {
           cgs_details: result_cgs.rows,
           gef_details: result_gef.rows,
           user_requests_info: result_requests.rows,
-          materials_stage: result_materials.rows,
-          in_transit_stage: result_in_transit.rows,
-          work_in_progress_stage: result_work_in_progress.rows,
           services_and_prices: result_services.rows,
           goods: result_good.rows,
         });
@@ -1564,15 +1552,6 @@ class DataController {
       const result_requests = await pool.query(
         `SELECT * FROM user_requests_info;`
       );
-      const result_materials = await pool.query(
-        `SELECT * FROM materials_stage;`
-      );
-      const result_in_transit_stage = await pool.query(
-        `SELECT * FROM in_transit_stage;`
-      );
-      const result_work_in_progress_stage = await pool.query(
-        `SELECT * FROM work_in_progress_stage;`
-      );
 
       const result_services_and_prices = await pool.query(`
         SELECT s.id AS service_id, 
@@ -1601,9 +1580,7 @@ class DataController {
           cgs_details: result_cgs.rows,
           gef_details: result_gef.rows,
           user_requests_info: result_requests.rows,
-          materials_stage: result_materials.rows,
-          in_transit_stage: result_in_transit_stage.rows,
-          work_in_progress_stage: result_work_in_progress_stage.rows,
+
           services_and_prices: result_services_and_prices.rows,
           goods: result_goods.rows,
           worker_service_coefficients: result_worker_service_coefficients.rows,
@@ -1840,24 +1817,7 @@ class DataController {
       let insertQuery = "";
       let insertValues = [];
 
-      if (stageName === "materials") {
-        tableName = "materials_stage";
-        selectQuery = `SELECT * FROM ${tableName} WHERE request_id = $1`;
-        insertQuery = `INSERT INTO ${tableName} (request_id, details) VALUES ($1, '') RETURNING *`;
-        insertValues = [requestID];
-      } else if (stageName === "in_transit") {
-        tableName = "in_transit_stage";
-        selectQuery = `SELECT * FROM ${tableName} WHERE request_id = $1`;
-        insertQuery = `INSERT INTO ${tableName} (request_id, estimated_arrival, status) VALUES ($1, NULL, '') RETURNING *`;
-        insertValues = [requestID];
-      } else if (stageName === "work_in_progress") {
-        tableName = "work_in_progress_stage";
-        selectQuery = `SELECT * FROM ${tableName} WHERE request_id = $1`;
-        insertQuery = `INSERT INTO ${tableName} (request_id, work_description, started_at, completed_at) VALUES ($1, '', current_timestamp, NULL) RETURNING *`;
-        insertValues = [requestID];
-      } else {
-        return res.status(400).json({ error: "Invalid stage name" });
-      }
+      return res.status(400).json({ error: "Invalid stage name" });
 
       const result = await pool.query(selectQuery, [requestID]);
       if (result.rowCount === 0) {
@@ -1875,16 +1835,6 @@ class DataController {
     try {
       const { stageName, key, newValue, id } = req.body;
       let tableName = "";
-
-      if (stageName === "materials") {
-        tableName = "materials_stage";
-      } else if (stageName === "in_transit") {
-        tableName = "in_transit_stage";
-      } else if (stageName === "work_in_progress") {
-        tableName = "work_in_progress_stage";
-      } else {
-        return res.status(400).json({ error: "Invalid stage name" });
-      }
 
       const query = `UPDATE ${tableName} SET ${key} = $1 WHERE id = $2`;
       await pool.query(query, [newValue, id]);
@@ -2706,9 +2656,45 @@ class DataController {
       const userLogin = decodeJWT(req.cookies.refreshToken).login;
       const uploadedBy = await getID(userLogin);
 
-      const allowedCategories = ["defects", "nameplates", "report", "request"];
+      const allowedCategories = [
+        "defects",
+        "nameplates",
+        "report",
+        "request",
+        "signature/worker",
+        "signature/user",
+      ];
+
       if (!allowedCategories.includes(category)) {
         return res.status(400).json({ error: "Некорректная категория" });
+      }
+
+      if (category === "signature/worker" || category === "signature/user") {
+        const { rows: oldPhotos } = await pool.query(
+          `SELECT filename FROM photos WHERE issue_id = $1 AND category = $2`,
+          [requestID, category]
+        );
+
+        for (const old of oldPhotos) {
+          try {
+            await s3.send(
+              new DeleteObjectCommand({
+                Bucket: process.env.S3_BUCKET,
+                Key: old.filename,
+              })
+            );
+          } catch (err) {
+            console.warn(
+              "Не удалось удалить старый объект из S3:",
+              old.filename
+            );
+          }
+        }
+
+        await pool.query(
+          `DELETE FROM photos WHERE issue_id = $1 AND category = $2`,
+          [requestID, category]
+        );
       }
 
       const uploadedPhotos = await Promise.all(
@@ -2719,8 +2705,8 @@ class DataController {
           ).toString("utf-8");
           const uniqueName = `${file.filename}${path.extname(originalName)}`;
           const key = `${requestID}/${category}/${uniqueName}`;
-
           const fileBuffer = await fs.promises.readFile(file.path);
+
           await s3.send(
             new PutObjectCommand({
               Bucket: process.env.S3_BUCKET,
@@ -2732,9 +2718,9 @@ class DataController {
 
           const { rows } = await pool.query(
             `INSERT INTO photos 
-               (issue_id, category, filename, original_name, uploaded_by)
-             VALUES ($1, $2, $3, $4, $5)
-             RETURNING id, filename, original_name`,
+             (issue_id, category, filename, original_name, uploaded_by)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id, filename, original_name`,
             [requestID, category, key, originalName, uploadedBy]
           );
 
@@ -2743,8 +2729,6 @@ class DataController {
             Key: key,
           });
           const url = await getSignedUrl(s3, getCmd, { expiresIn: 60 * 60 });
-
-          fs.unlinkSync(file.path);
 
           return {
             id: rows[0].id,
@@ -2779,11 +2763,12 @@ class DataController {
   async getRequestPhoto(req, res) {
     try {
       const requestID = parseInt(req.params.requestID, 10);
+      const filterCategory = req.query.category;
 
       const { rows } = await pool.query(
         `SELECT id, filename, original_name, category
-           FROM photos
-          WHERE issue_id = $1`,
+         FROM photos
+        WHERE issue_id = $1`,
         [requestID]
       );
 
@@ -2797,10 +2782,24 @@ class DataController {
             Bucket: process.env.S3_BUCKET,
             Key: filename,
           });
-          const url = await getSignedUrl(s3, cmd, { expiresIn: 60 * 60 });
+          const url = await getSignedUrl(s3, cmd, { expiresIn: 15 * 60 });
           return { id, original_name, url, category };
         })
       );
+
+      if (filterCategory === "signature") {
+        const worker = photosWithUrls.find(
+          (p) => p.category === "signature/worker"
+        );
+        const user = photosWithUrls.find(
+          (p) => p.category === "signature/user"
+        );
+
+        return res.json({
+          worker_signature: worker || null,
+          user_signature: user || null,
+        });
+      }
 
       const photos_by_category = photosWithUrls.reduce((acc, photo) => {
         const { category, ...rest } = photo;
@@ -2809,7 +2808,7 @@ class DataController {
         return acc;
       }, {});
 
-      return res.send({ ...photos_by_category });
+      return res.json(photos_by_category);
     } catch (error) {
       console.error("Ошибка при получении фото:", error);
       return res.status(500).json({ error: "Не удалось получить фото" });

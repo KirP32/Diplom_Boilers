@@ -18,6 +18,7 @@ import $api from "../../../../../../../http";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
 import { green } from "@mui/material/colors";
+import SignatureUploader from "./SignatureUploader/SignatureUploader";
 
 export default function WorkInProgress({
   requestID,
@@ -181,6 +182,7 @@ export default function WorkInProgress({
       console.error("Ошибка при сохранении даты:", error);
     }
   };
+
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h5" align="center" gutterBottom>
@@ -378,7 +380,7 @@ export default function WorkInProgress({
             }}
           >
             <Typography variant="h5" sx={{ margin: 0 }}>
-              Есть уточнения?
+              Есть уточнения ?
             </Typography>
             <Button
               variant="contained"
@@ -438,6 +440,7 @@ export default function WorkInProgress({
           {isEditingDate ? <CheckIcon /> : <EditIcon />}
         </IconButton>
       </Box>
+      <SignatureUploader requestID={requestID} />
     </Box>
   );
 }

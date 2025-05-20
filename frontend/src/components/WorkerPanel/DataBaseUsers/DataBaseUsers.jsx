@@ -40,9 +40,6 @@ const tableMapping = {
   cgs_details: "cgs_details",
   gef_details: "gef_details",
   user_requests_info: "user_requests_info",
-  materials_stage: "materials_stage",
-  in_transit_stage: "in_transit_stage",
-  work_in_progress_stage: "work_in_progress_stage",
   services_and_prices: "services_and_prices",
   goods: "goods",
 };
@@ -641,11 +638,7 @@ export default function DataBaseUsers() {
               <MenuItem value="user_requests_info">
                 <strong>ЗАЯВКИ</strong>
               </MenuItem>
-              <MenuItem value="materials_stage">Заявка - Материалы</MenuItem>
-              <MenuItem value="in_transit_stage">Заявка - В пути</MenuItem>
-              <MenuItem value="work_in_progress_stage">
-                Заявка - Проводятся работы
-              </MenuItem>
+
               <MenuItem value="services_and_prices">Услуги</MenuItem>
               <MenuItem value="goods">Запчасти</MenuItem>
             </Select>
