@@ -2241,6 +2241,63 @@ class DataController {
     }
   }
 
+  async getServicePricesRequest(req, res) {
+    try {
+      const { requestID } = req.params;
+
+      const reqRes = await pool.query(
+        `SELECT 
+         ur.region_code, 
+         ur.assigned_to
+       FROM user_requests ur
+       WHERE ur.id = $1`,
+        [requestID]
+      );
+
+      if (reqRes.rowCount === 0) {
+        return res.status(404).json({ message: "Заявка не найдена" });
+      }
+
+      const { region_code, assigned_to } = reqRes.rows[0];
+      const regionCode = region_code;
+      let workerId = null;
+
+      if (assigned_to) {
+        const wdRes = await pool.query(
+          `SELECT id FROM worker_details 
+         WHERE username = (SELECT username FROM users WHERE id = $1)`,
+          [assigned_to]
+        );
+        if (wdRes.rowCount > 0) {
+          workerId = wdRes.rows[0].id;
+        }
+      }
+
+      const dataPrices = await pool.query(
+        `
+      SELECT
+        s.id           AS service_id,
+        s.name         AS service_name,
+        sp.price       AS base_price,
+        COALESCE(wsc.coefficient, 1) AS coefficient
+      FROM services s
+      JOIN service_prices sp
+        ON s.id = sp.service_id
+      LEFT JOIN worker_service_coefficients wsc
+        ON s.id = wsc.service_id
+        AND wsc.worker_id = COALESCE($2, 0)
+      WHERE sp.region = $1
+      `,
+        [regionCode, workerId]
+      );
+
+      return res.json(dataPrices.rows);
+    } catch (error) {
+      console.error("getServicePricesByRequest error:", error);
+      return res.status(500).json({ message: "Ошибка сервера" });
+    }
+  }
+
   async updatePrices(req, res) {
     try {
       if (!req.file) {

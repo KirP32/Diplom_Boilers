@@ -47,7 +47,7 @@ export default function WorkInProgress({
 
     let isActive = true;
     $api
-      .get(`/getServicePrices/${requestID}`)
+      .get(`/getServicePricesRequest/${requestID}`)
       .then((res) => {
         if (isActive) {
           setServicesCatalog(res.data);

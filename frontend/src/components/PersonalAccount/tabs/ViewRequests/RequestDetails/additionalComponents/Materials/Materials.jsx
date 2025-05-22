@@ -102,7 +102,7 @@ export default function Materials({
     if (!requestID) return;
     let isActive = true;
     $api
-      .get(`/getServicePrices/${requestID}`)
+      .get(`/getServicePricesRequest/${requestID}`)
       .then((res) => {
         if (isActive) setServices(res.data);
       })

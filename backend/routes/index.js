@@ -64,6 +64,11 @@ router.get(
   checkCookie,
   DataController.getServicePrices
 );
+router.get(
+  "/getServicePricesRequest/:requestID",
+  checkCookie,
+  DataController.getServicePricesRequest
+);
 router.get("/getGoods", checkCookie, DataController.getGoods);
 router.get(
   "/getActualGoodsAndServices/:requestID",
