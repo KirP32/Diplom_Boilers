@@ -58,8 +58,9 @@ router.get(
   DataController.getUserAccessLevel
 );
 router.get("/getWorkerInfo", checkCookie, DataController.getWorkerInfo);
+
 router.get(
-  "/getServicePrices/:requestID",
+  "/getServicePrices/:login",
   checkCookie,
   DataController.getServicePrices
 );

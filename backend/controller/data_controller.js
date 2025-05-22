@@ -2208,54 +2208,36 @@ class DataController {
 
   async getServicePrices(req, res) {
     try {
-      const { requestID } = req.params;
-
-      const reqRes = await pool.query(
-        `SELECT 
-         ur.region_code, 
-         ur.assigned_to      -- user.id инженера, может быть NULL
-       FROM user_requests ur
-       WHERE ur.id = $1`,
-        [requestID]
+      const { login } = req.params;
+      const userResult = await pool.query(
+        "SELECT id, region FROM worker_details WHERE username = $1",
+        [login]
       );
-      if (reqRes.rowCount === 0) {
-        return res.status(404).json({ message: "Заявка не найдена" });
+
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ message: "Пользователь не найден" });
       }
-      const { region_code, assigned_to } = reqRes.rows[0];
-      const regionCode = region_code;
-      let workerId = null;
-      if (assigned_to) {
-        const wdRes = await pool.query(
-          `select id from worker_details where username = (select username from users where id = $1);`,
-          [assigned_to]
-        );
-        if (wdRes.rowCount > 0) {
-          workerId = wdRes.rows[0].id;
-        }
-      }
+
+      const { id: worker_id, region: user_region } = userResult.rows[0];
 
       const dataPrices = await pool.query(
-        `
-      SELECT
-        s.id           AS service_id,
-        s.name         AS service_name,
-        sp.price       AS base_price,
-        COALESCE(wsc.coefficient, 1) AS coefficient
-      FROM services s
-      JOIN service_prices sp
-        ON s.id = sp.service_id
-      LEFT JOIN worker_service_coefficients wsc
-        ON s.id = wsc.service_id
-        AND wsc.worker_id = COALESCE($2, 0)
-      WHERE sp.region = $1
-      `,
-        [regionCode, workerId]
+        `SELECT 
+            s.id AS service_id,
+            s.name AS service_name,
+            sp.price,
+            COALESCE(wsc.coefficient, 1) AS coefficient
+         FROM services s
+         JOIN service_prices sp ON s.id = sp.service_id
+         LEFT JOIN worker_service_coefficients wsc 
+           ON s.id = wsc.service_id AND wsc.worker_id = $1
+         WHERE sp.region = $2`,
+        [worker_id, user_region]
       );
 
-      return res.json(dataPrices.rows);
+      res.json(dataPrices.rows);
     } catch (error) {
-      console.error("getServicePricesByRequest error:", error);
-      return res.status(500).json({ message: "Ошибка сервера" });
+      console.error("Ошибка при получении цен на услуги:", error);
+      res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 
