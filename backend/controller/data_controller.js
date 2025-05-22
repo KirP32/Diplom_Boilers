@@ -878,6 +878,13 @@ class DataController {
       ) eq_mod ON true
 
       LEFT JOIN LATERAL (
+        SELECT e.repair_completion_date
+        FROM user_requests_equipments e
+        WHERE e.user_request_id = ur.id
+        LIMIT 1
+      ) eq_date ON true
+
+      LEFT JOIN LATERAL (
         SELECT SUM(sp.price * COALESCE(wsc.coefficient, 1))::double precision AS total_cost
         FROM request_services rs
         JOIN service_prices sp ON rs.service_id = sp.service_id AND sp.region = ur.region_code
@@ -907,8 +914,11 @@ class DataController {
       wd.geo_lat   AS worker_geo_lat,
       wd.geo_lon   AS worker_geo_lon,
 
+      
+
       COALESCE(eq_mod.module_series, ur.module) AS module,
-      COALESCE(total.total_cost, 0)::double precision AS total_cost
+      COALESCE(total.total_cost, 0)::double precision AS total_cost,
+      eq_date.repair_completion_date
     `;
 
       let allDevicesQuery, workerDevicesQuery;
@@ -961,9 +971,20 @@ class DataController {
       const allDevicesRes = await pool.query(allDevicesQuery, paramsAll);
       const workerDevicesRes = await pool.query(workerDevicesQuery, paramsWork);
 
+      function formatDateOnly(date) {
+        return date instanceof Date ? date.toISOString().split("T")[0] : date;
+      }
+
+      function normalizeRows(rows) {
+        return rows.map((row) => ({
+          ...row,
+          repair_completion_date: formatDateOnly(row.repair_completion_date),
+        }));
+      }
+
       return res.json({
-        allDevices: allDevicesRes.rows,
-        workerDevices: workerDevicesRes.rows,
+        allDevices: normalizeRows(allDevicesRes.rows),
+        workerDevices: normalizeRows(workerDevicesRes.rows),
       });
     } catch (error) {
       console.error("getRequests error:", error);
@@ -2971,6 +2992,10 @@ class DataController {
   }
   async confirmEquipmentData(req, res) {
     const client = await pool.connect();
+    function parseDate(value) {
+      return value === "" ? null : value;
+    }
+
     try {
       await client.query("BEGIN");
 
@@ -2995,19 +3020,18 @@ class DataController {
       is_warranty_case = $2
       WHERE id = $3
     `;
-
       for (const element of req.body) {
         await client.query(updateEqText, [
           element.article_number,
           element.seller_name,
-          element.sale_date,
-          element.commissioning_date,
+          parseDate(element.sale_date),
+          parseDate(element.commissioning_date),
           element.commissioning_org,
           element.commissioning_master,
           element.previous_repairs,
           element.document_number,
           element.id,
-          element.repair_completion_date,
+          parseDate(element.repair_completion_date),
         ]);
 
         for (const defect of element.defect_descriptions) {

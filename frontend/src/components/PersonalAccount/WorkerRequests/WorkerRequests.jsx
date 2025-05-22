@@ -35,7 +35,7 @@ export default function WorkerRequests({
   const getData = useCallback(async () => {
     const response = await $api.get(`/getRequests/${access_level}`);
     setAvailData(response.data);
-  }, []);
+  }, [access_level]);
 
   const [detailsObject, setDetailsObject] = useState(null);
   const removeRequest = useCallback(
@@ -109,7 +109,7 @@ export default function WorkerRequests({
       console.log("Токен не найден");
     }
   }, []);
-  const [isTableView, setIsTableView] = useState(false);
+  // const [isTableView, setIsTableView] = useState(false);
 
   const navigate = useNavigate();
   return (

@@ -17,8 +17,8 @@ const formatDate = (isoString) => {
     day: "2-digit",
     month: "long",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    // hour: "2-digit",
+    // minute: "2-digit",
   });
 };
 
@@ -72,7 +72,7 @@ export default function ListView({
                 Расстояние
               </TableCell>
               <TableCell sx={headerCellSx} align="right">
-                Создана
+                Ремонт до
               </TableCell>
               <TableCell sx={headerCellSx} align="center">
                 Действие
@@ -118,7 +118,7 @@ export default function ListView({
                 Расстояние
               </TableCell>
               <TableCell sx={headerCellSx} align="right">
-                Создана
+                Ремонт до
               </TableCell>
               <TableCell sx={headerCellSx} align="center">
                 Действие
@@ -193,7 +193,7 @@ const RequestRow = React.memo(
           abortControllerRef.current.abort();
         }
       };
-    }, [item.assigned_to, item.system_name]);
+    }, [item.assigned_to, item.id, item.system_name]);
 
     return (
       <TableRow key={item.id}>
@@ -244,7 +244,9 @@ const RequestRow = React.memo(
             whiteSpace: "nowrap",
           }}
         >
-          {formatDate(item.created_at)}
+          {item?.repair_completion_date === null
+            ? "Не назначен"
+            : formatDate(item.repair_completion_date)}
         </TableCell>
         <TableCell align="center" sx={{ position: "relative" }}>
           <MuiButton
@@ -321,7 +323,7 @@ const RequestRowInWork = React.memo(
       }
 
       return () => controller.abort();
-    }, [item.assigned_to, item.system_name]);
+    }, [item.assigned_to, item.id, item.system_name]);
 
     return (
       <TableRow key={item.id}>
@@ -372,7 +374,9 @@ const RequestRowInWork = React.memo(
             whiteSpace: "nowrap",
           }}
         >
-          {formatDate(item.created_at)}
+          {item?.repair_completion_date === null
+            ? "Не назначен"
+            : formatDate(item.repair_completion_date)}
         </TableCell>
         <TableCell align="center" sx={{ position: "relative" }}>
           <MuiButton

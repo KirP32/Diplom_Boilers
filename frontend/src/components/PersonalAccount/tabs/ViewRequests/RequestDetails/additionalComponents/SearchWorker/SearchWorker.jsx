@@ -83,6 +83,7 @@ export default function SearchWorker({
       copy[idx] = { ...copy[idx], [field]: value };
       return copy;
     });
+    console.log(equipmentData);
   };
 
   const handleDefectDescriptionChange = (equipmentIndex, defectId, value) => {
@@ -123,11 +124,11 @@ export default function SearchWorker({
   async function postEquipmentData() {
     $api
       .post("/confirmEquipmentData", equipmentData)
-      .catch((err) => {
-        console.log(err);
-      })
       .then(() => {
         setSnackbarOpen(true);
+      })
+      .catch((err) => {
+        console.log(err);
       });
   }
   const isReadOnly = access_level !== 3;
@@ -451,27 +452,43 @@ export default function SearchWorker({
                 )}
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  label="Планируемая дата выполнения ремонта"
-                  value={local?.repair_completion_date || ""}
-                  type="date"
-                  onChange={(e) =>
-                    handleFieldChange(
-                      idx,
-                      "repair_completion_date",
-                      e.target.value
-                    )
-                  }
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                    htmlInput: {
-                      sx: { mr: 2 },
-                    },
-                  }}
-                  fullWidth
-                />
+                {isReadOnly ? (
+                  <TextField
+                    label="Планируемая дата выполнения ремонта"
+                    value={local?.repair_completion_date || ""}
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
+                      },
+                      htmlInput: {
+                        sx: { mr: 2 },
+                      },
+                    }}
+                    fullWidth
+                  />
+                ) : (
+                  <TextField
+                    label="Планируемая дата выполнения ремонта"
+                    value={local?.repair_completion_date || ""}
+                    type="date"
+                    onChange={(e) =>
+                      handleFieldChange(
+                        idx,
+                        "repair_completion_date",
+                        e.target.value
+                      )
+                    }
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
+                      },
+                      htmlInput: {
+                        sx: { mr: 2 },
+                      },
+                    }}
+                    fullWidth
+                  />
+                )}
               </Grid>
             </Paper>
           );
