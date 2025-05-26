@@ -98,6 +98,7 @@ router.get(
   DataController.getEquipmentData
 );
 router.get("/getWorkerList/:region", checkCookie, DataController.getWorkerList);
+router.get("/getRepairDate/:id", checkCookie, DataController.getRepairDate);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
@@ -172,6 +173,7 @@ router.post(
   checkCookie,
   DataController.updateCompletionDate
 );
+router.post("/updateRepairDate", checkCookie, DataController.updateRepairDate);
 // router.post(
 //   "/uploadSignaturePhoto/:requestID",
 //   checkCookie,

@@ -392,7 +392,7 @@ export default function WorkInProgress({
           gap: 2,
         }}
       >
-        <Typography variant="h5">Дата выполнения работ:</Typography>
+        <Typography variant="h5">Дата завершения работ:</Typography>
         <TextField
           type="date"
           value={date || ""}

@@ -38,6 +38,7 @@ export default function RequestDetails({
   setItem, // чтобы закрыть окно заявки
   getAllDevices, // если завершена, чтобы убрать доступ к системе у работника
 }) {
+  const [sseEvent, setSseEvent] = useState();
   const [fullItem, setFullItem] = useState(null);
   // const [keyEditing, setKeyEditing] = useState("");
   // const [editingName, setEditingName] = useState("");
@@ -89,6 +90,25 @@ export default function RequestDetails({
   //       console.log(error);
   //     });
   // }, []);
+
+  useEffect(() => {
+    if (!item.id) return;
+    const es = new EventSource(
+      `http://localhost:8080/events?requestID=${item.id}`
+    );
+
+    es.addEventListener("repairDate_updated", () => {
+      setSseEvent({ type: "repairDate_updated" });
+    });
+
+    es.addEventListener("equipment_updated", () => {
+      setSseEvent({ type: "equipment_updated" });
+    });
+
+    return () => {
+      es.close();
+    };
+  }, [item.id]);
 
   useEffect(() => {
     async function fetchFullItem() {
@@ -260,7 +280,14 @@ export default function RequestDetails({
           equipments: fullItem?.equipments,
         }}
         access_level={access_level}
-        fullItem={fullItem}
+        fullItem={
+          fullItem && {
+            id: fullItem.id,
+            worker_region: fullItem.worker_region,
+            repair_completion_date: fullItem.repair_completion_date,
+          }
+        }
+        sseEvent={sseEvent}
         setFullItem={(e) => {
           setFullItem((prev) => ({
             ...prev,

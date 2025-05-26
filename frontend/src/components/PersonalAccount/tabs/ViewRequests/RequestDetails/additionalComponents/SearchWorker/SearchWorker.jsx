@@ -11,15 +11,19 @@ import {
   Alert,
   FormControl,
   Radio,
+  IconButton,
 } from "@mui/material";
 import Materials from "../Materials/Materials";
 import $api from "../../../../../../../http";
 import { useEffect } from "react";
 
 import { FormControlLabel, FormLabel, RadioGroup } from "@mui/material";
-
+import EditIcon from "@mui/icons-material/Edit";
+import CheckIcon from "@mui/icons-material/Check";
+import { green } from "@mui/material/colors";
 export default function SearchWorker({
   access_level,
+  sseEvent,
   item,
   fullItem,
   setFullItem,
@@ -27,6 +31,31 @@ export default function SearchWorker({
   const [data, setData] = useState([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [equipmentData, setEquipmentData] = useState([]);
+  const [date, setDate] = useState("");
+
+  useEffect(() => {
+    $api.get(`/getRepairDate/${fullItem?.id}`).then((res) => {
+      setDate(res.data[0].repair_completion_date);
+    });
+  }, [fullItem?.id]);
+
+  useEffect(() => {
+    if (!sseEvent || !fullItem?.id) return;
+
+    if (sseEvent.type === "repairDate_updated") {
+      $api
+        .get(`/getRepairDate/${fullItem.id}`)
+        .then((res) => setDate(res.data[0].repair_completion_date))
+        .catch(console.error);
+    }
+
+    if (sseEvent.type === "equipment_updated") {
+      $api
+        .get(`/getEquipmentData/${fullItem.id}`)
+        .then((res) => setData(res.data))
+        .catch(console.error);
+    }
+  }, [sseEvent, fullItem?.id]);
 
   useEffect(() => {
     if (!fullItem?.id) return;
@@ -63,9 +92,6 @@ export default function SearchWorker({
       previous_repairs: eq?.previous_repairs ?? "",
       article_number: eq?.article_number ?? "",
       document_number: eq?.sale_document ?? "",
-      repair_completion_date: eq.repair_completion_date
-        ? eq.repair_completion_date.slice(0, 10)
-        : "",
 
       defect_descriptions: (eq?.defects || []).map((d) => ({
         id: d.id,
@@ -83,7 +109,6 @@ export default function SearchWorker({
       copy[idx] = { ...copy[idx], [field]: value };
       return copy;
     });
-    console.log(equipmentData);
   };
 
   const handleDefectDescriptionChange = (equipmentIndex, defectId, value) => {
@@ -103,6 +128,7 @@ export default function SearchWorker({
       return copy;
     });
   };
+
   const handleDefectWarrantyChange = (equipmentIndex, defectId, isWarranty) => {
     setEquipmentData((prev) => {
       const copy = [...prev];
@@ -123,7 +149,10 @@ export default function SearchWorker({
 
   async function postEquipmentData() {
     $api
-      .post("/confirmEquipmentData", equipmentData)
+      .post("/confirmEquipmentData", {
+        equipmentData,
+        requestID: fullItem?.id,
+      })
       .then(() => {
         setSnackbarOpen(true);
       })
@@ -132,7 +161,19 @@ export default function SearchWorker({
       });
   }
   const isReadOnly = access_level !== 3;
+  const [isEditingDate, setIsEditingDate] = useState(false);
 
+  const handleSave = async () => {
+    try {
+      await $api.post("/updateRepairDate", {
+        repairDate: date,
+        id: fullItem.id,
+      });
+      setIsEditingDate(false);
+    } catch (error) {
+      console.error("Ошибка при сохранении даты:", error);
+    }
+  };
   return (
     <Box sx={{ display: "flex", gap: 5, flexDirection: "column" }}>
       <Box sx={{ mx: "auto", maxWidth: 800, fontSize: 20 }}>
@@ -451,49 +492,46 @@ export default function SearchWorker({
                   </Grid>
                 )}
               </Grid>
-              <Grid item xs={12}>
-                {isReadOnly ? (
-                  <TextField
-                    label="Планируемая дата выполнения ремонта"
-                    value={local?.repair_completion_date || ""}
-                    slotProps={{
-                      inputLabel: {
-                        shrink: true,
-                      },
-                      htmlInput: {
-                        sx: { mr: 2 },
-                      },
-                    }}
-                    fullWidth
-                  />
-                ) : (
-                  <TextField
-                    label="Планируемая дата выполнения ремонта"
-                    value={local?.repair_completion_date || ""}
-                    type="date"
-                    onChange={(e) =>
-                      handleFieldChange(
-                        idx,
-                        "repair_completion_date",
-                        e.target.value
-                      )
-                    }
-                    slotProps={{
-                      inputLabel: {
-                        shrink: true,
-                      },
-                      htmlInput: {
-                        sx: { mr: 2 },
-                      },
-                    }}
-                    fullWidth
-                  />
-                )}
-              </Grid>
             </Paper>
           );
         })}
-
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: 2,
+            gap: 2,
+            justifyContent: "center",
+          }}
+        >
+          <Typography variant="h5">Дата начала работ:</Typography>
+          <TextField
+            type="date"
+            value={date || ""}
+            onChange={(e) => (!isReadOnly ? setDate(e.target.value) : null)}
+            disabled={!isEditingDate}
+            slotProps={{
+              inputLabel: { shrink: true },
+              htmlInput: { sx: { mr: 2 } },
+            }}
+            sx={{ width: 250 }}
+          />
+          {!isReadOnly && (
+            <IconButton
+              onClick={() => {
+                if (isEditingDate) {
+                  handleSave();
+                } else {
+                  setIsEditingDate(true);
+                }
+              }}
+              sx={{ color: isEditingDate ? green[600] : "default" }}
+            >
+              {isEditingDate ? <CheckIcon /> : <EditIcon />}
+            </IconButton>
+          )}
+        </Box>
         <Box sx={{ textAlign: "center", mt: 2 }}>
           <Button
             variant="contained"

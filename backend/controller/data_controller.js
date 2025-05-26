@@ -3,6 +3,7 @@ const pool = require("../dataBase/pool");
 const { getTokens } = require("../getTokens");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
+const { sendToUser } = require("./sse");
 
 //файлы
 const fs = require("node:fs");
@@ -843,6 +844,7 @@ class DataController {
       if (userRes.rowCount === 0) {
         return res.status(404).json({ error: "Пользователь не найден" });
       }
+
       const { id: userId, access_level } = userRes.rows[0];
 
       let assignedField, confirmedField;
@@ -878,13 +880,6 @@ class DataController {
       ) eq_mod ON true
 
       LEFT JOIN LATERAL (
-        SELECT e.repair_completion_date
-        FROM user_requests_equipments e
-        WHERE e.user_request_id = ur.id
-        LIMIT 1
-      ) eq_date ON true
-
-      LEFT JOIN LATERAL (
         SELECT SUM(sp.price * COALESCE(wsc.coefficient, 1))::double precision AS total_cost
         FROM request_services rs
         JOIN service_prices sp ON rs.service_id = sp.service_id AND sp.region = ur.region_code
@@ -897,28 +892,12 @@ class DataController {
     `;
 
       const selectFields = `
-      ur.id,
-      ur.addres,
-      ur.description,
-      ur.phone_number,
-      ur.problem_name,
-      ur.status,
-      ur.${assignedField},
-      ur.assigned_to,
-      ur.system_name,
-      ur.created_at,
-
-      ur.geo_lat   AS system_geo_lat,
-      ur.geo_lon   AS system_geo_lon,
-
-      wd.geo_lat   AS worker_geo_lat,
-      wd.geo_lon   AS worker_geo_lon,
-
-      
-
+      ur.*,
+      TO_CHAR(ur.repair_completion_date, 'YYYY-MM-DD') AS repair_completion_date,
+      wd.geo_lat AS worker_geo_lat,
+      wd.geo_lon AS worker_geo_lon,
       COALESCE(eq_mod.module_series, ur.module) AS module,
-      COALESCE(total.total_cost, 0)::double precision AS total_cost,
-      eq_date.repair_completion_date
+      COALESCE(total.total_cost, 0)::double precision AS total_cost
     `;
 
       let allDevicesQuery, workerDevicesQuery;
@@ -943,7 +922,6 @@ class DataController {
         WHERE ur.${assignedField} = $1
           AND ur.status = 0
       `;
-        paramsAll = [];
         paramsWork = [userId];
       } else {
         allDevicesQuery = `
@@ -971,20 +949,9 @@ class DataController {
       const allDevicesRes = await pool.query(allDevicesQuery, paramsAll);
       const workerDevicesRes = await pool.query(workerDevicesQuery, paramsWork);
 
-      function formatDateOnly(date) {
-        return date instanceof Date ? date.toISOString().split("T")[0] : date;
-      }
-
-      function normalizeRows(rows) {
-        return rows.map((row) => ({
-          ...row,
-          repair_completion_date: formatDateOnly(row.repair_completion_date),
-        }));
-      }
-
       return res.json({
-        allDevices: normalizeRows(allDevicesRes.rows),
-        workerDevices: normalizeRows(workerDevicesRes.rows),
+        allDevices: allDevicesRes.rows,
+        workerDevices: workerDevicesRes.rows,
       });
     } catch (error) {
       console.error("getRequests error:", error);
@@ -1619,7 +1586,8 @@ class DataController {
       const response = await pool.query(
         `
       SELECT
-        ur.*,
+        ur.*, 
+        TO_CHAR(ur.work_completion_date, 'YYYY-MM-DD') AS work_completion_date,
         u.username                AS worker_username,
         wd.phone_number           AS worker_phone,
         wd.region                 AS worker_region,
@@ -3034,7 +3002,7 @@ class DataController {
     function parseDate(value) {
       return value === "" ? null : value;
     }
-
+    const { requestID } = req.body;
     try {
       await client.query("BEGIN");
 
@@ -3048,7 +3016,6 @@ class DataController {
         commissioning_org   = $5,
         commissioning_master= $6,
         previous_repairs    = $7,
-        repair_completion_date = $10,
         sale_document       = $8
       WHERE id = $9
     `;
@@ -3059,7 +3026,7 @@ class DataController {
       is_warranty_case = $2
       WHERE id = $3
     `;
-      for (const element of req.body) {
+      for (const element of req.body.equipmentData) {
         await client.query(updateEqText, [
           element.article_number,
           element.seller_name,
@@ -3070,7 +3037,6 @@ class DataController {
           element.previous_repairs,
           element.document_number,
           element.id,
-          parseDate(element.repair_completion_date),
         ]);
 
         for (const defect of element.defect_descriptions) {
@@ -3082,6 +3048,7 @@ class DataController {
         }
       }
       await client.query("COMMIT");
+      sendToUser(requestID, "equipment_updated");
       res.send("OK");
     } catch (error) {
       await client.query("ROLLBACK");
@@ -3105,7 +3072,6 @@ class DataController {
         ue.commissioning_date,
         ue.commissioning_org,
         ue.commissioning_master,
-        ue.repair_completion_date,
         ue.previous_repairs,
         ue.sale_document,
         ud.id               AS defect_id,
@@ -3134,7 +3100,6 @@ class DataController {
             commissioning_master: row.commissioning_master,
             previous_repairs: row.previous_repairs,
             sale_document: row.sale_document,
-            repair_completion_date: row.repair_completion_date,
             defects: [],
           };
         }
@@ -3148,7 +3113,6 @@ class DataController {
       }
 
       const equipments = Object.values(equipmentsMap);
-
       return res.send(equipments);
     } catch (error) {
       console.error("getEquipmentData error:", error);
@@ -3201,6 +3165,33 @@ class DataController {
       return res.send("OK");
     } catch (error) {
       return res.status(500).send({ message: error });
+    }
+  }
+  async updateRepairDate(req, res) {
+    try {
+      const { repairDate, id } = req.body;
+      await pool.query(
+        `UPDATE user_requests SET repair_completion_date = $1 WHERE id = $2`,
+        [repairDate === "" ? null : repairDate, id]
+      );
+      sendToUser(id, "repairDate_updated");
+      return res.send("OK");
+    } catch (error) {
+      return res.status(500).send({ message: error });
+    }
+  }
+  async getRepairDate(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await pool.query(
+        `SELECT TO_CHAR(repair_completion_date, 'YYYY-MM-DD') AS repair_completion_date
+       FROM user_requests
+       WHERE id = $1`,
+        [id]
+      );
+      return res.send(result.rows);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
     }
   }
 }

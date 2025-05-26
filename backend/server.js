@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const router = require("./routes/index");
 const pool = require("./dataBase/pool");
 const { handleStage } = require("./controller/socket_io_controller");
+const { registerSSE } = require("./controller/sse");
 
 const app = express();
 const port = 8080;
@@ -88,6 +89,7 @@ io.on("connection", (socket) => {
 });
 
 app.use("/", router);
+app.get("/events", registerSSE);
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
