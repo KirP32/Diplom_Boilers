@@ -6,7 +6,6 @@ async function checkCookie(req, res, next) {
   // #TODO: Не обновлять refreshtoken при генерации accessToken
   const accesstoken = req.headers["accesstoken"];
   const refreshToken = req.cookies["refreshToken"];
-
   if (!accesstoken) {
     return res.sendStatus(401);
   }

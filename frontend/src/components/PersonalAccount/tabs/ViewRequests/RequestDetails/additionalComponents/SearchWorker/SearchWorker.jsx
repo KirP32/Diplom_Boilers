@@ -34,7 +34,7 @@ export default function SearchWorker({
   const [date, setDate] = useState("");
 
   useEffect(() => {
-    $api.get(`/getRepairDate/${fullItem?.id}`).then((res) => {
+    $api.get(`/getRepairDate/${fullItem?.id}/repair`).then((res) => {
       setDate(res.data[0].repair_completion_date);
     });
   }, [fullItem?.id]);
@@ -551,6 +551,7 @@ export default function SearchWorker({
         setSnackbarOpen={(e) => setSnackbarOpen(e)}
         fullItem={fullItem}
         setFullItem={(e) => setFullItem(e)}
+        sseEvent={sseEvent}
       />
       <Snackbar
         open={snackbarOpen}

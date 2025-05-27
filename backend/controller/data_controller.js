@@ -19,6 +19,7 @@ const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { GetObjectCommand } = require("@aws-sdk/client-s3");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { send } = require("node:process");
 
 const s3 = new S3Client({
   region: process.env.S3_REGION,
@@ -2608,6 +2609,7 @@ class DataController {
       }
 
       await client.query("COMMIT");
+      sendToUser(requestID, "servicesAndGoods");
       return res.status(200).json({ message: "Данные успешно обновлены." });
     } catch (error) {
       await client.query("ROLLBACK");
@@ -2769,7 +2771,7 @@ class DataController {
           };
         })
       );
-
+      sendToUser(requestID, "photo_updated");
       return res.json({
         status: "ok",
         photos: uploadedPhotos,
@@ -2798,13 +2800,18 @@ class DataController {
 
       const { rows } = await pool.query(
         `SELECT id, filename, original_name, category
-         FROM photos
-        WHERE issue_id = $1`,
+       FROM photos
+       WHERE issue_id = $1`,
         [requestID]
       );
 
       if (!rows.length) {
-        return res.status(404).json({ photos_by_category: {} });
+        return res.json({
+          defects: [],
+          nameplates: [],
+          report: [],
+          request: [],
+        });
       }
 
       const photosWithUrls = await Promise.all(
@@ -2825,7 +2832,6 @@ class DataController {
         const user = photosWithUrls.find(
           (p) => p.category === "signature/user"
         );
-
         return res.json({
           worker_signature: worker || null,
           user_signature: user || null,
@@ -2839,6 +2845,13 @@ class DataController {
         return acc;
       }, {});
 
+      const expectedCategories = ["defects", "nameplates", "report", "request"];
+      for (const cat of expectedCategories) {
+        if (!photos_by_category[cat]) {
+          photos_by_category[cat] = [];
+        }
+      }
+
       return res.json(photos_by_category);
     } catch (error) {
       console.error("Ошибка при получении фото:", error);
@@ -2850,7 +2863,7 @@ class DataController {
     try {
       const id = parseInt(req.params.id, 10);
       const original_name = req.params.original_name;
-
+      const requestID = parseInt(req.params.requestID, 10);
       const { rows } = await pool.query(
         `SELECT filename FROM photos WHERE id = $1 AND original_name = $2`,
         [id, original_name]
@@ -2870,7 +2883,7 @@ class DataController {
       });
 
       await s3.send(cmd);
-
+      sendToUser(requestID, "deletePhoto");
       return res.json({ success: true });
     } catch (error) {
       console.error("Ошибка при удалении фото:", error);
@@ -3162,6 +3175,7 @@ class DataController {
         "UPDATE user_requests SET work_completion_date = $1 where id = $2",
         [saleDate, id]
       );
+      sendToUser(id, "completionDate_updated");
       return res.send("OK");
     } catch (error) {
       return res.status(500).send({ message: error });
@@ -3182,16 +3196,34 @@ class DataController {
   }
   async getRepairDate(req, res) {
     try {
-      const { id } = req.params;
+      const id = parseInt(req.params.id, 10);
+      const date = req.params.date;
+      console.log(date);
+      const columns = {
+        repair: "repair_completion_date",
+        completion: "work_completion_date",
+      };
+
+      const column = columns[date];
+      if (!column) {
+        return res.status(400).json({ error: "Invalid date" });
+      }
+
       const result = await pool.query(
-        `SELECT TO_CHAR(repair_completion_date, 'YYYY-MM-DD') AS repair_completion_date
-       FROM user_requests
-       WHERE id = $1`,
+        `SELECT TO_CHAR(${column}, 'YYYY-MM-DD') AS date
+         FROM user_requests
+        WHERE id = $1`,
         [id]
       );
-      return res.send(result.rows);
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Request not found" });
+      }
+
+      return res.json({ date: result.rows[0].date });
     } catch (error) {
-      return res.status(500).send({ message: error.message });
+      console.error("getRepairDate error:", error);
+      return res.status(500).json({ error: error.message });
     }
   }
 }

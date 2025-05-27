@@ -37,7 +37,8 @@ async function checkAuth(req, res, next) {
     }
 
     const userId = userRes.rows[0].id;
-    const requestID = parseInt(req.params.requestID);
+    const requestID =
+      parseInt(req.params.requestID) || parseInt(req.query.requestID);
     if (Number.isInteger(requestID) === false) {
       return res.status(400).json({ error: "Некорректный requestID" });
     }

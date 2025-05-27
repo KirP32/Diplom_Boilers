@@ -25,7 +25,7 @@ export default function WorkInProgress({
   access_level,
   worker_username,
   worker_region,
-  work_completion_date,
+  sseEvent,
 }) {
   const [servicesCatalog, setServicesCatalog] = useState([]);
   const [goodsCatalog, setGoodsCatalog] = useState([]);
@@ -38,9 +38,15 @@ export default function WorkInProgress({
   const [editableServices, setEditableServices] = useState([]);
   const [editableGoods, setEditableGoods] = useState([]);
 
-  const [date, setDate] = useState(work_completion_date?.slice(0, 10) || "");
+  const [date, setDate] = useState("");
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    $api.get(`/getRepairDate/${requestID}/completion`).then((res) => {
+      setDate(res.data.date);
+    });
+  }, [requestID]);
 
   useEffect(() => {
     if (!requestID) return;
@@ -59,6 +65,18 @@ export default function WorkInProgress({
       isActive = false;
     };
   }, [requestID, worker_username]);
+
+  useEffect(() => {
+    if (!sseEvent) return;
+    if (sseEvent.type === "servicesAndGoods") {
+      getActualGoodsAndServices();
+    }
+    if (sseEvent.type === "completionDate_updated") {
+      $api.get(`/getRepairDate/${requestID}/completion`).then((res) => {
+        setDate(res.data.date);
+      });
+    }
+  }, [requestID, sseEvent]);
 
   useEffect(() => {
     $api
@@ -251,14 +269,18 @@ export default function WorkInProgress({
                       })`}
                       secondary={
                         access_level === 3
-                          ? `Цена: ${
-                              service.base_price * service.coefficient
-                            } руб. с учётом коэффициента АСЦ: ${
+                          ? `Цена: ${(
+                              service.base_price *
+                              service.coefficient *
+                              service.amount
+                            ).toFixed(2)} руб. с учётом коэффициента АСЦ: ${
                               service.coefficient
                             }`
-                          : `Цена: ${
-                              service.base_price * service.coefficient
-                            } руб.`
+                          : `Цена: ${(
+                              service.base_price *
+                              service.coefficient *
+                              service.amount
+                            ).toFixed(2)} руб.`
                       }
                     />
                   </ListItem>
@@ -329,7 +351,9 @@ export default function WorkInProgress({
                     >
                       <ListItemText
                         primary={`${good.name} (x${good.amount || 1})`}
-                        secondary={`Артикул: ${good.article}, Цена: ${good.price}`}
+                        secondary={`Артикул: ${good.article}, Цена: ${(
+                          good.price * good.amount
+                        ).toFixed(2)}`}
                       />
                     </ListItem>
                   )
@@ -417,7 +441,7 @@ export default function WorkInProgress({
           {isEditingDate ? <CheckIcon /> : <EditIcon />}
         </IconButton>
       </Box>
-      <SignatureUploader requestID={requestID} />
+      <SignatureUploader requestID={requestID} sseEvent={sseEvent} />
     </Box>
   );
 }

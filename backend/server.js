@@ -89,7 +89,7 @@ io.on("connection", (socket) => {
 });
 
 app.use("/", router);
-app.get("/events", registerSSE);
+// app.get("/events", registerSSE);
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);

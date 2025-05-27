@@ -6,6 +6,7 @@ const checkAuth = require("../middleware/checkAuth.js");
 const router = new Router();
 
 const multer = require("multer");
+const { registerSSE } = require("../controller/sse.js");
 const upload = multer({ dest: "uploads/" });
 
 // router.get('/changes', DataController.changes);
@@ -98,7 +99,12 @@ router.get(
   DataController.getEquipmentData
 );
 router.get("/getWorkerList/:region", checkCookie, DataController.getWorkerList);
-router.get("/getRepairDate/:id", checkCookie, DataController.getRepairDate);
+router.get(
+  "/getRepairDate/:id/:date",
+  checkCookie,
+  DataController.getRepairDate
+);
+router.get("/events", checkCookie, checkAuth, registerSSE);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

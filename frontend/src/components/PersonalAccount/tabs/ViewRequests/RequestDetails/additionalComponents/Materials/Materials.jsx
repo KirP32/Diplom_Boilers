@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Box,
   Grid,
@@ -32,6 +32,7 @@ export default function Materials({
   setSnackbarOpen,
   fullItem,
   setFullItem,
+  sseEvent,
 }) {
   const [services, setServices] = useState([]);
   const [goods, setGoods] = useState([]);
@@ -98,19 +99,25 @@ export default function Materials({
       .catch(console.error);
   }, []);
 
-  useEffect(() => {
+  const fetchServicePrices = useCallback(async () => {
     if (!requestID) return;
-    let isActive = true;
-    $api
-      .get(`/getServicePricesRequest/${requestID}`)
-      .then((res) => {
-        if (isActive) setServices(res.data);
-      })
-      .catch(console.error);
-    return () => {
-      isActive = false;
-    };
-  }, [requestID, fullItem?.worker_username]);
+    try {
+      const res = await $api.get(`/getServicePricesRequest/${requestID}`);
+      setServices(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [requestID]);
+
+  useEffect(() => {
+    fetchServicePrices();
+  }, [fetchServicePrices, fullItem?.worker_username]);
+
+  useEffect(() => {
+    if (sseEvent?.type === "servicesAndGoods") {
+      getActualGoodsAndServices();
+    }
+  }, [sseEvent]);
 
   async function getActualGoodsAndServices() {
     if (worker_region !== null) {
@@ -274,9 +281,11 @@ export default function Materials({
                       primary={`${service.service_name} (x${
                         service.amount || 1
                       })`}
-                      secondary={`Цена: ${
-                        service.base_price * service.coefficient
-                      } руб.`}
+                      secondary={`Цена: ${(
+                        service.base_price *
+                        service.coefficient *
+                        service.amount
+                      ).toFixed(2)} руб.`}
                     />
                   </ListItem>
                 ))}
@@ -336,7 +345,9 @@ export default function Materials({
                   >
                     <ListItemText
                       primary={`${good.name} (x${good.amount || 1})`}
-                      secondary={`Артикул: ${good.article}, Цена: ${good.price}`}
+                      secondary={`Цена: ${(good.price * good.amount).toFixed(
+                        2
+                      )} руб.`}
                     />
                   </ListItem>
                 ))}

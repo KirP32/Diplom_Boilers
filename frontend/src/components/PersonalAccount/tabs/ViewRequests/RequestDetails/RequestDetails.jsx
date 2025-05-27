@@ -25,6 +25,8 @@ import Complete from "./additionalComponents/Complete/Complete";
 import PhotoFolder from "./additionalComponents/PhotoFolder/PhotoFolder";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import { EventSourcePolyfill } from "event-source-polyfill";
+
 const data_type_1 = [
   "Рекламация на оборудование",
   // "Материалы",
@@ -93,18 +95,41 @@ export default function RequestDetails({
 
   useEffect(() => {
     if (!item.id) return;
-    const es = new EventSource(
-      `http://localhost:8080/events?requestID=${item.id}`
+    const es = new EventSourcePolyfill(
+      `http://localhost:8080/events?requestID=${item.id}`,
+      {
+        withCredentials: true,
+        headers: {
+          accesstoken:
+            localStorage.getItem("accessToken") ||
+            sessionStorage.getItem("accessToken"),
+        },
+      }
     );
-
+    // Обработчик события для обновления даты начала работ
     es.addEventListener("repairDate_updated", () => {
       setSseEvent({ type: "repairDate_updated" });
     });
-
+    // Обработчик события для обновления списка неисправностей оборудования
     es.addEventListener("equipment_updated", () => {
       setSseEvent({ type: "equipment_updated" });
     });
-
+    // Обработчик события для обновления фотографий
+    es.addEventListener("photo_updated", () => {
+      setSseEvent({ type: "photo_updated" });
+    });
+    // Удаление фотографии
+    es.addEventListener("deletePhoto", () => {
+      setSseEvent({ type: "deletePhoto" });
+    });
+    // Обновление списка услуг
+    es.addEventListener("servicesAndGoods", () => {
+      setSseEvent({ type: "servicesAndGoods" });
+    });
+    // Обновление даты окончания работ
+    es.addEventListener("completionDate_updated", () => {
+      setSseEvent({ type: "completionDate_updated" });
+    });
     return () => {
       es.close();
     };
@@ -283,7 +308,7 @@ export default function RequestDetails({
         fullItem={
           fullItem && {
             id: fullItem.id,
-            worker_region: fullItem.worker_region,
+            region_code: fullItem.worker_region,
             repair_completion_date: fullItem.repair_completion_date,
           }
         }
@@ -311,7 +336,7 @@ export default function RequestDetails({
         access_level={access_level}
         worker_username={fullItem?.worker_username}
         worker_region={fullItem?.worker_region}
-        work_completion_date={fullItem?.work_completion_date}
+        sseEvent={sseEvent}
       />
     ),
     Завершенно: (
@@ -612,7 +637,7 @@ export default function RequestDetails({
                 setRequsetOpen={setRequsetOpen}
               />
             }
-            {<PhotoFolder requestID={item.id} />}
+            {<PhotoFolder requestID={item.id} sseEvent={sseEvent} />}
             {component}
             {fullItem?.status !== 1 && (
               <section

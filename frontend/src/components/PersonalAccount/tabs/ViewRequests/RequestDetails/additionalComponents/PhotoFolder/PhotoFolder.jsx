@@ -24,7 +24,7 @@ const CATEGORIES = [
   { value: "request", label: "Фото заявки" },
 ];
 
-export default function PhotoFolder({ requestID }) {
+export default function PhotoFolder({ requestID, sseEvent }) {
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].value);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [drag, setDrag] = useState(false);
@@ -38,18 +38,26 @@ export default function PhotoFolder({ requestID }) {
     request: [],
   });
   const urlRef = useRef([]);
-
   const fetchPhotos = useCallback(async () => {
     try {
       const res = await $api.get(`/getRequestPhoto/${requestID}`);
-      setUrlsByCategory((prev) => ({
-        ...prev,
-        ...res.data,
-      }));
+      setUrlsByCategory({
+        defects: res.data.defects || [],
+        nameplates: res.data.nameplates || [],
+        report: res.data.report || [],
+        request: res.data.request || [],
+      });
     } catch (err) {
       console.log(err);
     }
   }, [requestID]);
+
+  useEffect(() => {
+    if (!sseEvent || !requestID) return;
+    if (sseEvent.type === "photo_updated" || sseEvent.type === "deletePhoto") {
+      fetchPhotos();
+    }
+  }, [fetchPhotos, requestID, sseEvent]);
 
   useEffect(() => {
     if (requestID) fetchPhotos();
