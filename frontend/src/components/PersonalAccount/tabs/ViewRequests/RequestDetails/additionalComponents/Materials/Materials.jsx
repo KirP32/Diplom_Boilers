@@ -50,7 +50,6 @@ export default function Materials({
   const [selectedId, setSelectedId] = useState(fullItem?.assigned_to);
 
   useEffect(() => {
-    if (!fullItem?.region_code) return;
     $api
       .get(`/getWorkerList/${fullItem.region_code}`)
       .then((res) => setWorkerList(res.data))
