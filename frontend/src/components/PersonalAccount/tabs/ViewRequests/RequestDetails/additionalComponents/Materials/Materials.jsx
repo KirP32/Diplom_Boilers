@@ -48,7 +48,6 @@ export default function Materials({
   const [filterCompany, setFilterCompany] = useState("");
   const [workerList, setWorkerList] = useState([]);
   const [selectedId, setSelectedId] = useState(fullItem?.assigned_to);
-  console.log(fullItem);
   useEffect(() => {
     $api
       .get(`/getWorkerList/${fullItem.region_code}`)

@@ -313,7 +313,8 @@ export default function RequestDetails({
         fullItem={
           fullItem && {
             id: fullItem.id,
-            region_code: fullItem.worker_region,
+            region_code: fullItem.region_code,
+            worker_region: fullItem.worker_region,
             repair_completion_date: fullItem.repair_completion_date,
           }
         }
