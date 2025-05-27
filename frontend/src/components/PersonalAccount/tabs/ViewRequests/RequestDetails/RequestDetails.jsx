@@ -97,7 +97,7 @@ export default function RequestDetails({
   useEffect(() => {
     if (!item.id) return;
     const es = new EventSourcePolyfill(
-      `http://localhost:8080/events?requestID=${item.id}`,
+      `https://ads-line.pro/api/events?requestID=${item.id}`,
       {
         withCredentials: true,
         headers: {
