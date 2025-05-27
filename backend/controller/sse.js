@@ -11,10 +11,15 @@ function registerSSE(req, res) {
   });
   res.flushHeaders();
 
+  const heartbeat = setInterval(() => {
+    res.write("event: ping\ndata: {}\n\n");
+  }, 25000);
+
   const client = { requestID, res };
   clients.push(client);
 
   req.on("close", () => {
+    clearInterval(heartbeat);
     clients.splice(clients.indexOf(client), 1);
   });
 }

@@ -10,6 +10,7 @@ const { registerSSE } = require("../controller/sse.js");
 const upload = multer({ dest: "uploads/" });
 
 // router.get('/changes', DataController.changes);
+router.get("/events", checkCookie, checkAuth, registerSSE);
 router.get("/test", DataController.test);
 router.get("/devices", checkCookie, DataController.devices);
 router.get("/refresh", DataController.refresh);
@@ -104,7 +105,6 @@ router.get(
   checkCookie,
   DataController.getRepairDate
 );
-router.get("/events", checkCookie, checkAuth, registerSSE);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
