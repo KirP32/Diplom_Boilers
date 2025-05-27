@@ -30,7 +30,6 @@ export default function ListView({
   removeRequest,
 }) {
   const colWidth = "20%";
-
   const tableSx = {
     minWidth: 650,
     tableLayout: "fixed",
@@ -140,275 +139,258 @@ export default function ListView({
   );
 }
 
-const RequestRow = React.memo(
-  function RequestRow({
-    item,
-    isProcessing,
-    addRequest,
-    setAdditionalOpen,
-    setCurrentItem,
-  }) {
-    const [distance, setDistance] = useState(null);
-    const abortControllerRef = useRef(null);
+const RequestRow = React.memo(function RequestRow({
+  item,
+  isProcessing,
+  addRequest,
+  setAdditionalOpen,
+  setCurrentItem,
+}) {
+  const [distance, setDistance] = useState(null);
+  const abortControllerRef = useRef(null);
 
-    useEffect(() => {
-      const fetchData = async () => {
-        abortControllerRef.current = new AbortController();
-        try {
-          const result = await $api.get(
-            `/getLatLon/${item.assigned_to}/${item.id}`,
-            { signal: abortControllerRef.current.signal }
-          );
+  useEffect(() => {
+    const fetchData = async () => {
+      abortControllerRef.current = new AbortController();
+      try {
+        const result = await $api.get(
+          `/getLatLon/${item.assigned_to}/${item.id}`,
+          { signal: abortControllerRef.current.signal }
+        );
 
-          const from = [
-            parseFloat(result.data.system.geo_lon),
-            parseFloat(result.data.system.geo_lat),
-          ];
-          const to = [
-            parseFloat(result.data.worker.geo_lon),
-            parseFloat(result.data.worker.geo_lat),
-          ];
+        const from = [
+          parseFloat(result.data.system.geo_lon),
+          parseFloat(result.data.system.geo_lat),
+        ];
+        const to = [
+          parseFloat(result.data.worker.geo_lon),
+          parseFloat(result.data.worker.geo_lat),
+        ];
 
-          const response = await axios.get(
-            `https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=false`,
-            { signal: abortControllerRef.current.signal }
-          );
+        const response = await axios.get(
+          `https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=false`,
+          { signal: abortControllerRef.current.signal }
+        );
 
-          setDistance((response.data.routes[0].distance / 1000).toFixed(1));
-        } catch (error) {
-          if (!axios.isCancel(error)) {
-            setDistance(null);
-          }
+        setDistance((response.data.routes[0].distance / 1000).toFixed(1));
+      } catch (error) {
+        if (!axios.isCancel(error)) {
+          setDistance(null);
         }
-      };
-
-      if (item.assigned_to && item.system_name) {
-        fetchData();
       }
+    };
 
-      return () => {
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-      };
-    }, [item.assigned_to, item.id, item.system_name]);
+    if (item.assigned_to && item.system_name) {
+      fetchData();
+    }
 
-    return (
-      <TableRow key={item.id}>
-        <TableCell
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {item.problem_name}
-        </TableCell>
-        <TableCell
-          align="right"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {item.module}
-        </TableCell>
-        <TableCell
-          align="right"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {item.total_cost} руб.
-        </TableCell>
-        <TableCell
-          align="right"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {distance === null ? "рассчёт расстояния" : distance + " км"}
-        </TableCell>
-        <TableCell
-          align="right"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {item?.repair_completion_date === null
-            ? "Не назначен"
-            : formatDate(item.repair_completion_date)}
-        </TableCell>
-        <TableCell align="center" sx={{ position: "relative" }}>
-          <MuiButton
-            variant="contained"
-            onClick={() => addRequest(item.system_name, item.id)}
-            disabled={isProcessing}
-          >
-            Принять
-          </MuiButton>
-          <InfoIcon
-            onClick={() => {
-              setAdditionalOpen();
-              setCurrentItem(item);
-            }}
-            style={{
-              cursor: "pointer",
-              position: "absolute",
-              marginLeft: "10px",
-              marginTop: "5px",
-            }}
-          />
-        </TableCell>
-      </TableRow>
-    );
-  },
-  (prevProps, nextProps) =>
-    prevProps.item.id === nextProps.item.id &&
-    prevProps.isProcessing === nextProps.isProcessing &&
-    prevProps.item.assigned_to === nextProps.item.assigned_to &&
-    prevProps.item.system_name === nextProps.item.system_name
-);
-
-const RequestRowInWork = React.memo(
-  function RequestRowInWork({
-    item,
-    isProcessing,
-    setDetailsObject,
-    removeRequest,
-  }) {
-    const [distance, setDistance] = useState(null);
-    useEffect(() => {
-      const controller = new AbortController();
-
-      const fetchDistance = async () => {
-        try {
-          const result = await $api.get(
-            `/getLatLon/${item.assigned_to}/${item.id}`,
-            { signal: controller.signal }
-          );
-
-          const from = [
-            parseFloat(result.data.system.geo_lon),
-            parseFloat(result.data.system.geo_lat),
-          ];
-          const to = [
-            parseFloat(result.data.worker.geo_lon),
-            parseFloat(result.data.worker.geo_lat),
-          ];
-
-          const response = await axios.get(
-            `https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=false`
-          );
-
-          setDistance((response.data.routes[0].distance / 1000).toFixed(1));
-        } catch (error) {
-          if (!axios.isCancel(error)) {
-            setDistance(null);
-          }
-        }
-      };
-
-      if (item.assigned_to && item.system_name) {
-        fetchDistance();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
+    };
+  }, [item.assigned_to, item.id, item.system_name]);
 
-      return () => controller.abort();
-    }, [item.assigned_to, item.id, item.system_name]);
+  return (
+    <TableRow key={item.id}>
+      <TableCell
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {item.problem_name}
+      </TableCell>
+      <TableCell
+        align="right"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {item.module}
+      </TableCell>
+      <TableCell
+        align="right"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {item.total_cost} руб.
+      </TableCell>
+      <TableCell
+        align="right"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {distance === null ? "рассчёт расстояния" : distance + " км"}
+      </TableCell>
+      <TableCell
+        align="right"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {item?.repair_completion_date === null
+          ? "Не назначен"
+          : formatDate(item.repair_completion_date)}
+      </TableCell>
+      <TableCell align="center" sx={{ position: "relative" }}>
+        <MuiButton
+          variant="contained"
+          onClick={() => addRequest(item.system_name, item.id)}
+          disabled={isProcessing}
+        >
+          Принять
+        </MuiButton>
+        <InfoIcon
+          onClick={() => {
+            setAdditionalOpen();
+            setCurrentItem(item);
+          }}
+          style={{
+            cursor: "pointer",
+            position: "absolute",
+            marginLeft: "10px",
+            marginTop: "5px",
+          }}
+        />
+      </TableCell>
+    </TableRow>
+  );
+});
 
-    return (
-      <TableRow key={item.id}>
-        <TableCell
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+const RequestRowInWork = React.memo(function RequestRowInWork({
+  item,
+  isProcessing,
+  setDetailsObject,
+  removeRequest,
+}) {
+  const [distance, setDistance] = useState(null);
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchDistance = async () => {
+      try {
+        const result = await $api.get(
+          `/getLatLon/${item.assigned_to}/${item.id}`,
+          { signal: controller.signal }
+        );
+
+        const from = [
+          parseFloat(result.data.system.geo_lon),
+          parseFloat(result.data.system.geo_lat),
+        ];
+        const to = [
+          parseFloat(result.data.worker.geo_lon),
+          parseFloat(result.data.worker.geo_lat),
+        ];
+
+        const response = await axios.get(
+          `https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=false`
+        );
+
+        setDistance((response.data.routes[0].distance / 1000).toFixed(1));
+      } catch (error) {
+        if (!axios.isCancel(error)) {
+          setDistance(null);
+        }
+      }
+    };
+
+    if (item.assigned_to && item.system_name) {
+      fetchDistance();
+    }
+
+    return () => controller.abort();
+  }, [item.assigned_to, item.id, item.system_name]);
+
+  return (
+    <TableRow key={item.id}>
+      <TableCell
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {item.problem_name}
+      </TableCell>
+      <TableCell
+        align="right"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {item.module}
+      </TableCell>
+      <TableCell
+        align="right"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {item.total_cost} руб.
+      </TableCell>
+      <TableCell
+        align="right"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {distance === null ? "рассчёт расстояния" : distance + " км"}
+      </TableCell>
+      <TableCell
+        align="right"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {item?.repair_completion_date === null
+          ? "Не назначен"
+          : formatDate(item.repair_completion_date)}
+      </TableCell>
+      <TableCell align="center" sx={{ position: "relative" }}>
+        <MuiButton
+          variant="contained"
+          onClick={() => {
+            setDetailsObject(item);
           }}
+          disabled={isProcessing}
         >
-          {item.problem_name}
-        </TableCell>
-        <TableCell
-          align="right"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+          Подробнее
+        </MuiButton>
+        <span
+          className="material-icons"
+          style={{
+            color: "red",
+            cursor: "pointer",
+            position: "absolute",
+            marginLeft: "10px",
+            marginTop: "5px",
           }}
+          onClick={() => removeRequest(item)}
         >
-          {item.module}
-        </TableCell>
-        <TableCell
-          align="right"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {item.total_cost} руб.
-        </TableCell>
-        <TableCell
-          align="right"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {distance === null ? "рассчёт расстояния" : distance + " км"}
-        </TableCell>
-        <TableCell
-          align="right"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {item?.repair_completion_date === null
-            ? "Не назначен"
-            : formatDate(item.repair_completion_date)}
-        </TableCell>
-        <TableCell align="center" sx={{ position: "relative" }}>
-          <MuiButton
-            variant="contained"
-            onClick={() => {
-              setDetailsObject(item);
-            }}
-            disabled={isProcessing}
-          >
-            Подробнее
-          </MuiButton>
-          <span
-            className="material-icons"
-            style={{
-              color: "red",
-              cursor: "pointer",
-              position: "absolute",
-              marginLeft: "10px",
-              marginTop: "5px",
-            }}
-            onClick={() => removeRequest(item)}
-          >
-            cancel
-          </span>
-        </TableCell>
-      </TableRow>
-    );
-  },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.item.id === nextProps.item.id &&
-      prevProps.isProcessing === nextProps.isProcessing &&
-      prevProps.item.assigned_to === nextProps.item.assigned_to &&
-      prevProps.item.system_name === nextProps.item.system_name
-    );
-  }
-);
+          cancel
+        </span>
+      </TableCell>
+    </TableRow>
+  );
+});

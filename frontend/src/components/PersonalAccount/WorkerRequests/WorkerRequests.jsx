@@ -272,6 +272,7 @@ export default function WorkerRequests({
           item={detailsObject}
           setItem={(e) => setDetailsObject(e)}
           getAllDevices={() => getAllDevices()}
+          getData={() => getData()}
         />
       )}
     </div>

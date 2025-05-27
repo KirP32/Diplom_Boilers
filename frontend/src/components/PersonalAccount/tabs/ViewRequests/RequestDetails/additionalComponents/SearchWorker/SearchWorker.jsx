@@ -27,6 +27,7 @@ export default function SearchWorker({
   item,
   fullItem,
   setFullItem,
+  getData,
 }) {
   const [data, setData] = useState([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -35,7 +36,7 @@ export default function SearchWorker({
 
   useEffect(() => {
     $api.get(`/getRepairDate/${fullItem?.id}/repair`).then((res) => {
-      setDate(res.data[0].repair_completion_date);
+      setDate(res.data.date);
     });
   }, [fullItem?.id]);
 
@@ -44,8 +45,8 @@ export default function SearchWorker({
 
     if (sseEvent.type === "repairDate_updated") {
       $api
-        .get(`/getRepairDate/${fullItem.id}`)
-        .then((res) => setDate(res.data[0].repair_completion_date))
+        .get(`/getRepairDate/${fullItem.id}/repair`)
+        .then((res) => setDate(res.data.date))
         .catch(console.error);
     }
 
@@ -170,6 +171,7 @@ export default function SearchWorker({
         id: fullItem.id,
       });
       setIsEditingDate(false);
+      getData();
     } catch (error) {
       console.error("Ошибка при сохранении даты:", error);
     }
@@ -505,7 +507,7 @@ export default function SearchWorker({
             justifyContent: "center",
           }}
         >
-          <Typography variant="h5">Дата начала работ:</Typography>
+          <Typography variant="h5">Выполнить работы до:</Typography>
           <TextField
             type="date"
             value={date || ""}
@@ -532,17 +534,17 @@ export default function SearchWorker({
             </IconButton>
           )}
         </Box>
-        <Box sx={{ textAlign: "center", mt: 2 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => postEquipmentData(equipmentData)}
-          >
-            {!isReadOnly
-              ? "Подтвердить данные оборудования"
-              : "Установить дату ремонта"}
-          </Button>
-        </Box>
+        {!isReadOnly && (
+          <Box sx={{ textAlign: "center", mt: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => postEquipmentData(equipmentData)}
+            >
+              {"Подтвердить данные оборудования"}
+            </Button>
+          </Box>
+        )}
       </Box>
       <Materials
         requestID={fullItem?.id}
@@ -552,6 +554,7 @@ export default function SearchWorker({
         fullItem={fullItem}
         setFullItem={(e) => setFullItem(e)}
         sseEvent={sseEvent}
+        getData={getData}
       />
       <Snackbar
         open={snackbarOpen}

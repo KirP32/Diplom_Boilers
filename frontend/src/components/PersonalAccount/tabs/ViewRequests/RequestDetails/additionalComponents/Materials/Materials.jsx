@@ -33,6 +33,7 @@ export default function Materials({
   fullItem,
   setFullItem,
   sseEvent,
+  getData,
 }) {
   const [services, setServices] = useState([]);
   const [goods, setGoods] = useState([]);
@@ -212,7 +213,10 @@ export default function Materials({
     };
     await $api
       .post("/InsertGoodsServices", data)
-      .then(() => setSnackbarOpen(true))
+      .then(() => {
+        setSnackbarOpen(true);
+        getData();
+      })
       .catch(() => {});
     getActualGoodsAndServices();
   };

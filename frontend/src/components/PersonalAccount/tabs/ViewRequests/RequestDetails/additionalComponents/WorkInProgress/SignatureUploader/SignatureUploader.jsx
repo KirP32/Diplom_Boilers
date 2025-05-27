@@ -4,9 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import $api from "../../../../../../../../http";
 
-export default function SignatureUploader({ requestID }) {
+export default function SignatureUploader({ requestID, sseEvent }) {
   const [photoURL, setPhotoURL] = useState({ workerURL: null, userURL: null });
-
   useEffect(() => {
     $api
       .get(`/getRequestPhoto/${requestID}?category=signature`)
@@ -18,6 +17,20 @@ export default function SignatureUploader({ requestID }) {
       )
       .catch((error) => console.log(error));
   }, [requestID]);
+
+  useEffect(() => {
+    if (!sseEvent) return;
+    if (sseEvent.type === "signature_updated") {
+      $api
+        .get(`/getRequestPhoto/${requestID}?category=signature`)
+        .then((result) => {
+          setPhotoURL({
+            workerURL: result.data.worker_signature.url,
+            userURL: result.data.user_signature.url,
+          });
+        });
+    }
+  }, [requestID, sseEvent]);
 
   return (
     <Box sx={{ mt: 2 }}>

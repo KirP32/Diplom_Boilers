@@ -881,7 +881,7 @@ class DataController {
       ) eq_mod ON true
 
       LEFT JOIN LATERAL (
-        SELECT SUM(sp.price * COALESCE(wsc.coefficient, 1))::double precision AS total_cost
+        SELECT SUM(sp.price * COALESCE(wsc.coefficient, 1) * rs.amount)::double precision AS total_cost
         FROM request_services rs
         JOIN service_prices sp ON rs.service_id = sp.service_id AND sp.region = ur.region_code
         LEFT JOIN users u_sub ON u_sub.id = ur.assigned_to
@@ -2771,7 +2771,11 @@ class DataController {
           };
         })
       );
-      sendToUser(requestID, "photo_updated");
+      if (category === "signature/worker" || category === "signature/user") {
+        sendToUser(requestID, "signature_updated");
+      } else {
+        sendToUser(requestID, "photo_updated");
+      }
       return res.json({
         status: "ok",
         photos: uploadedPhotos,
@@ -3198,7 +3202,6 @@ class DataController {
     try {
       const id = parseInt(req.params.id, 10);
       const date = req.params.date;
-      console.log(date);
       const columns = {
         repair: "repair_completion_date",
         completion: "work_completion_date",

@@ -39,6 +39,7 @@ export default function RequestDetails({
   item, // минимальная информация {assigned_to (это даже не надо), id, problem_name, status, system_name}
   setItem, // чтобы закрыть окно заявки
   getAllDevices, // если завершена, чтобы убрать доступ к системе у работника
+  getData, // чтобы обновить список заявок
 }) {
   const [sseEvent, setSseEvent] = useState();
   const [fullItem, setFullItem] = useState(null);
@@ -129,6 +130,10 @@ export default function RequestDetails({
     // Обновление даты окончания работ
     es.addEventListener("completionDate_updated", () => {
       setSseEvent({ type: "completionDate_updated" });
+    });
+    // Обновление подписи участников
+    es.addEventListener("signature_updated", () => {
+      setSseEvent({ type: "signature_updated" });
     });
     return () => {
       es.close();
@@ -319,6 +324,7 @@ export default function RequestDetails({
             ...e,
           }));
         }}
+        getData={getData}
       />
     ),
     // Материалы: (
