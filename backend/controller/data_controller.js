@@ -610,56 +610,31 @@ class DataController {
   async getSystemRequests(req, res) {
     try {
       const { name } = req.query;
-      await pool
-        .query(
-          `SELECT 
-                id, 
-                problem_name,
-                status,
-                assigned_to,
-                system_name,
-             FROM 
-                user_requests
-             WHERE 
-                 system_name = $1`,
-          [name]
-        )
-        .catch((error) => {
-          console.log(error);
-          res.sendStatus(500);
-        })
-        .then((result) => {
-          const decoded = decodeJWT(req.cookies.refreshToken);
-          if (
-            decoded.access_level === 0 ||
-            decoded.access_level === 2 ||
-            decoded.access_level === 3
-          ) {
-            res.send(result.rows);
-          } else {
-            res.send(
-              result.rows
-                .map(
-                  (item) =>
-                    item.assigned_to === decoded.userID ? { ...item } : null
-                  // : {
-                  //     description: item.description,
-                  //     id: item.id,
-                  //     module: item.module,
-                  //     phone_number: item.phone_number,
-                  //     problem_name: item.problem_name,
-                  //     stage: item.stage,
-                  //     status: item.status,
-                  //     system_name: item.system_name,
-                  //     type: item.type,
-                  //   }
-                )
-                .filter((item) => item !== null)
-            );
-          }
-        });
+      const result = await pool.query(
+        `SELECT
+         id,
+         problem_name,
+         status,
+         assigned_to,
+         system_name
+       FROM user_requests
+       WHERE system_name = $1`,
+        [name]
+      );
+
+      const decoded = decodeJWT(req.cookies.refreshToken);
+
+      if ([0, 2, 3].includes(decoded.access_level)) {
+        return res.json(result.rows);
+      }
+
+      const filtered = result.rows.filter(
+        (item) => item.assigned_to === decoded.userID
+      );
+      return res.json(filtered);
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      return res.sendStatus(500);
     }
   }
 
