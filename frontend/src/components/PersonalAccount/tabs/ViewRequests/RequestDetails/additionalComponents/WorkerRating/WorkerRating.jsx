@@ -1,44 +1,31 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { styled, keyframes } from "@mui/material/styles";
-import { Box, TextField, Typography } from "@mui/material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import Rating from "@mui/material/Rating";
 import SentimentVeryDissatisfiedIcon from "@mui/icons-material/SentimentVeryDissatisfied";
 import SentimentDissatisfiedIcon from "@mui/icons-material/SentimentDissatisfied";
 import SentimentSatisfiedIcon from "@mui/icons-material/SentimentSatisfied";
 import SentimentSatisfiedAltIcon from "@mui/icons-material/SentimentSatisfiedAltOutlined";
 import SentimentVerySatisfiedIcon from "@mui/icons-material/SentimentVerySatisfied";
+import $api from "../../../../../../../http";
 
 const customIcons = {
   1: {
     icon: <SentimentVeryDissatisfiedIcon color="error" />,
     label: "Очень плохо",
   },
-  2: {
-    icon: <SentimentDissatisfiedIcon color="error" />,
-    label: "Плохо",
-  },
-  3: {
-    icon: <SentimentSatisfiedIcon color="warning" />,
-    label: "Нормально",
-  },
-  4: {
-    icon: <SentimentSatisfiedAltIcon color="success" />,
-    label: "Хорошо",
-  },
-  5: {
-    icon: <SentimentVerySatisfiedIcon color="success" />,
-    label: "Отлично",
-  },
+  2: { icon: <SentimentDissatisfiedIcon color="error" />, label: "Плохо" },
+  3: { icon: <SentimentSatisfiedIcon color="warning" />, label: "Нормально" },
+  4: { icon: <SentimentSatisfiedAltIcon color="success" />, label: "Хорошо" },
+  5: { icon: <SentimentVerySatisfiedIcon color="success" />, label: "Отлично" },
 };
 
 function IconContainer(props) {
   const { value, ...other } = props;
   return <span {...other}>{customIcons[value].icon}</span>;
 }
-IconContainer.propTypes = {
-  value: PropTypes.number.isRequired,
-};
+IconContainer.propTypes = { value: PropTypes.number.isRequired };
 
 const slideSeq = keyframes`
   0%   { transform: translateX(-80px); opacity: 0; }
@@ -46,7 +33,6 @@ const slideSeq = keyframes`
   100% { transform: translateX(80px);  opacity: 0; }
 `;
 
-// Компонент точечки
 const Dot = styled("span")(({ theme, delay }) => ({
   display: "inline-block",
   width: 12,
@@ -59,8 +45,31 @@ const Dot = styled("span")(({ theme, delay }) => ({
 }));
 
 export default function WorkerRating({ requestID, access_level }) {
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(null);
   const [comment, setComment] = useState("");
+  const [disabled, setDisabled] = useState(false);
+
+  useEffect(() => {
+    if (!requestID) return;
+    $api
+      .get(`/getRequestRating/${requestID}`)
+      .then((res) => {
+        if (res.data?.rating) {
+          setValue(res.data.rating);
+          setComment(res.data.comment || "");
+          setDisabled(true);
+        }
+      })
+      .catch((err) => console.error(err));
+  }, [requestID]);
+
+  async function handleSaveResult() {
+    $api
+      .post("/workerRating", { value, comment, requestID })
+      .then(() => setDisabled(true))
+      .catch(() => {});
+  }
+
   if (access_level === 3) {
     return (
       <Box
@@ -78,10 +87,11 @@ export default function WorkerRating({ requestID, access_level }) {
         </Typography>
         <Rating
           name={`worker-rating-${requestID}`}
-          value={value}
+          value={value || 0}
           onChange={(_, newValue) => setValue(newValue)}
           IconContainerComponent={IconContainer}
           getLabelText={(val) => customIcons[val].label}
+          disabled={disabled}
           highlightSelectedOnly
           sx={{
             "& .MuiSvgIcon-root": {
@@ -93,17 +103,25 @@ export default function WorkerRating({ requestID, access_level }) {
           }}
         />
         {value > 0 && (
-          <>
-            <TextField
-              label="Комментарий (не обязательно)"
-              multiline
-              minRows={3}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              fullWidth
-              sx={{ mt: 2 }}
-            />
-          </>
+          <TextField
+            label="Комментарий (не обязательно)"
+            multiline
+            minRows={3}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            fullWidth
+            disabled={disabled}
+            sx={{ mt: 2 }}
+          />
+        )}
+        {!disabled && (
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleSaveResult}
+          >
+            Оценить
+          </Button>
         )}
       </Box>
     );

@@ -420,7 +420,11 @@ export default function OptionsDialog({ open, user, setOptions }) {
   return (
     <Dialog open={open} onClose={() => onFinish()} fullWidth maxWidth="md">
       <DialogTitle
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          position: "relative",
+        }}
       >
         {
           <Typography
@@ -450,6 +454,7 @@ export default function OptionsDialog({ open, user, setOptions }) {
               : "Профиль заполнен частично"}
           </Typography>
         }
+
         <span
           style={{
             gridColumn: 2,
@@ -472,7 +477,24 @@ export default function OptionsDialog({ open, user, setOptions }) {
             onClick={() => handleDownloadClick()}
           />
         )}
+
+        {userData?.avg_rating && (
+          <Typography
+            variant="caption"
+            sx={{
+              position: "absolute",
+              bottom: 6,
+              left: 0,
+              right: 0,
+              textAlign: "center",
+              color: "gray",
+            }}
+          >
+            Ваш рейтинг: {parseFloat(userData.avg_rating).toFixed(2)}
+          </Typography>
+        )}
       </DialogTitle>
+
       <DialogContent>
         {userData ? (
           <>

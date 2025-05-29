@@ -3228,6 +3228,51 @@ class DataController {
       return res.status(500).json({ error: error.message });
     }
   }
+  async workerRating(req, res) {
+    try {
+      const { value, comment, requestID } = req.body;
+      await pool.query(
+        "insert into request_ratings (rating, comment, request_id) values ($1, $2, $3) ",
+        [value, comment, requestID]
+      );
+      await pool.query(
+        `UPDATE worker_details
+      SET rating_sum = rating_sum + $1,
+          rating_count = rating_count + 1
+      WHERE username = (
+        SELECT u.username
+        FROM user_requests ur
+        JOIN users u ON ur.assigned_to = u.id
+        WHERE ur.id = $2
+      )`,
+        [value, requestID]
+      );
+      return res.send("OK");
+    } catch (error) {
+      return res.status(500).send({ message: error });
+    }
+  }
+  async getRequestRating(req, res) {
+    try {
+      const { requestID } = req.params;
+
+      const result = await pool.query(
+        `SELECT rating, comment
+       FROM request_ratings
+       WHERE request_id = $1`,
+        [requestID]
+      );
+
+      if (result.rowCount === 0) {
+        return res.json(null);
+      }
+
+      return res.json(result.rows[0]);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: "Ошибка сервера" });
+    }
+  }
 }
 async function updateToken(login, refreshToken, UUID4) {
   try {

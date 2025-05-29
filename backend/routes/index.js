@@ -105,6 +105,11 @@ router.get(
   checkCookie,
   DataController.getRepairDate
 );
+router.get(
+  "/getRequestRating/:requestID",
+  checkCookie,
+  DataController.getRequestRating
+);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);
@@ -180,6 +185,7 @@ router.post(
   DataController.updateCompletionDate
 );
 router.post("/updateRepairDate", checkCookie, DataController.updateRepairDate);
+router.post("/workerRating", checkCookie, DataController.workerRating);
 // router.post(
 //   "/uploadSignaturePhoto/:requestID",
 //   checkCookie,
