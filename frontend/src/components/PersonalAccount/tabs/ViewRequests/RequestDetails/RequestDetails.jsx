@@ -96,6 +96,7 @@ export default function RequestDetails({
 
   useEffect(() => {
     if (!item.id) return;
+
     const es = new EventSourcePolyfill(
       `https://ads-line.pro/api/events?requestID=${item.id}`,
       {
@@ -316,6 +317,7 @@ export default function RequestDetails({
             region_code: fullItem.region_code,
             worker_region: fullItem.worker_region,
             repair_completion_date: fullItem.repair_completion_date,
+            assigned_to: fullItem.assigned_to,
           }
         }
         sseEvent={sseEvent}
