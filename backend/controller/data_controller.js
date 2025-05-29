@@ -618,7 +618,6 @@ class DataController {
                 status,
                 assigned_to,
                 system_name,
-                module
              FROM 
                 user_requests
              WHERE 
@@ -706,11 +705,11 @@ class DataController {
       const insertReq = await client.query(
         `INSERT INTO user_requests
            (problem_name, type, status, assigned_to, region_assigned_to,
-            created_at, module, created_by, description, system_name,
+            created_at, created_by, description, system_name,
             phone_number, created_by_worker, gef_assigned_to, fio, addres, region_code)
          VALUES
            ($1, 0, 0, $2, $3, current_timestamp,
-            '', $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING id`,
         [
           problem_name,
@@ -895,9 +894,9 @@ class DataController {
       const selectFields = `
       ur.*,
       TO_CHAR(ur.repair_completion_date, 'YYYY-MM-DD') AS repair_completion_date,
-      wd.geo_lat AS worker_geo_lat,
-      wd.geo_lon AS worker_geo_lon,
-      COALESCE(eq_mod.module_series, ur.module) AS module,
+      wd.geo_lat   AS worker_geo_lat,
+      wd.geo_lon   AS worker_geo_lon,
+      eq_mod.module_series AS module,
       COALESCE(total.total_cost, 0)::double precision AS total_cost
     `;
 

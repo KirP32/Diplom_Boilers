@@ -26,12 +26,14 @@ import PhotoFolder from "./additionalComponents/PhotoFolder/PhotoFolder";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { EventSourcePolyfill } from "event-source-polyfill";
+import WorkerRating from "./additionalComponents/WorkerRating/WorkerRating";
 
 const data_type_1 = [
   "Рекламация на оборудование",
   // "Материалы",
   "В пути",
   "Проводятся работы",
+  "Оценка работ",
   "Завершенно",
 ];
 
@@ -347,6 +349,9 @@ export default function RequestDetails({
         worker_region={fullItem?.worker_region}
         sseEvent={sseEvent}
       />
+    ),
+    "Оценка работ": (
+      <WorkerRating requestID={fullItem?.id} access_level={access_level} />
     ),
     Завершенно: (
       // <CompletedWorks access_level={access_level} />
