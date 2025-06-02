@@ -320,6 +320,7 @@ export default function RequestDetails({
             worker_region: fullItem.worker_region,
             repair_completion_date: fullItem.repair_completion_date,
             assigned_to: fullItem.assigned_to,
+            worker_username: fullItem.worker_username,
           }
         }
         sseEvent={sseEvent}

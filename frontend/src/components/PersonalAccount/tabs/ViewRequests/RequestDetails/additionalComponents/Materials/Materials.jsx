@@ -98,6 +98,26 @@ export default function Materials({
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    if (!services || services.length === 0) return;
+
+    setEditableServices((prev) =>
+      prev.map((oldService) => {
+        const updated = services.find(
+          (s) => s.service_id === oldService.service_id
+        );
+        if (updated) {
+          return {
+            ...oldService,
+            base_price: updated.base_price,
+            coefficient: updated.coefficient,
+          };
+        }
+        return oldService;
+      })
+    );
+  }, [services]);
+
   const fetchServicePrices = useCallback(async () => {
     if (!requestID) return;
     try {
@@ -287,7 +307,7 @@ export default function Materials({
                         service.base_price *
                         service.coefficient *
                         service.amount
-                      ).toFixed(2)} руб.`}
+                      ).toFixed(2)} руб. (коэффициент: ${service.coefficient})`}
                     />
                   </ListItem>
                 ))}

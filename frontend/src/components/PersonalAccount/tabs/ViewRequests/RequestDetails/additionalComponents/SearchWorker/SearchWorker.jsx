@@ -96,6 +96,7 @@ export default function SearchWorker({
 
       defect_descriptions: (eq?.defects || []).map((d) => ({
         id: d.id,
+        name: d.defect_info,
         description: d.description ?? "",
         is_warranty_case: d.is_warranty_case,
       })),

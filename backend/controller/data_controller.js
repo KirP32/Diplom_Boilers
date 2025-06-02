@@ -792,7 +792,12 @@ class DataController {
         user_id: createdById,
         description: `Заявка создана пользователем ${created_by}`,
       });
-
+      await log_request_action({
+        request_id: requestId,
+        action_type: "gef_confirmed",
+        user_id: createdById,
+        description: `Исполнитель заполнения рекламации ${created_by}`,
+      });
       return res.status(200).json({ requestId });
     } catch (err) {
       await client.query("ROLLBACK");
@@ -1770,6 +1775,12 @@ class DataController {
           [requestID]
         );
       }
+      await log_request_action({
+        request_id: requestID,
+        user_id: decodeJWT(req.headers["accesstoken"]).userID || null,
+        action_type: "assigned_worker",
+        description: `Назначен исполнитель: ${username}`,
+      });
       return res.status(200).json({ message: "Заявка успешно обновлена." });
     } catch (error) {
       console.error("Ошибка при обновлении заявки:", error);
@@ -2578,6 +2589,19 @@ class DataController {
     try {
       await client.query("BEGIN");
 
+      const existing = await client.query(
+        `
+      SELECT EXISTS (
+        SELECT 1 FROM request_services WHERE request_id = $1
+        UNION
+        SELECT 1 FROM request_goods WHERE request_id = $1
+      ) AS has_data
+    `,
+        [requestID]
+      );
+
+      const isUpdate = existing.rows[0].has_data;
+
       await client.query("DELETE FROM request_services WHERE request_id = $1", [
         requestID,
       ]);
@@ -2607,6 +2631,17 @@ class DataController {
 
       await client.query("COMMIT");
       sendToUser(requestID, "servicesAndGoods");
+
+      const userID = decodeJWT(req.headers["accesstoken"]).userID || null;
+      await log_request_action({
+        request_id: requestID,
+        user_id: userID,
+        action_type: isUpdate ? "cart_updated" : "cart_completed",
+        description: isUpdate
+          ? "Обновлены услуги и запчасти для заявки"
+          : "Установлены услуги и запчасти для заявки",
+      });
+
       return res.status(200).json({ message: "Данные успешно обновлены." });
     } catch (error) {
       await client.query("ROLLBACK");
@@ -3059,10 +3094,26 @@ class DataController {
             defect.is_warranty_case,
             defect.id,
           ]);
+          await log_request_action({
+            request_id: requestID,
+            user_id: decodeJWT(req.headers["accesstoken"]).userID || null,
+            action_type: "warranty_checked",
+            description: `Деффект оборудования '${defect.name}' признан ${
+              defect.is_warranty_case ? "гарантийным" : "негарантийным"
+            }`,
+          });
         }
       }
       await client.query("COMMIT");
       sendToUser(requestID, "equipment_updated");
+
+      await log_request_action({
+        request_id: requestID,
+        user_id: decodeJWT(req.headers["accesstoken"]).userID || null,
+        action_type: "equipment_checked",
+        description: `Исполнитель проверил данные оборудования`,
+      });
+
       res.send("OK");
     } catch (error) {
       await client.query("ROLLBACK");
@@ -3090,7 +3141,8 @@ class DataController {
         ue.sale_document,
         ud.id               AS defect_id,
         ud.is_warranty_case,
-        ud.detailed_description
+        ud.detailed_description,
+        ud.defect_info
       FROM user_requests_equipments ue
       LEFT JOIN user_requests_details ud
         ON ud.user_request_equipment_id = ue.id
@@ -3120,6 +3172,7 @@ class DataController {
         if (row.defect_id) {
           equipmentsMap[eqId].defects.push({
             id: row.defect_id,
+            defect_info: row.defect_info,
             description: row.detailed_description,
             is_warranty_case: row.is_warranty_case,
           });
@@ -3187,7 +3240,7 @@ class DataController {
         request_id: id,
         user_id: decodeJWT(req.headers["accesstoken"]).userID || null,
         action_type: "completion_date_set",
-        description: `Установлена дата завершения работ: ${saleDate}`,
+        description: `Установлена фактическая дата завершения работ: ${saleDate}`,
         stage: null,
       });
 
@@ -3206,6 +3259,12 @@ class DataController {
         [repairDate === "" ? null : repairDate, id]
       );
       sendToUser(id, "repairDate_updated");
+      await log_request_action({
+        request_id: id,
+        user_id: decodeJWT(req.headers["accesstoken"]).userID || null,
+        action_type: "repair_date_set",
+        description: `Установлены сроки выполения работ: ${repairDate}`,
+      });
       return res.send("OK");
     } catch (error) {
       return res.status(500).send({ message: error });
@@ -3261,6 +3320,13 @@ class DataController {
       )`,
         [value, requestID]
       );
+      await log_request_action({
+        request_id: requestID,
+        user_id: decodeJWT(req.headers["accesstoken"]).userID || null,
+        action_type: "worker_rated",
+        description: `Отзыв потребителя заполнен. Оценка: ${value}, Комментарий: ${comment}`,
+      });
+
       return res.send("OK");
     } catch (error) {
       return res.status(500).send({ message: error });
