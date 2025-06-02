@@ -46,7 +46,7 @@ export default function SignUp({ updateRegFlag, ...props }) {
           alert("Успешно");
         })
         .catch((error) => {
-          console.log(error.message);
+          // console.log(error.message);
           if (
             error.status === 401 &&
             localStorage.getItem("stay_logged") === "false"

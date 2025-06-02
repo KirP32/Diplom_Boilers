@@ -244,7 +244,6 @@ class DataController {
       await client.query(`INSERT INTO ${tableName} (username) VALUES ($1)`, [
         login,
       ]);
-
       const data = {
         user_id: await getID(decodeJWT(authcookie).login),
         action: "Добавлен пользователь",
@@ -786,6 +785,14 @@ class DataController {
       );
 
       await client.query("COMMIT");
+
+      await log_request_action({
+        request_id: requestId,
+        action_type: "created",
+        user_id: createdById,
+        description: `Заявка создана пользователем ${created_by}`,
+      });
+
       return res.status(200).json({ requestId });
     } catch (err) {
       await client.query("ROLLBACK");
@@ -944,6 +951,7 @@ class DataController {
       if (userQuery.rowCount === 0) {
         return res.status(404).json({ message: "Пользователь не найден." });
       }
+
       const { id: userId, access_level } = userQuery.rows[0];
 
       let updateResult;
@@ -968,6 +976,14 @@ class DataController {
             .status(400)
             .json({ message: "Заявка не найдена или уже принята." });
         }
+
+        await log_request_action({
+          request_id,
+          user_id: userId,
+          action_type: "worker_confirmed",
+          description: "Сотрудник подтвердил участие в заявке",
+          stage: null,
+        });
       } else if (access_level === 2) {
         updateResult = await pool.query(
           "UPDATE user_requests_info SET wattson_confirmed = TRUE WHERE request_id = $1",
@@ -978,6 +994,14 @@ class DataController {
             .status(400)
             .json({ message: "Заявка не найдена или уже принята." });
         }
+
+        await log_request_action({
+          request_id,
+          user_id: userId,
+          action_type: "wattson_confirmed",
+          description: "Watsson подтвердил участие в заявке",
+          stage: null,
+        });
       } else {
         return res
           .status(403)
@@ -2867,7 +2891,7 @@ class DataController {
       return res.status(500).json({ error: "Не удалось удалить фото" });
     }
   }
-  // УДАЛИТ ВСЁ ИЗ БАКЕТА, ОПАСНО, НЕ ТРОГАТЬ
+  // УДАЛИТ ВСЁ ИЗ БАКЕТА, !!!ОПАСНО!!!!, НЕ ТРОГАТЬ
   // async clearStorage(req, res) {
   //   try {
   //     const bucketName = process.env.S3_BUCKET;
@@ -3148,16 +3172,32 @@ class DataController {
   async updateCompletionDate(req, res) {
     try {
       const { saleDate, id } = req.body;
-      await pool.query(
-        "UPDATE user_requests SET work_completion_date = $1 where id = $2",
+
+      const result = await pool.query(
+        "UPDATE user_requests SET work_completion_date = $1 WHERE id = $2",
         [saleDate, id]
       );
+
+      if (result.rowCount === 0) {
+        return res.status(404).send({ message: "Заявка не найдена." });
+      }
+
+      // Логируем действие
+      await log_request_action({
+        request_id: id,
+        user_id: decodeJWT(req.headers["accesstoken"]).userID || null,
+        action_type: "completion_date_set",
+        description: `Установлена дата завершения работ: ${saleDate}`,
+        stage: null,
+      });
+
       sendToUser(id, "completionDate_updated");
       return res.send("OK");
     } catch (error) {
       return res.status(500).send({ message: error });
     }
   }
+
   async updateRepairDate(req, res) {
     try {
       const { repairDate, id } = req.body;
@@ -3308,6 +3348,28 @@ async function log_history(data) {
   } catch (error) {
     console.log("Проблема логирований действий (log_history)");
     console.log(error);
+  }
+}
+
+async function log_request_action(data) {
+  try {
+    await pool.query(
+      `INSERT INTO request_logs 
+        (request_id, user_id, action_type, description, stage, created_at) 
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [
+        data.request_id,
+        data.user_id,
+        data.action_type,
+        data.description,
+        data.stage || null,
+      ]
+    );
+  } catch (error) {
+    console.log(
+      "Ошибка при логировании действия по заявке (log_request_action):"
+    );
+    console.error(error);
   }
 }
 
