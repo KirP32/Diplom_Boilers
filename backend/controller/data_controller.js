@@ -252,9 +252,8 @@ class DataController {
         subject_id: userId,
       };
 
-      await log_history(data);
-
       await client.query("COMMIT");
+      await log_history(data);
       res.send("OK");
     } catch (error) {
       await client.query("ROLLBACK");
@@ -3301,7 +3300,7 @@ async function deleteCookieDB(refreshToken, UUID4) {
 }
 async function log_history(data) {
   try {
-    //console.log(data);
+    // console.log(data);
     await pool.query(
       "INSERT INTO actions_control (user_id, subject_id, action, time) VALUES ($1, $2, $3, $4)",
       [data.user_id, data.subject_id, data.action, data.time]
