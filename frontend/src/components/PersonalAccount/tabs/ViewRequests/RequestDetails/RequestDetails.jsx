@@ -92,6 +92,7 @@ export default function RequestDetails({
 
   if (fullItem?.assigned_to === null && access_level === 1) {
     getData();
+    getAllDevices();
   }
 
   // Загрузка списков пользователей для автокомплита
