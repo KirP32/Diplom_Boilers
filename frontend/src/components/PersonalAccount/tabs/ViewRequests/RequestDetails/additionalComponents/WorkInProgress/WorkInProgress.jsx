@@ -353,7 +353,7 @@ export default function WorkInProgress({
                         primary={`${good.name} (x${good.amount || 1})`}
                         secondary={`Артикул: ${good.article}, Цена: ${(
                           good.price * good.amount
-                        ).toFixed(2)}`}
+                        ).toFixed(2)} руб.`}
                       />
                     </ListItem>
                   )

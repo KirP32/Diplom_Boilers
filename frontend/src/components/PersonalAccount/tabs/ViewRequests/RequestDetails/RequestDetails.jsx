@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useContext, useEffect, useState, useRef } from "react";
+import { useContext, useEffect, useState } from "react";
 import styles from "./RequestDetails.module.scss";
 import { ThemeContext } from "../../../../../Theme";
 import Stepper from "@mui/material/Stepper";
@@ -300,7 +300,6 @@ export default function RequestDetails({
   const react_functional_components = {
     "Рекламация на оборудование": (
       <SearchWorker
-       
         access_level={access_level}
         fullItem={
           fullItem && {

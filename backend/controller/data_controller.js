@@ -3195,6 +3195,7 @@ class DataController {
         ud.id               AS defect_id,
         ud.is_warranty_case,
         ud.detailed_description,
+        ud.find_date,
         ud.defect_info
       FROM user_requests_equipments ue
       LEFT JOIN user_requests_details ud
@@ -3231,6 +3232,7 @@ class DataController {
             defect_info: row.defect_info,
             description: row.detailed_description,
             is_warranty_case: row.is_warranty_case,
+            find_date: row.find_date,
           });
         }
       }
@@ -3407,6 +3409,27 @@ class DataController {
     } catch (error) {
       console.error(error);
       return res.status(500).send({ message: "Ошибка сервера" });
+    }
+  }
+  async getLogs(req, res) {
+    try {
+      const { requestID } = req.params;
+      const result = await pool.query(
+        `
+      SELECT description, created_at
+      FROM request_logs
+      WHERE request_id = $1
+      ORDER BY created_at ASC
+      `,
+        [requestID]
+      );
+      if (result.rowCount > 0) {
+        return res.send(result.rows);
+      } else {
+        return res.status(404).send({ message: "Логи не найдены" });
+      }
+    } catch (error) {
+      return res.status(500).send({ message: error });
     }
   }
 }

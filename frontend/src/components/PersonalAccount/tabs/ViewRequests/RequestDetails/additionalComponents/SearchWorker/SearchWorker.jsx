@@ -132,6 +132,7 @@ export default function SearchWorker({
       defect_descriptions: (eq?.defects || []).map((d) => ({
         id: d.id,
         name: d.defect_info,
+        find_date: d.find_date,
         description: d.description ?? "",
         is_warranty_case: d.is_warranty_case,
       })),
@@ -212,6 +213,7 @@ export default function SearchWorker({
       console.error("Ошибка при сохранении даты:", error);
     }
   };
+
   return (
     <Box sx={{ display: "flex", gap: 5, flexDirection: "column" }}>
       <Box sx={{ mx: "auto", maxWidth: 800, fontSize: 20 }}>
@@ -485,20 +487,13 @@ export default function SearchWorker({
                   />
                 </Grid>
 
-                {eq.defects?.length > 0 && (
+                {eq.defect_descriptions?.length > 0 && (
                   <Grid item xs={12}>
                     <Typography variant="subtitle1" gutterBottom>
                       История дефектов
                     </Typography>
 
-                    {eq.defects.map((d, di) => {
-                      const descObj = equipmentData[
-                        idx
-                      ]?.defect_descriptions.find((dd) => dd.id === d.id) || {
-                        description: "",
-                        is_warranty_case: false,
-                      };
-
+                    {eq.defect_descriptions.map((d, di) => {
                       return (
                         <Box
                           key={di}
@@ -510,12 +505,17 @@ export default function SearchWorker({
                           }}
                         >
                           <Typography sx={{ mb: 1 }}>
-                            <strong>{d.find_date}</strong> — {d.defect_info}
+                            <strong>{d.name}</strong> —{" "}
+                            {new Date(d.find_date).toLocaleString("ru-RU", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            })}
                           </Typography>
 
                           <TextField
                             label="Описание неисправности"
-                            value={descObj.description}
+                            value={d.description}
                             onChange={(e) =>
                               isReadOnly
                                 ? null
@@ -537,7 +537,7 @@ export default function SearchWorker({
                             </FormLabel>
                             <RadioGroup
                               row
-                              value={String(descObj.is_warranty_case)}
+                              value={String(d.is_warranty_case)}
                               onChange={(e) => {
                                 if (!isReadOnly) {
                                   const val = e.target.value === "true";

@@ -94,6 +94,7 @@ router.get(
   DataController.getLatLon
 );
 router.get("/getRequestName", checkCookie, DataController.getRequestName);
+
 router.get(
   "/getEquipmentData/:requestID",
   checkCookie,
@@ -110,6 +111,8 @@ router.get(
   checkCookie,
   DataController.getRequestRating
 );
+
+router.get("/getLogs/:requestID", checkCookie, DataController.getLogs);
 
 router.post("/login", DataController.login);
 router.post("/sign_up", checkCookie, DataController.sign_up);

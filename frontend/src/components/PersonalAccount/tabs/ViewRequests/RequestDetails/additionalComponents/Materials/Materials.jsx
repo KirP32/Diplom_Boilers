@@ -303,11 +303,21 @@ export default function Materials({
                       primary={`${service.service_name} (x${
                         service.amount || 1
                       })`}
-                      secondary={`Цена: ${(
-                        service.base_price *
-                        service.coefficient *
-                        service.amount
-                      ).toFixed(2)} руб. (коэффициент: ${service.coefficient})`}
+                      secondary={
+                        access_level === 3
+                          ? `Цена: ${(
+                              service.base_price *
+                              service.coefficient *
+                              (service.amount || 1)
+                            ).toFixed(2)} руб. (коэффициент: ${
+                              service.coefficient
+                            })`
+                          : `Цена: ${(
+                              service.base_price *
+                              service.coefficient *
+                              (service.amount || 1)
+                            ).toFixed(2)} руб.`
+                      }
                     />
                   </ListItem>
                 ))}
