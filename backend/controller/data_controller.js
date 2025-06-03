@@ -1134,17 +1134,7 @@ class DataController {
       const remainingCount = Number(checkRequests.rows[0].count);
 
       if (remainingCount === 0) {
-        const deleteSystem = await pool.query(
-          "DELETE FROM user_systems WHERE user_id = $1 AND name = $2",
-          [user_id, system_name]
-        );
-        if (deleteSystem.rowCount > 0) {
-          return res.send("OK");
-        } else {
-          return res
-            .status(400)
-            .json({ message: "Ошибка при удалении системы." });
-        }
+        return res.send("OK");
       }
 
       return res.send("Removed");

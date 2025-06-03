@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import styles from "./RequestDetails.module.scss";
 import { ThemeContext } from "../../../../../Theme";
 import Stepper from "@mui/material/Stepper";
@@ -14,10 +14,13 @@ import {
   Tooltip,
   CircularProgress,
   Collapse,
+  Autocomplete,
+  TextField,
+  IconButton,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
 import $api from "../../../../../http";
 import { socket } from "../../../../../socket";
-import { IconButton } from "@mui/material";
 import SearchWorker from "./additionalComponents/SearchWorker/SearchWorker";
 import OnWay from "./additionalComponents/OnWay/OnWay";
 import WorkInProgress from "./additionalComponents/WorkInProgress/WorkInProgress";
@@ -45,18 +48,19 @@ export default function RequestDetails({
 }) {
   const [sseEvent, setSseEvent] = useState();
   const [fullItem, setFullItem] = useState(null);
-  // const [keyEditing, setKeyEditing] = useState("");
-  // const [editingName, setEditingName] = useState("");
+  const [keyEditing, setKeyEditing] = useState("");
+  const [editingName, setEditingName] = useState("");
   const { access_level } = useContext(ThemeContext);
   const [itemStage, setItemStage] = useState(fullItem?.stage);
-  // const [nameList, setNameList] = useState({
-  //   worker_name: [],
-  //   wattson_name: [],
-  // });
+  const [nameList, setNameList] = useState({
+    worker_name: [],
+    wattson_name: [],
+  });
   const [socketLoading, setSocketLoading] = useState(true);
   const [lockedAction, setLockedAction] = useState(null);
   const [lastActionUser, setLastActionUser] = useState(null);
   const [requestOpen, setRequsetOpen] = useState(false);
+
   function addToItem(data) {
     if (data.status === 1) {
       setFullItem((prev) => ({
@@ -85,16 +89,22 @@ export default function RequestDetails({
       }));
     }
   }
-  // useEffect(() => {
-  //   $api
-  //     .get("/workersNameList")
-  //     .then((result) => {
-  //       setNameList(result.data);
-  //     })
-  //     .catch((error) => {
-  //       console.log(error);
-  //     });
-  // }, []);
+
+  if (fullItem?.assigned_to === null && access_level === 1) {
+    getData();
+  }
+
+  // Загрузка списков пользователей для автокомплита
+  useEffect(() => {
+    $api
+      .get("/workersNameList")
+      .then((result) => {
+        setNameList(result.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
 
   useEffect(() => {
     if (!item.id) return;
@@ -110,31 +120,25 @@ export default function RequestDetails({
         },
       }
     );
-    // Обработчик события для обновления даты начала работ
+    // Обработчики SSE
     es.addEventListener("repairDate_updated", () => {
       setSseEvent({ type: "repairDate_updated" });
     });
-    // Обработчик события для обновления списка неисправностей оборудования
     es.addEventListener("equipment_updated", () => {
       setSseEvent({ type: "equipment_updated" });
     });
-    // Обработчик события для обновления фотографий
     es.addEventListener("photo_updated", () => {
       setSseEvent({ type: "photo_updated" });
     });
-    // Удаление фотографии
     es.addEventListener("deletePhoto", () => {
       setSseEvent({ type: "deletePhoto" });
     });
-    // Обновление списка услуг
     es.addEventListener("servicesAndGoods", () => {
       setSseEvent({ type: "servicesAndGoods" });
     });
-    // Обновление даты окончания работ
     es.addEventListener("completionDate_updated", () => {
       setSseEvent({ type: "completionDate_updated" });
     });
-    // Обновление подписи участников
     es.addEventListener("signature_updated", () => {
       setSseEvent({ type: "signature_updated" });
     });
@@ -143,6 +147,7 @@ export default function RequestDetails({
     };
   }, [item.id]);
 
+  // Загрузка полной информации по заявке
   useEffect(() => {
     async function fetchFullItem() {
       try {
@@ -166,12 +171,12 @@ export default function RequestDetails({
   const handleStep = (step) => () => {
     setItemStage(step);
   };
+
+  // Веб-сокет для обновлений
   useEffect(() => {
     const requestId = item.id;
 
     function handleConnect() {
-      // console.log("Сокет УСПЕШНО ПОДКЛЮЧЕН");
-
       setSocketLoading(false);
       socket.emit("joinRequest", requestId, (response) => {
         if (response.status === "error") {
@@ -184,27 +189,17 @@ export default function RequestDetails({
       addToItem(data);
     };
 
-    // const handleConnectError = (err) => {
-    //   console.error("Ошибка подключения:", err.message);
-    //   console.error("Описание ошибки:", err.description);
-    //   console.error("Контекст ошибки:", err.context);
-    // };
-    // console.log("Начинаю подключение к сокету");
     socket.connect();
     socket.on("connect", handleConnect);
     socket.on("requestUpdated", handleRequestUpdate);
-    // socket.on("connect_error", handleConnectError);
 
     return () => {
-      // console.log("Закрытие подключения");
       socket.emit("leaveRequest", requestId);
       socket.off("connect", handleConnect);
       socket.off("requestUpdated", handleRequestUpdate);
-      // socket.off("connect_error", handleConnectError);
     };
   }, []);
 
-  // console.log("Текущее состояние socketLoading:", socketLoading);
   async function handleNextStage() {
     try {
       if (access_level > 0) {
@@ -271,10 +266,8 @@ export default function RequestDetails({
     setItem(null);
   };
 
+  // Загрузка списка подтверждений
   const confirmations = [
-    // ...(!fullItem?.created_by_worker
-    //   ? [{ name: "Пользователь", confirmed: fullItem?.user_confirmed }]
-    //   : []),
     {
       name: "АСЦ",
       confirmed: fullItem?.worker_confirmed,
@@ -282,14 +275,13 @@ export default function RequestDetails({
         ? { username: fullItem.worker_username, phone: fullItem.worker_phone }
         : null,
     },
-    // {
-    //   name: "WATTSON",
-    //   confirmed: fullItem?.regional_confirmed,
-    //   info: fullItem
-    //     ? { username: fullItem.wattson_username, phone: fullItem.wattson_phone }
-    //     : null,
-    // },
-    { name: "GEFFEN", confirmed: fullItem?.service_engineer_confirmed },
+    {
+      name: "GEFFEN",
+      confirmed: fullItem?.service_engineer_confirmed,
+      info: fullItem
+        ? { username: fullItem.service_engineer_username, phone: "" }
+        : null,
+    },
   ];
 
   const anyConfirmed = confirmations.some((c) => c.confirmed === true);
@@ -333,14 +325,6 @@ export default function RequestDetails({
         getData={getData}
       />
     ),
-    // Материалы: (
-    //   <Materials
-    //     requestID={fullItem?.id}
-    //     access_level={access_level}
-    //     worker_username={fullItem?.worker_username}
-    //     worker_region={fullItem?.worker_region}
-    //   />
-    // ),
     "В пути": <OnWay access_level={access_level} />,
     "Проводятся работы": (
       <WorkInProgress
@@ -355,7 +339,6 @@ export default function RequestDetails({
       <WorkerRating requestID={fullItem?.id} access_level={access_level} />
     ),
     Завершенно: (
-      // <CompletedWorks access_level={access_level} />
       <Complete
         requestID={fullItem?.id}
         worker_region={fullItem?.worker_region}
@@ -365,53 +348,50 @@ export default function RequestDetails({
 
   const component = react_functional_components[stepKey] || null;
 
+  // Проверка, кто подтвердил
   const userConfirmed =
     (access_level === 0 && fullItem?.user_confirmed) ||
     (access_level === 1 && fullItem?.worker_confirmed) ||
     (access_level === 2 && fullItem?.regional_confirmed) ||
     (access_level === 3 && fullItem?.service_engineer_confirmed);
 
-  // const handleKeyDown = (event) => {
-  //   if (event.key === "Enter") {
-  //     handleSubmit();
-  //   }
-  // };
+  // Обработчики ввода нового имени
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      handleSubmit();
+    }
+  };
 
-  // const handleFieldBlur = () => {
-  //   handleSubmit();
-  // };
+  const handleFieldBlur = () => {
+    handleSubmit();
+  };
 
-  // const handleSubmit = async () => {
-  //   const data = { requestID: fullItem.id, ...editingName };
-  //   if (editingName) {
-  //     try {
-  //       await $api.post("/setNewWorker", data);
-  //       // изменить логику, не брать данные с сервера повторно, использовать всё из прошлого запроса
-  //       const tooltipResponse = await $api.get("/getTooltipEmployees");
-
-  //       setNameList(tooltipResponse.data);
-
-  //       const updatedFull = await $api.get(`/getFullRequest/${fullItem.id}`);
-  //       setFullItem(updatedFull.data);
-
-  //       const updatedEditingName =
-  //         (tooltipResponse.data.worker_name || []).find(
-  //           (worker) => worker.username === editingName.username
-  //         ) ||
-  //         (tooltipResponse.data.wattson_name || []).find(
-  //           (worker) => worker.username === editingName.username
-  //         ) ||
-  //         "";
-
-  //       setEditingName(updatedEditingName);
-  //       setKeyEditing(null);
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   } else {
-  //     setKeyEditing(null);
-  //   }
-  // };
+  const handleSubmit = async () => {
+    if (!editingName || !fullItem) {
+      setKeyEditing("");
+      return;
+    }
+    // Если редактирование ASЦ
+    if (keyEditing === "АСЦ") {
+      const data = {
+        requestID: fullItem.id,
+        id: editingName.id, // это worker_id
+        username: editingName.username,
+        access_level: editingName.access_level,
+      };
+      try {
+        await $api.post("/setNewWorker", data);
+        // Обновим fullItem полностью
+        const updatedFull = await $api.get(`/getFullRequest/${fullItem.id}`);
+        setFullItem(updatedFull.data);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setKeyEditing("");
+      }
+    }
+    // Если появятся другие подтверждения, аналогично обрабатываем тут
+  };
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);
@@ -423,10 +403,19 @@ export default function RequestDetails({
       minute: "2-digit",
     });
   };
+
   return (
     <div className={styles.backdrop} onClick={closePanel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
-        {socketLoading ? (
+        {fullItem?.assigned_to === null && access_level === 1 ? (
+          <Typography
+            variant="h6"
+            align="center"
+            sx={{ mt: 4, color: "error.main" }}
+          >
+            Доступ закрыт
+          </Typography>
+        ) : socketLoading ? (
           <div
             style={{
               display: "flex",
@@ -559,37 +548,33 @@ export default function RequestDetails({
                   key={conf.name}
                   sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
                 >
-                  {
-                    // conf.name === keyEditing ? (
-                    //   <Autocomplete
-                    //     sx={{ width: 300 }}
-                    //     options={
-                    //       conf.name === "АСЦ"
-                    //         ? [
-                    //             { id: null, username: "Нет", access_level: 0 },
-                    //             ...nameList.worker_name,
-                    //           ]
-                    //         : [
-                    //             { id: null, username: "Нет", access_level: 1 },
-                    //             ...nameList.wattson_name,
-                    //           ]
-                    //     }
-                    //     value={editingName}
-                    //     onChange={(_, newValue) => setEditingName(newValue || "")}
-                    //     getOptionLabel={(option) => option.username || ""}
-                    //     renderInput={(params) => (
-                    //       <TextField
-                    //         {...params}
-                    //         autoFocus
-                    //         label="Введите имя пользователя"
-                    //         size="small"
-                    //         onBlur={handleFieldBlur}
-                    //         onKeyDown={handleKeyDown}
-                    //       />
-                    //     )}
-                    //     freeSolo
-                    //   />
-                    // ) : (
+                  {conf.name === keyEditing ? (
+                    <Autocomplete
+                      sx={{ width: 300 }}
+                      options={
+                        conf.name === "АСЦ"
+                          ? [
+                              { id: null, username: "Нет", access_level: 0 },
+                              ...nameList.worker_name,
+                            ]
+                          : []
+                      }
+                      value={editingName}
+                      onChange={(_, newValue) => setEditingName(newValue || "")}
+                      getOptionLabel={(option) => option.username || ""}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          autoFocus
+                          label="Введите имя пользователя"
+                          size="small"
+                          onBlur={handleFieldBlur}
+                          onKeyDown={handleKeyDown}
+                        />
+                      )}
+                      freeSolo
+                    />
+                  ) : (
                     <>
                       {access_level === 3 && conf.name !== "GEFFEN" ? (
                         <Tooltip
@@ -625,34 +610,40 @@ export default function RequestDetails({
                         {conf.confirmed ? "Подтвержден" : "Не подтвержден"}
                       </Typography>
 
-                      {/* {access_level === 3 &&
-                        conf.name !== "GEFFEN" &&
-                        conf.name !== "Пользователь" && (
+                      {access_level === 3 &&
+                        conf.name === "АСЦ" &&
+                        fullItem?.stage !== 0 && (
                           <IconButton
                             size="small"
                             onClick={() => {
-                              setEditingName(conf.info?.username ?? "");
+                              setEditingName(
+                                conf.info
+                                  ? {
+                                      id: fullItem.assigned_to,
+                                      username: conf.info.username,
+                                      access_level: 1,
+                                    }
+                                  : ""
+                              );
                               setKeyEditing(conf.name);
                             }}
                           >
                             <EditIcon fontSize="small" />
                           </IconButton>
-                        )} */}
+                        )}
                     </>
-                    // )
-                  }
+                  )}
                 </Box>
               ))}
             </Box>
-            {
-              <RequestInfo
-                formatDate={formatDate}
-                fullItem={fullItem}
-                requestOpen={requestOpen}
-                setRequsetOpen={setRequsetOpen}
-              />
-            }
-            {<PhotoFolder requestID={item.id} sseEvent={sseEvent} />}
+
+            <RequestInfo
+              formatDate={formatDate}
+              fullItem={fullItem}
+              requestOpen={requestOpen}
+              setRequsetOpen={setRequsetOpen}
+            />
+            <PhotoFolder requestID={item.id} sseEvent={sseEvent} />
             {component}
             {fullItem?.status !== 1 && (
               <section
