@@ -300,11 +300,7 @@ export default function RequestDetails({
   const react_functional_components = {
     "Рекламация на оборудование": (
       <SearchWorker
-        item={{
-          worker_username: fullItem?.worker_username,
-          uri_worker_confirmed: fullItem?.uri_worker_confirmed,
-          equipments: fullItem?.equipments,
-        }}
+       
         access_level={access_level}
         fullItem={
           fullItem && {
@@ -314,6 +310,7 @@ export default function RequestDetails({
             repair_completion_date: fullItem.repair_completion_date,
             assigned_to: fullItem.assigned_to,
             worker_username: fullItem.worker_username,
+            equipments: fullItem?.equipments,
           }
         }
         sseEvent={sseEvent}

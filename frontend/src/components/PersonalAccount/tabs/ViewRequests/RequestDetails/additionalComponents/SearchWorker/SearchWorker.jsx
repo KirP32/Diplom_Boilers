@@ -12,6 +12,9 @@ import {
   FormControl,
   Radio,
   IconButton,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import Materials from "../Materials/Materials";
 import $api from "../../../../../../../http";
@@ -21,10 +24,43 @@ import { FormControlLabel, FormLabel, RadioGroup } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
 import { green } from "@mui/material/colors";
+
+const modelOptionsMap = {
+  3.1: [
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-301 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-251 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-200 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-400 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-127 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-1199 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-1060 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-800 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-660 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-500 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-145 кВт",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-200 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-251 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-301 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-400 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-500 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-660 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-800 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-1060 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-1199 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-1600 кВт с контролем герметичности",
+    "Котел отопительный водогрейный типа GEFFEN MB 3.1-2000 кВт с контролем герметичности",
+  ],
+  4.1: [
+    "Котел конденсационный газовый водогрейный типа GEFFEN MB 4.1-99",
+    "Котел конденсационный газовый водогрейный типа GEFFEN MB 4.1-80",
+    "Котел конденсационный газовый водогрейный типа GEFFEN MB 4.1-60",
+    "Котел конденсационный газовый водогрейный типа GEFFEN MB 4.1-40",
+  ],
+};
+
 export default function SearchWorker({
   access_level,
   sseEvent,
-  item,
   fullItem,
   setFullItem,
   getData,
@@ -33,7 +69,6 @@ export default function SearchWorker({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [equipmentData, setEquipmentData] = useState([]);
   const [date, setDate] = useState("");
-
   useEffect(() => {
     $api.get(`/getRepairDate/${fullItem?.id}/repair`).then((res) => {
       setDate(res.data.date);
@@ -78,9 +113,9 @@ export default function SearchWorker({
 
     const init = data.map((eq) => ({
       id: eq.id,
-      series: eq.series,
-      model: eq.model,
-      serial_number: eq.serial_number,
+      series: eq.series ?? "",
+      model: eq.model ?? "",
+      serial_number: eq.serial_number ?? "",
 
       sale_date: eq.sale_date ? eq.sale_date.slice(0, 10) : "",
 
@@ -180,7 +215,7 @@ export default function SearchWorker({
   return (
     <Box sx={{ display: "flex", gap: 5, flexDirection: "column" }}>
       <Box sx={{ mx: "auto", maxWidth: 800, fontSize: 20 }}>
-        {item.equipments?.map((eq, idx) => {
+        {equipmentData?.map((eq, idx) => {
           const local = equipmentData[idx];
           return (
             <Paper
@@ -194,26 +229,59 @@ export default function SearchWorker({
 
               <Grid container spacing={2}>
                 <Grid item xs={4}>
-                  <TextField
-                    label="Серия"
-                    value={eq.series || ""}
-                    slotProps={{ readOnly: true }}
-                    fullWidth
-                  />
+                  <FormControl fullWidth>
+                    <InputLabel>Серия</InputLabel>
+                    <Select
+                      label="Серия"
+                      value={local?.series}
+                      onChange={(e) =>
+                        isReadOnly
+                          ? null
+                          : handleFieldChange(idx, "series", e.target.value)
+                      }
+                    >
+                      <MenuItem value="3.1">3.1</MenuItem>
+                      <MenuItem value="4.1">4.1</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={4}>
-                  <TextField
-                    label="Модель"
-                    value={eq.model || ""}
-                    slotProps={{ readOnly: true }}
-                    fullWidth
-                  />
+                  <FormControl fullWidth>
+                    <InputLabel>Модель</InputLabel>
+                    <Select
+                      label="Модель"
+                      value={local.model}
+                      onChange={(e) =>
+                        isReadOnly
+                          ? null
+                          : handleFieldChange(idx, "model", e.target.value)
+                      }
+                    >
+                      {modelOptionsMap[eq.series].map((opt) => (
+                        <MenuItem key={opt} value={opt}>
+                          {opt}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={4}>
                   <TextField
                     label="Серийный номер"
-                    value={eq.serial_number || ""}
-                    slotProps={{ readOnly: true }}
+                    value={local?.serial_number || ""}
+                    onChange={(e) =>
+                      isReadOnly
+                        ? null
+                        : handleFieldChange(
+                            idx,
+                            "serial_number",
+                            e.target.value
+                          )
+                    }
+                    slotProps={{
+                      inputLabel: { shrink: true },
+                      input: { sx: { mr: 2 } },
+                    }}
                     fullWidth
                   />
                 </Grid>

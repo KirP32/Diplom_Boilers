@@ -3109,8 +3109,11 @@ class DataController {
         commissioning_org   = $5,
         commissioning_master= $6,
         previous_repairs    = $7,
-        sale_document       = $8
-      WHERE id = $9
+        sale_document       = $8,
+        series = $9,
+        model = $10,
+        serial_number = $11
+      WHERE id = $12
     `;
 
       const updateDefText = `
@@ -3129,6 +3132,9 @@ class DataController {
           element.commissioning_master,
           element.previous_repairs,
           element.document_number,
+          element.series,
+          element.model,
+          element.serial_number,
           element.id,
         ]);
 
@@ -3180,6 +3186,9 @@ class DataController {
         ue.sale_date,
         ue.commissioning_date,
         ue.commissioning_org,
+        ue.series,
+        ue.model,
+        ue.serial_number,
         ue.commissioning_master,
         ue.previous_repairs,
         ue.sale_document,
@@ -3204,6 +3213,9 @@ class DataController {
             id: eqId,
             article_number: row.article_number,
             seller: row.seller,
+            series: row.series,
+            model: row.model,
+            serial_number: row.serial_number,
             sale_date: row.sale_date,
             commissioning_date: row.commissioning_date,
             commissioning_org: row.commissioning_org,
