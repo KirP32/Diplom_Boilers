@@ -145,6 +145,10 @@ export default function SearchWorker({
     setEquipmentData((prev) => {
       const copy = [...prev];
       copy[idx] = { ...copy[idx], [field]: value };
+
+      if (field === "series") {
+        copy[idx].model = "";
+      }
       return copy;
     });
   };
