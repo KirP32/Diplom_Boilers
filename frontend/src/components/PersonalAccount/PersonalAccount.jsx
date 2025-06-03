@@ -61,7 +61,11 @@ export default function PersonalAccount() {
       if (response.status === 200) {
         const newDevices = formatResponseData(response.data);
         setDevicesArray(newDevices);
-        if (!currentDeviceObject) {
+
+        if (
+          !currentDeviceObject ||
+          !newDevices.some((d) => d.name === currentDeviceObject.name)
+        ) {
           setDeviceObject(newDevices[0]);
         }
       }

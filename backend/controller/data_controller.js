@@ -1157,76 +1157,130 @@ class DataController {
   async deleteRequest(req, res) {
     try {
       const { id: requestId, system_name } = req.params;
-      const username = decodeJWT(req.cookies.refreshToken)?.login;
-      if (!requestId || !system_name || !username) {
+      const tokenData = decodeJWT(req.cookies.refreshToken) || {};
+      const deleterUsername = tokenData.login;
+      const deleterAccess = tokenData.access_level; // 0 = клиент, 1 = рабочий, 3 = админ
+
+      if (!requestId || !system_name || !deleterUsername) {
         return res.status(400).json({ message: "Неверный формат запроса" });
       }
-      const systemCheck = await pool.query(
-        `SELECT 1 FROM user_systems 
-         WHERE user_id = (SELECT id FROM users WHERE username = $1) 
-         AND name = $2`,
-        [username, system_name]
-      );
 
-      if (systemCheck.rowCount === 0) {
+      // Получаем ID и уровень доступа удаляющего из таблицы users
+      const deleterRes = await pool.query(
+        `SELECT id, access_level FROM users WHERE username = $1`,
+        [deleterUsername]
+      );
+      if (deleterRes.rowCount === 0) {
         return res.status(403).json({ message: "Доступ запрещен" });
       }
+      const deleterId = deleterRes.rows[0].id;
+      const deleterLevel = deleterRes.rows[0].access_level;
 
-      const requestData = await pool.query(
-        `SELECT assigned_to FROM user_requests WHERE id = $1`,
-        [requestId]
-      );
-
-      if (requestData.rowCount === 0) {
-        return res.status(404).json({ message: "Заявка не найдена" });
-      }
-
-      const workerId = requestData.rows[0].assigned_to;
-
-      if (!workerId) {
-        const updateResult = await pool.query(
-          `UPDATE user_requests SET status = 1 WHERE id = $1`,
-          [requestId]
+      // Проверяем наличие записи в user_systems для рабоч/админов
+      if (deleterLevel === 1 || deleterLevel === 3) {
+        const sysCheck = await pool.query(
+          `SELECT 1 FROM user_systems WHERE user_id = $1 AND name = $2`,
+          [deleterId, system_name]
         );
-
-        if (updateResult.rowCount === 0) {
-          return res.status(404).json({ message: "Ошибка с заявкой" });
+        if (sysCheck.rowCount === 0) {
+          return res
+            .status(403)
+            .json({ message: "Доступ к системе отсутствует" });
         }
-
-        return res.status(200).json({ message: "Запись успешно обновлена" });
       }
 
-      const activeRequests = await pool.query(
-        `SELECT COUNT(*) as count 
-         FROM user_requests 
-         WHERE assigned_to = $1 
-           AND system_name = $2 
-           AND status = 0 
-           AND id != $3`,
-        [workerId, system_name, requestId]
+      // Получаем assigned_to и created_by из заявки
+      const requestRes = await pool.query(
+        `SELECT assigned_to, created_by FROM user_requests WHERE id = $1`,
+        [requestId]
       );
-      if (Number(activeRequests.rows[0].count) === 0) {
-        await pool.query(
-          `DELETE FROM user_systems 
-           WHERE user_id = $1 AND name = $2`,
-          [workerId, system_name]
-        );
+      if (requestRes.rowCount === 0) {
+        return res.status(404).json({ message: "Заявка не найдена" });
+      }
+      const currentWorkerId = requestRes.rows[0].assigned_to;
+      const creatorId = requestRes.rows[0].created_by;
+
+      // Проверяем права на удаление
+      if (deleterLevel === 0) {
+        // Клиент
+        if (creatorId !== deleterId) {
+          return res
+            .status(403)
+            .json({ message: "Нельзя удалить чужую заявку" });
+        }
+      } else if (deleterLevel === 1) {
+        // Рабочий
+        if (currentWorkerId !== deleterId) {
+          return res
+            .status(403)
+            .json({ message: "Нельзя удалить чужую заявку" });
+        }
+      } else if (deleterLevel !== 3) {
+        return res.status(403).json({ message: "Непонятный уровень доступа" });
       }
 
-      const updateResult = await pool.query(
-        `UPDATE user_requests SET status = 1 WHERE id = $1`,
+      // Закрываем заявку: статус 1 и отвязываем от assigned_to
+      await pool.query(
+        `UPDATE user_requests SET status = 1, assigned_to = NULL WHERE id = $1`,
         [requestId]
       );
 
-      if (updateResult.rowCount === 0) {
-        return res.status(404).json({ message: "Заявка не найдена" });
+      // Если был назначенный работник, проверяем его активные заявки и при необходимости удаляем из user_systems
+      if (currentWorkerId) {
+        const activeForWorker = await pool.query(
+          `
+        SELECT COUNT(*) AS cnt
+        FROM user_requests
+        WHERE assigned_to = $1
+          AND system_name = $2
+          AND status = 0
+        `,
+          [currentWorkerId, system_name]
+        );
+        const cntWorker = Number(activeForWorker.rows[0].cnt);
+        if (cntWorker === 0) {
+          await pool.query(
+            `DELETE FROM user_systems WHERE user_id = $1 AND name = $2`,
+            [currentWorkerId, system_name]
+          );
+        }
       }
 
-      return res.status(200).json({ message: "Операция выполнена успешно" });
+      // Если создатель не клиент, проверяем его активные заявки и при необходимости удаляем из user_systems
+      if (creatorId) {
+        const creatorRes = await pool.query(
+          `SELECT access_level FROM users WHERE id = $1`,
+          [creatorId]
+        );
+        if (creatorRes.rowCount > 0) {
+          const creatorLevel = creatorRes.rows[0].access_level;
+          if (creatorLevel !== 0) {
+            const activeForCreator = await pool.query(
+              `
+            SELECT COUNT(*) AS cnt
+            FROM user_requests
+            WHERE created_by = $1
+              AND system_name = $2
+              AND status = 0
+            `,
+              [creatorId, system_name]
+            );
+            const cntCreator = Number(activeForCreator.rows[0].cnt);
+            if (cntCreator === 0) {
+              await pool.query(
+                `DELETE FROM user_systems WHERE user_id = $1 AND name = $2`,
+                [creatorId, system_name]
+              );
+            }
+          }
+        }
+      }
+
+      return res.status(200).json({ message: "Заявка успешно удалена" });
     } catch (error) {
       return res
         .status(500)
-        .json({ message: "Внутренняя ошибка сервера", error: error });
+        .json({ message: "Внутренняя ошибка сервера", error: error.message });
     }
   }
 

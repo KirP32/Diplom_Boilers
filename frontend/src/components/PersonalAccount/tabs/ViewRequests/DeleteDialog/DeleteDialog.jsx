@@ -23,7 +23,6 @@ export default function DeleteDialog({ showDialog, setOpen, getSystems }) {
     <Dialog open={true} onClose={() => setOpen(false)}>
       <DialogTitle id="alert-dialog-title">
         {`Удалить: ${showDialog.item.problem_name} ?`} <br />{" "}
-        {`Модуль: ${showDialog.item.module}`}
       </DialogTitle>
       <DialogActions>
         <Button onClick={() => setOpen(false)}>Нет</Button>
