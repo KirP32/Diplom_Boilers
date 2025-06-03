@@ -235,42 +235,58 @@ export default function SearchWorker({
 
               <Grid container spacing={2}>
                 <Grid item xs={4}>
-                  <FormControl fullWidth>
-                    <InputLabel>Серия</InputLabel>
-                    <Select
+                  {isReadOnly ? (
+                    <TextField
                       label="Серия"
-                      value={local?.series}
-                      onChange={(e) =>
-                        isReadOnly
-                          ? null
-                          : handleFieldChange(idx, "series", e.target.value)
-                      }
-                    >
-                      <MenuItem value="3.1">3.1</MenuItem>
-                      <MenuItem value="4.1">4.1</MenuItem>
-                    </Select>
-                  </FormControl>
+                      value={local.series}
+                      InputProps={{ readOnly: true }}
+                      fullWidth
+                    />
+                  ) : (
+                    <FormControl fullWidth>
+                      <InputLabel>Серия</InputLabel>
+                      <Select
+                        label="Серия"
+                        value={local.series}
+                        onChange={(e) =>
+                          handleFieldChange(idx, "series", e.target.value)
+                        }
+                      >
+                        <MenuItem value="3.1">3.1</MenuItem>
+                        <MenuItem value="4.1">4.1</MenuItem>
+                      </Select>
+                    </FormControl>
+                  )}
                 </Grid>
+
                 <Grid item xs={4}>
-                  <FormControl fullWidth>
-                    <InputLabel>Модель</InputLabel>
-                    <Select
+                  {isReadOnly ? (
+                    <TextField
                       label="Модель"
                       value={local.model}
-                      onChange={(e) =>
-                        isReadOnly
-                          ? null
-                          : handleFieldChange(idx, "model", e.target.value)
-                      }
-                    >
-                      {modelOptionsMap[eq.series].map((opt) => (
-                        <MenuItem key={opt} value={opt}>
-                          {opt}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      InputProps={{ readOnly: true }}
+                      fullWidth
+                    />
+                  ) : (
+                    <FormControl fullWidth>
+                      <InputLabel>Модель</InputLabel>
+                      <Select
+                        label="Модель"
+                        value={local.model}
+                        onChange={(e) =>
+                          handleFieldChange(idx, "model", e.target.value)
+                        }
+                      >
+                        {modelOptionsMap[local.series]?.map((opt) => (
+                          <MenuItem key={opt} value={opt}>
+                            {opt}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
                 </Grid>
+
                 <Grid item xs={4}>
                   <TextField
                     label="Серийный номер"
